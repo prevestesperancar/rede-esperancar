@@ -1,0 +1,367 @@
+// Rede Esperançar — schema principal
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ESTUDANTE
+  PROFESSOR
+  COORDENACAO
+  APOIO_PSICOSSOCIAL
+  ADMIN
+}
+
+enum StatusInscricao {
+  PENDENTE
+  APROVADA
+  RECUSADA
+}
+
+enum StatusEstudante {
+  EM_AVALIACAO
+  PRESENTE
+  FALTANTE
+  DESISTENTE
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  role         Role
+  nome         String
+  telefone     String?
+  fotoUrl      String?
+  materia      String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // null quando role = ADMIN (visão global, não escopada a um núcleo)
+  nucleoId String?
+  nucleo   Nucleo? @relation("UsuariosDoNucleo", fields: [nucleoId], references: [id])
+
+  estudante             Estudante?
+  disciplinasQueLeciona TurmaDisciplina[]
+  nucleosQueCoordena    Nucleo[]          @relation("CoordenadorDoNucleo")
+  monitoriasComoProfessor Monitoria[]
+
+  @@index([nucleoId])
+}
+
+model Nucleo {
+  id          String   @id @default(cuid())
+  nome        String
+  slug        String   @unique
+  cidade      String
+  estado      String
+  bairro      String?
+  endereco    String?
+  descricao   String?
+  fotoUrl     String?
+  instagram   String?
+  ativo       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  coordenadorId String?
+  coordenador   User?   @relation("CoordenadorDoNucleo", fields: [coordenadorId], references: [id])
+
+  usuarios    User[]       @relation("UsuariosDoNucleo")
+  turmas      Turma[]
+  materiais   Material[]
+  avisos      Aviso[]
+  simulados   Simulado[]
+  eventos     Evento[]
+  provas      Prova[]
+  depoimentos Depoimento[]
+  monitorias  Monitoria[]
+  formularios FormularioCustom[]
+}
+
+model Turma {
+  id            String  @id @default(cuid())
+  nome          String
+  periodo       String
+  capacidade    Int
+  whatsappLink  String?
+  ativo         Boolean @default(true)
+
+  nucleoId String
+  nucleo   Nucleo @relation(fields: [nucleoId], references: [id])
+
+  matriculas  Matricula[]
+  disciplinas TurmaDisciplina[]
+  avisos      Aviso[]
+  frequencias Frequencia[]
+  monitorias  Monitoria[]
+
+  @@index([nucleoId])
+}
+
+model Estudante {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  status          StatusEstudante @default(EM_AVALIACAO)
+  ultimoContato   DateTime?
+  ultimoContatoObs String?
+
+  // Dados coletados na inscrição (não sensíveis — CPF/RG/dados bancários ficam só na planilha)
+  dataNascimento  DateTime?
+  sexoGenero      String?
+  racaCor         String?
+  bairro          String?
+  municipio       String?
+  situacaoEscolar String?
+  escola          String?
+  escolaPublica   Boolean?
+  cotista         Boolean?
+  jaFezEnem       Boolean?
+  cursoDesejado   String?
+  universidadeDesejada String?
+  disponibilidadeSabado Boolean?
+  provasQueVaiFazer String?
+  rendaFamiliar   String?
+  pessoasEmCasa   Int?
+  trabalha        Boolean?
+  motivacao       String?
+
+  matriculas  Matricula[]
+  frequencias Frequencia[]
+  redacoes    Redacao[]
+  simulados   SimuladoResposta[]
+}
+
+model Matricula {
+  id          String           @id @default(cuid())
+  estudanteId String
+  turmaId     String
+  status      StatusInscricao  @default(PENDENTE)
+  createdAt   DateTime         @default(now())
+
+  estudante Estudante @relation(fields: [estudanteId], references: [id])
+  turma     Turma     @relation(fields: [turmaId], references: [id])
+
+  @@unique([estudanteId, turmaId])
+  @@index([turmaId])
+}
+
+model Disciplina {
+  id   String @id @default(cuid())
+  nome String @unique
+
+  turmaDisciplinas TurmaDisciplina[]
+  monitorias       Monitoria[]
+}
+
+// Uma oferta de disciplina dentro de uma turma: quem leciona, que dia/horário
+model TurmaDisciplina {
+  id           String @id @default(cuid())
+  turmaId      String
+  disciplinaId String
+  professorId  String
+  diaSemana    String // ex: "Sábado 1", "Sábado 2", "Noturno Ter/Qui"
+  horaInicio   String // "09:00"
+  horaFim      String // "09:50"
+
+  turma      Turma      @relation(fields: [turmaId], references: [id])
+  disciplina Disciplina @relation(fields: [disciplinaId], references: [id])
+  professor  User       @relation(fields: [professorId], references: [id])
+
+  @@index([turmaId])
+  @@index([professorId])
+}
+
+model Material {
+  id         String   @id @default(cuid())
+  titulo     String
+  descricao  String?
+  arquivoUrl String
+  publico    Boolean  @default(false) // true = aparece em "Materiais gratuitos" no site público
+  createdAt  DateTime @default(now())
+
+  nucleoId String?
+  nucleo   Nucleo? @relation(fields: [nucleoId], references: [id])
+
+  @@index([nucleoId])
+}
+
+model Aviso {
+  id        String   @id @default(cuid())
+  titulo    String
+  corpo     String
+  createdAt DateTime @default(now())
+
+  nucleoId String?
+  nucleo   Nucleo? @relation(fields: [nucleoId], references: [id])
+  turmaId  String?
+  turma    Turma?  @relation(fields: [turmaId], references: [id])
+
+  @@index([nucleoId])
+  @@index([turmaId])
+}
+
+model Evento {
+  id      String   @id @default(cuid())
+  titulo  String
+  data    DateTime
+  local   String?
+  publico Boolean  @default(true)
+
+  nucleoId String?
+  nucleo   Nucleo? @relation(fields: [nucleoId], references: [id])
+
+  @@index([nucleoId])
+}
+
+// Prova/vestibular da rede (ex: UERJ, ENEM) — usado pra contagem regressiva no portal do aluno
+model Prova {
+  id     String   @id @default(cuid())
+  nome   String
+  data   DateTime
+
+  nucleoId String?
+  nucleo   Nucleo? @relation(fields: [nucleoId], references: [id])
+
+  @@index([nucleoId])
+}
+
+// Depoimento/história de estudante ou professor, gerenciável pela coordenação, exibido na Home
+model Depoimento {
+  id           String   @id @default(cuid())
+  nome         String
+  curso        String?
+  universidade String?
+  fotoUrl      String?
+  quote     String
+  createdAt DateTime @default(now())
+
+  nucleoId String?
+  nucleo   Nucleo? @relation(fields: [nucleoId], references: [id])
+
+  @@index([nucleoId])
+}
+
+model Monitoria {
+  id         String  @id @default(cuid())
+  diaSemana  String
+  horaInicio String
+  horaFim    String
+  materiais  String?
+  link       String?
+  global     Boolean @default(false)
+
+  nucleoId String
+  nucleo   Nucleo @relation(fields: [nucleoId], references: [id])
+
+  turmaId String?
+  turma   Turma?  @relation(fields: [turmaId], references: [id])
+
+  professorId String?
+  professor   User?   @relation(fields: [professorId], references: [id])
+
+  disciplinaId String?
+  disciplina   Disciplina? @relation(fields: [disciplinaId], references: [id])
+
+  @@index([turmaId])
+  @@index([nucleoId])
+}
+
+model Frequencia {
+  id          String   @id @default(cuid())
+  estudanteId String
+  turmaId     String
+  data        DateTime
+  presente    Boolean
+
+  estudante Estudante @relation(fields: [estudanteId], references: [id])
+  turma     Turma     @relation(fields: [turmaId], references: [id])
+
+  @@unique([estudanteId, turmaId, data])
+}
+
+model Simulado {
+  id        String   @id @default(cuid())
+  nome      String
+  data      DateTime
+  gabarito  String // ex: "A,B,C,D,A,B,..."
+  createdAt DateTime @default(now())
+
+  nucleoId String
+  nucleo   Nucleo @relation(fields: [nucleoId], references: [id])
+
+  respostas SimuladoResposta[]
+
+  @@index([nucleoId])
+}
+
+model SimuladoResposta {
+  id                  String   @id @default(cuid())
+  simuladoId          String
+  estudanteId         String
+  respostas           String // ex: "A,B,C,D,A,B,..."
+  nota                Float?
+  corrigidoManualmente Boolean @default(false)
+  createdAt           DateTime @default(now())
+
+  simulado  Simulado  @relation(fields: [simuladoId], references: [id])
+  estudante Estudante @relation(fields: [estudanteId], references: [id])
+
+  @@unique([simuladoId, estudanteId])
+}
+
+model FormularioCustom {
+  id        String   @id @default(cuid())
+  titulo    String
+  descricao String?
+  campos    String // JSON: [{ id, label, tipo, opcoes?, obrigatorio }]
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  nucleoId String
+  nucleo   Nucleo @relation(fields: [nucleoId], references: [id])
+
+  respostas FormularioResposta[]
+
+  @@index([nucleoId])
+}
+
+model FormularioResposta {
+  id           String   @id @default(cuid())
+  formularioId String
+  respostas    String // JSON: { [campoId]: valor }
+  createdAt    DateTime @default(now())
+
+  formulario FormularioCustom @relation(fields: [formularioId], references: [id])
+
+  @@index([formularioId])
+}
+
+model ConteudoSite {
+  id               String  @id @default(cuid())
+  quemSomosTexto   String?
+  contatoEmail     String?
+  contatoTelefone  String?
+  contatoEndereco  String?
+  updatedAt        DateTime @updatedAt
+}
+
+// Fase 2 — ainda não usado nas telas
+model Redacao {
+  id          String   @id @default(cuid())
+  estudanteId String
+  arquivoUrl  String
+  nota        Float?
+  feedback    String?
+  status      String   @default("enviada")
+  createdAt   DateTime @default(now())
+
+  estudante Estudante @relation(fields: [estudanteId], references: [id])
+}

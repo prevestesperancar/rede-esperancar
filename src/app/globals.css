@@ -1,26 +1,95 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #f6f7f2;
+  --surface: #ffffff;
+  --ink: #14161f;
+  --ink-soft: #4a4e5a;
+  --ink-faint: #8a8d98;
+  --yellow: #f19700;
+  --yellow-deep: #ce7e00;
+  --yellow-ink: #2a1900;
+  --terracotta: #e1512e;
+  --teal: #0c6b5d;
+  --star: #d31e1e;
+  --border: #e4e1d2;
+  --border-strong: #d3cfbc;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root[data-theme="dark"] {
+  --paper: #14161f;
+  --surface: #1c1f2b;
+  --ink: #f6f7f2;
+  --ink-soft: #abafc0;
+  --ink-faint: #6b6f80;
+  --yellow: #ffa929;
+  --yellow-deep: #f19700;
+  --yellow-ink: #221200;
+  --terracotta: #ff7a54;
+  --teal: #35c7a8;
+  --star: #ff4b3e;
+  --border: #2a2e3d;
+  --border-strong: #383d4e;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme="light"]) {
+    --paper: #14161f;
+    --surface: #1c1f2b;
+    --ink: #f6f7f2;
+    --ink-soft: #abafc0;
+    --ink-faint: #6b6f80;
+    --yellow: #ffa929;
+    --yellow-deep: #f19700;
+    --yellow-ink: #221200;
+    --terracotta: #ff7a54;
+    --teal: #35c7a8;
+    --star: #ff4b3e;
+    --border: #2a2e3d;
+    --border-strong: #383d4e;
   }
 }
 
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-yellow: var(--yellow);
+  --color-yellow-deep: var(--yellow-deep);
+  --color-yellow-ink: var(--yellow-ink);
+  --color-terracotta: var(--terracotta);
+  --color-teal: var(--teal);
+  --color-star: var(--star);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee-scroll 22s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none;
+  }
 }

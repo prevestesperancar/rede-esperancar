@@ -39,3 +39,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma
+
+# dados sensíveis coletados na inscrição (CPF/RG) — nunca versionar
+/private-data/
+
+# uploads de teste (fotos/materiais enviados localmente durante o desenvolvimento)
+/public/uploads/*
+!/public/uploads/.gitkeep
+
+# configs de ferramentas locais, não fazem parte do projeto
+/.claude/
+/.agents/
+/.windsurf/
+skills-lock.json

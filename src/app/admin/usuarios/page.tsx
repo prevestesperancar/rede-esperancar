@@ -1,22 +1,84 @@
 import { getUsuariosAdmin, getNucleosAdmin } from "@/lib/queries/admin";
 import { EditarAcessoForm } from "@/components/admin/EditarAcessoForm";
+import { NovoUsuarioForm } from "@/components/admin/NovoUsuarioForm";
 
 const ROLE_LABEL: Record<string, string> = {
+  ESTUDANTE: "Aluno(a)",
   PROFESSOR: "Professor(a)",
   COORDENACAO: "Coordenação",
   APOIO_PSICOSSOCIAL: "Apoio psicossocial",
   ADMIN: "Admin",
 };
 
-export default async function AdminUsuariosPage() {
-  const [usuarios, nucleos] = await Promise.all([getUsuariosAdmin(), getNucleosAdmin()]);
+const ROLE_OPTIONS = [
+  { value: "", label: "Todos os papéis" },
+  { value: "ESTUDANTE", label: "Aluno(a)" },
+  { value: "PROFESSOR", label: "Professor(a)" },
+  { value: "COORDENACAO", label: "Coordenação" },
+  { value: "APOIO_PSICOSSOCIAL", label: "Apoio psicossocial" },
+  { value: "ADMIN", label: "Admin" },
+];
+
+export default async function AdminUsuariosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ role?: string; nucleoId?: string }>;
+}) {
+  const { role, nucleoId } = await searchParams;
+
+  const [usuarios, nucleos] = await Promise.all([
+    getUsuariosAdmin({ role, nucleoId }),
+    getNucleosAdmin(),
+  ]);
 
   return (
     <div>
       <h1 className="font-display text-2xl mb-1">Usuários</h1>
       <p className="text-sm text-ink-soft mb-7">
-        Gerencie o papel, o núcleo e a senha de professores, coordenadores, apoio psicossocial e admins.
+        Gerencie o papel, o núcleo e a senha de professores, coordenadores, apoio psicossocial, admins e alunos.
       </p>
+
+      <NovoUsuarioForm nucleos={nucleos.map((n) => ({ id: n.id, nome: n.nome }))} />
+
+      <form
+        method="get"
+        className="bg-surface border border-border rounded-2xl p-4 mb-4 flex flex-wrap gap-3 items-center"
+      >
+        <select
+          name="role"
+          defaultValue={role ?? ""}
+          className="rounded-lg border border-border-strong px-3 py-2 text-sm outline-none focus:border-ink bg-surface"
+        >
+          {ROLE_OPTIONS.map((r) => (
+            <option key={r.value} value={r.value}>
+              {r.label}
+            </option>
+          ))}
+        </select>
+        <select
+          name="nucleoId"
+          defaultValue={nucleoId ?? ""}
+          className="rounded-lg border border-border-strong px-3 py-2 text-sm outline-none focus:border-ink bg-surface"
+        >
+          <option value="">Todos os núcleos</option>
+          {nucleos.map((n) => (
+            <option key={n.id} value={n.id}>
+              {n.nome}
+            </option>
+          ))}
+        </select>
+        <button
+          type="submit"
+          className="text-sm font-bold px-4 py-2 rounded-full bg-yellow text-yellow-ink"
+        >
+          Filtrar
+        </button>
+        {(role || nucleoId) && (
+          <a href="/admin/usuarios" className="text-xs font-bold text-ink-faint">
+            Limpar filtros
+          </a>
+        )}
+      </form>
 
       <div className="flex flex-col gap-3">
         {usuarios.map((u) => (
@@ -30,13 +92,19 @@ export default async function AdminUsuariosPage() {
                 </div>
               </div>
             </div>
-            <EditarAcessoForm
-              userId={u.id}
-              email={u.email}
-              role={u.role}
-              nucleoId={u.nucleoId}
-              nucleos={nucleos.map((n) => ({ id: n.id, nome: n.nome }))}
-            />
+            {u.role === "ESTUDANTE" ? (
+              <p className="text-xs text-ink-faint">
+                Edite os dados desse aluno pela tela de Estudantes, na gestão do núcleo dele.
+              </p>
+            ) : (
+              <EditarAcessoForm
+                userId={u.id}
+                email={u.email}
+                role={u.role}
+                nucleoId={u.nucleoId}
+                nucleos={nucleos.map((n) => ({ id: n.id, nome: n.nome }))}
+              />
+            )}
           </div>
         ))}
         {usuarios.length === 0 && (

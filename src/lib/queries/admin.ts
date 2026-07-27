@@ -4,9 +4,12 @@ export async function getConteudoSite() {
   return prisma.conteudoSite.findFirst();
 }
 
-export async function getUsuariosAdmin() {
+export async function getUsuariosAdmin(filtros?: { role?: string; nucleoId?: string }) {
   return prisma.user.findMany({
-    where: { role: { not: "ESTUDANTE" } },
+    where: {
+      ...(filtros?.role ? { role: filtros.role as "ESTUDANTE" | "PROFESSOR" | "COORDENACAO" | "APOIO_PSICOSSOCIAL" | "ADMIN" } : {}),
+      ...(filtros?.nucleoId ? { nucleoId: filtros.nucleoId } : {}),
+    },
     include: { nucleo: true },
     orderBy: [{ role: "asc" }, { nome: "asc" }],
   });

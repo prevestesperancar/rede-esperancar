@@ -134,6 +134,39 @@ export async function atualizarConteudoSite(
 
 const ROLES_EDITAVEIS = ["PROFESSOR", "COORDENACAO", "APOIO_PSICOSSOCIAL", "ADMIN"];
 
+export async function criarUsuarioAdmin(_prevState: string | undefined, formData: FormData) {
+  await requireAdmin();
+
+  const nome = formData.get("nome") as string;
+  const email = formData.get("email") as string;
+  const senha = formData.get("senha") as string;
+  const role = formData.get("role") as string;
+  const nucleoId = formData.get("nucleoId") as string;
+
+  if (!nome || !email || !senha) return "Preencha nome, e-mail e senha.";
+  if (senha.length < 6) return "A senha precisa ter pelo menos 6 caracteres.";
+  if (!ROLES_EDITAVEIS.includes(role)) return "Papel inválido.";
+  if (role !== "ADMIN" && !nucleoId) return "Escolha o núcleo desse usuário.";
+
+  const existente = await prisma.user.findUnique({ where: { email } });
+  if (existente) return "Já existe um usuário com esse e-mail.";
+
+  const passwordHash = await bcrypt.hash(senha, 10);
+
+  await prisma.user.create({
+    data: {
+      nome,
+      email,
+      passwordHash,
+      role: role as "PROFESSOR" | "COORDENACAO" | "APOIO_PSICOSSOCIAL" | "ADMIN",
+      nucleoId: role === "ADMIN" ? null : nucleoId,
+    },
+  });
+
+  revalidatePath("/admin/usuarios");
+  return "Usuário criado!";
+}
+
 export async function alterarAcessoUsuario(
   _prevState: string | undefined,
   formData: FormData

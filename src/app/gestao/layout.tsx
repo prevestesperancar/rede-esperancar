@@ -12,14 +12,15 @@ export default async function GestaoLayout({
   if (!session?.user) redirect("/login");
   if (session.user.role !== "ADMIN" && !session.user.nucleoId) redirect("/");
 
-  const [nucleo, pendentesCount] = session.user.nucleoId
+  const [nucleo, pendentesCount, usuario] = session.user.nucleoId
     ? await Promise.all([
         prisma.nucleo.findUnique({ where: { id: session.user.nucleoId } }),
         prisma.matricula.count({
           where: { status: "PENDENTE", turma: { nucleoId: session.user.nucleoId } },
         }),
+        prisma.user.findUnique({ where: { id: session.user.id }, select: { fotoUrl: true } }),
       ])
-    : [null, 0];
+    : [null, 0, await prisma.user.findUnique({ where: { id: session.user.id }, select: { fotoUrl: true } })];
 
   if (session.user.role !== "ADMIN" && !nucleo) redirect("/");
 
@@ -30,6 +31,7 @@ export default async function GestaoLayout({
         nucleoNome={nucleo?.nome ?? "Admin"}
         pendentesCount={pendentesCount}
         role={session.user.role}
+        fotoUrl={usuario?.fotoUrl ?? null}
       />
       <main className="flex-1 min-w-0 p-9">{children}</main>
     </div>

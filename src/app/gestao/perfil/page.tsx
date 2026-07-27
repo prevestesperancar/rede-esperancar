@@ -56,7 +56,10 @@ export default async function GestaoPerfilPage() {
           <div className="bg-surface border border-border rounded-[18px] p-5 mb-6">
             <div className="font-extrabold text-sm mb-3">Planilha do Google Sheets</div>
             <p className="text-xs text-ink-faint mb-3">
-              Cole aqui o link da planilha com os estudantes já inscritos deste núcleo.
+              Cole aqui o link da planilha com os estudantes já inscritos deste núcleo. Para
+              importar os alunos automaticamente em "Estudantes", publique a planilha como CSV
+              (no Google Sheets: Arquivo → Compartilhar → Publicar na Web → formato CSV) e cole
+              esse link — não o link normal de compartilhamento.
             </p>
             <GoogleSheetsNucleoForm googleSheetsUrl={nucleo.googleSheetsUrl} />
           </div>

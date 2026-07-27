@@ -15,6 +15,7 @@ const ITEMS_COORDENACAO = [
   { href: "/gestao/eventos", label: "Eventos", icon: "📅" },
   { href: "/gestao/avisos", label: "Avisos", icon: "📢" },
   { href: "/gestao/simulados", label: "Simulados", icon: "📝" },
+  { href: "/gestao/questoes", label: "Banco de questões", icon: "❓" },
   { href: "/gestao/frequencia", label: "Frequência detalhada", icon: "📊" },
   { href: "/gestao/formularios", label: "Formulários", icon: "🗂️" },
   { href: "/gestao/inscricoes", label: "Inscrições", icon: "📋" },
@@ -29,6 +30,7 @@ const ITEMS_PROFESSOR = [
   { href: "/gestao/eventos", label: "Eventos", icon: "📅" },
   { href: "/gestao/avisos", label: "Avisos", icon: "📢" },
   { href: "/gestao/simulados", label: "Simulados", icon: "📝" },
+  { href: "/gestao/questoes", label: "Banco de questões", icon: "❓" },
 ];
 
 const ITEMS_APOIO = [
@@ -52,11 +54,13 @@ export function Sidebar({
   nucleoNome,
   pendentesCount,
   role,
+  fotoUrl,
 }: {
   userName: string;
   nucleoNome: string;
   pendentesCount: number;
   role: string;
+  fotoUrl?: string | null;
 }) {
   const pathname = usePathname();
 
@@ -121,13 +125,18 @@ export function Sidebar({
           pathname === "/gestao/perfil" ? "text-yellow" : "hover:opacity-80"
         }`}
       >
-        <div className="w-9 h-9 rounded-full bg-yellow text-yellow-ink flex items-center justify-center font-display text-xs flex-shrink-0">
-          {userName
-            .split(" ")
-            .slice(0, 2)
-            .map((p) => p[0])
-            .join("")
-            .toUpperCase()}
+        <div className="w-9 h-9 rounded-full bg-yellow text-yellow-ink flex items-center justify-center font-display text-xs flex-shrink-0 overflow-hidden">
+          {fotoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={fotoUrl} alt={userName} className="w-full h-full object-cover" />
+          ) : (
+            userName
+              .split(" ")
+              .slice(0, 2)
+              .map((p) => p[0])
+              .join("")
+              .toUpperCase()
+          )}
         </div>
         <div className="min-w-0">
           <div className="text-[13px] font-bold truncate">{userName}</div>

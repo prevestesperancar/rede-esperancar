@@ -1,7 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
-import { editarPerfil } from "@/actions/auth";
+import { useActionState, useTransition } from "react";
+import { editarPerfil, removerFotoPropria } from "@/actions/auth";
 
 export function EditarPerfilForm({
   nome,
@@ -16,6 +16,7 @@ export function EditarPerfilForm({
 }) {
   const [message, action, pending] = useActionState(editarPerfil, undefined);
   const success = message === "Perfil atualizado!";
+  const [removendo, startRemover] = useTransition();
 
   return (
     <form action={action} className="flex flex-col gap-3">
@@ -39,10 +40,17 @@ export function EditarPerfilForm({
             className="w-full rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink file:mr-3 file:rounded-full file:border-0 file:bg-yellow file:text-yellow-ink file:font-bold file:text-xs file:px-3 file:py-1.5"
           />
           {fotoUrl && (
-            <label className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-ink-soft">
-              <input type="checkbox" name="removerFoto" />
-              Remover foto de perfil
-            </label>
+            <button
+              type="button"
+              disabled={removendo}
+              onClick={() => {
+                if (!confirm("Remover sua foto de perfil?")) return;
+                startRemover(() => removerFotoPropria());
+              }}
+              className="mt-2 text-xs font-bold text-terracotta disabled:opacity-60"
+            >
+              {removendo ? "Removendo…" : "Remover foto de perfil"}
+            </button>
           )}
         </div>
       )}

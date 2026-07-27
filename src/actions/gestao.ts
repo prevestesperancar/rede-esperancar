@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { salvarArquivo } from "@/lib/upload";
+import { parseCsv, encontrarColuna } from "@/lib/csv";
 
 const GESTAO_ROLES = ["PROFESSOR", "COORDENACAO", "ADMIN"];
 const COORDENACAO_ROLES = ["COORDENACAO", "ADMIN"];
@@ -647,7 +648,6 @@ export async function atualizarProfessor(_prevState: string | undefined, formDat
   const telefone = formData.get("telefone") as string;
   const materia = formData.get("materia") as string;
   const foto = formData.get("foto") as File | null;
-  const removerFoto = formData.get("removerFoto") === "on";
 
   const professor = await prisma.user.findUnique({ where: { id: professorId } });
   if (!professor || professor.nucleoId !== user.nucleoId) return "Professor não encontrado neste núcleo.";
@@ -669,7 +669,7 @@ export async function atualizarProfessor(_prevState: string | undefined, formDat
       email,
       telefone: telefone || null,
       materia: materia || null,
-      ...(fotoUrl ? { fotoUrl } : removerFoto ? { fotoUrl: null } : {}),
+      ...(fotoUrl ? { fotoUrl } : {}),
     },
   });
 
@@ -677,6 +677,22 @@ export async function atualizarProfessor(_prevState: string | undefined, formDat
   revalidatePath("/gestao/historias");
   revalidatePath(`/gestao/professores/${professorId}`);
   return "Dados atualizados!";
+}
+
+export async function removerFotoProfessor(professorId: string) {
+  const user = await requireCoordenacao();
+
+  const professor = await prisma.user.findUnique({ where: { id: professorId } });
+  if (!professor || professor.nucleoId !== user.nucleoId) throw new Error("Professor não encontrado neste núcleo.");
+
+  await prisma.user.update({
+    where: { id: professorId },
+    data: { fotoUrl: null },
+  });
+
+  revalidatePath("/gestao/professores");
+  revalidatePath("/gestao/historias");
+  revalidatePath(`/gestao/professores/${professorId}`);
 }
 
 export async function apagarProfessor(professorId: string) {
@@ -928,4 +944,144 @@ export async function redefinirSenhaUsuarioNucleo(
 
   revalidatePath("/gestao/usuarios");
   return "Senha redefinida!";
+}
+
+export async function criarQuestaoBanco(_prevState: string | undefined, formData: FormData) {
+  await requireGestao();
+
+  const prova = formData.get("prova") as string;
+  const materia = formData.get("materia") as string;
+  const anoStr = formData.get("ano") as string;
+  const enunciado = formData.get("enunciado") as string;
+  const opcaoA = formData.get("opcaoA") as string;
+  const opcaoB = formData.get("opcaoB") as string;
+  const opcaoC = formData.get("opcaoC") as string;
+  const opcaoD = formData.get("opcaoD") as string;
+  const opcaoE = formData.get("opcaoE") as string;
+  const respostaCorreta = formData.get("respostaCorreta") as string;
+
+  if (!prova || !materia || !enunciado || !opcaoA || !opcaoB || !opcaoC || !opcaoD || !respostaCorreta) {
+    return "Preencha prova, matéria, enunciado, as alternativas e a resposta correta.";
+  }
+
+  await prisma.questaoBanco.create({
+    data: {
+      prova,
+      materia,
+      ano: anoStr ? Number(anoStr) : null,
+      enunciado,
+      opcaoA,
+      opcaoB,
+      opcaoC,
+      opcaoD,
+      opcaoE: opcaoE || null,
+      respostaCorreta,
+    },
+  });
+
+  revalidatePath("/admin/questoes");
+  revalidatePath("/gestao/questoes");
+  return "Questão adicionada!";
+}
+
+export async function apagarQuestaoBanco(questaoId: string) {
+  await requireGestao();
+  await prisma.questaoBanco.delete({ where: { id: questaoId } });
+  revalidatePath("/admin/questoes");
+  revalidatePath("/gestao/questoes");
+}
+
+export async function importarEstudantesPlanilha(
+  _prevState: string | undefined,
+  formData: FormData
+) {
+  const user = await requireCoordenacao();
+  if (!user.nucleoId) return "Núcleo não encontrado.";
+
+  const turmaId = formData.get("turmaId") as string;
+  if (!turmaId) return "Escolha a turma em que os alunos importados vão entrar.";
+
+  const turma = await prisma.turma.findUnique({ where: { id: turmaId } });
+  if (!turma || turma.nucleoId !== user.nucleoId) return "Turma não encontrada neste núcleo.";
+
+  const nucleo = await prisma.nucleo.findUnique({ where: { id: user.nucleoId } });
+  if (!nucleo?.googleSheetsUrl) return "Cole o link da planilha no perfil do núcleo antes de importar.";
+
+  let csvText: string;
+  try {
+    const resposta = await fetch(nucleo.googleSheetsUrl);
+    if (!resposta.ok) return "Não consegui abrir o link da planilha. Confira se ele está público (Publicar na Web).";
+    csvText = await resposta.text();
+  } catch {
+    return "Não consegui abrir o link da planilha. Confira se ele está correto.";
+  }
+
+  const linhas = parseCsv(csvText);
+  if (linhas.length < 2) return "A planilha parece vazia.";
+
+  const cabecalho = linhas[0];
+  const idxEmail = encontrarColuna(cabecalho, ["e-mail", "email"]);
+  const idxNome = encontrarColuna(cabecalho, ["nome completo", "nome"]);
+  const idxTelefone = encontrarColuna(cabecalho, ["celular", "telefone", "whatsapp"]);
+
+  if (idxEmail === -1 || idxNome === -1) {
+    return "Não encontrei colunas de nome e e-mail na planilha. Confira o cabeçalho.";
+  }
+
+  const senhaPadrao = await bcrypt.hash("esperancar123", 10);
+
+  let criados = 0;
+  let matriculados = 0;
+  let ignorados = 0;
+
+  for (const linha of linhas.slice(1)) {
+    const email = (linha[idxEmail] ?? "").trim().toLowerCase();
+    const nome = (linha[idxNome] ?? "").trim();
+    const telefone = idxTelefone !== -1 ? (linha[idxTelefone] ?? "").trim() : "";
+
+    if (!email || !nome) {
+      ignorados++;
+      continue;
+    }
+
+    let usuario = await prisma.user.findUnique({ where: { email } });
+
+    if (!usuario) {
+      usuario = await prisma.user.create({
+        data: {
+          email,
+          nome,
+          telefone: telefone || null,
+          passwordHash: senhaPadrao,
+          role: "ESTUDANTE",
+          nucleoId: user.nucleoId,
+        },
+      });
+      criados++;
+    } else if (usuario.role !== "ESTUDANTE") {
+      ignorados++;
+      continue;
+    }
+
+    const estudante = await prisma.estudante.upsert({
+      where: { userId: usuario.id },
+      update: {},
+      create: { userId: usuario.id },
+    });
+
+    const matriculaExistente = await prisma.matricula.findUnique({
+      where: { estudanteId_turmaId: { estudanteId: estudante.id, turmaId } },
+    });
+
+    if (!matriculaExistente) {
+      await prisma.matricula.create({
+        data: { estudanteId: estudante.id, turmaId, status: "APROVADA" },
+      });
+      matriculados++;
+    }
+  }
+
+  revalidatePath("/gestao/estudantes");
+  revalidatePath("/gestao/turmas");
+  return `Importação concluída: ${criados} aluno(s) novo(s) criado(s), ${matriculados} matrícula(s) adicionada(s), ${ignorados} linha(s) ignorada(s). A senha padrão para quem foi criado agora é "esperancar123" — avise os alunos para trocarem no perfil.`;
 }

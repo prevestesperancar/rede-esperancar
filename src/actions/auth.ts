@@ -80,7 +80,6 @@ export async function editarPerfil(
   const telefone = formData.get("telefone") as string;
   const email = formData.get("email") as string | null;
   const foto = formData.get("foto") as File | null;
-  const removerFoto = formData.get("removerFoto") === "on";
 
   if (!nome) return "O nome não pode ficar em branco.";
 
@@ -100,7 +99,7 @@ export async function editarPerfil(
       nome,
       telefone: telefone || null,
       ...(email ? { email } : {}),
-      ...(fotoUrl ? { fotoUrl } : removerFoto ? { fotoUrl: null } : {}),
+      ...(fotoUrl ? { fotoUrl } : {}),
     },
   });
 
@@ -114,4 +113,19 @@ export async function editarPerfil(
   }
 
   return "Perfil atualizado!";
+}
+
+export async function removerFotoPropria() {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { fotoUrl: null },
+  });
+
+  revalidatePath("/aluno");
+  revalidatePath("/aluno/perfil");
+  revalidatePath("/gestao");
+  revalidatePath("/gestao/perfil");
 }

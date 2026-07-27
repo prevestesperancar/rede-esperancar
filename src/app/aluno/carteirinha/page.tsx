@@ -106,7 +106,14 @@ export default async function CarteirinhaPage() {
       <style>{`
         @media print {
           nav, a, button { display: none !important; }
-          #carteirinha { box-shadow: none !important; margin: 0 auto !important; }
+          * {
+            print-color-adjust: exact !important;
+            -webkit-print-color-adjust: exact !important;
+          }
+          #carteirinha {
+            box-shadow: none !important;
+            margin: 0 auto !important;
+          }
         }
       `}</style>
     </div>

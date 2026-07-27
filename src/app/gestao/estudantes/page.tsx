@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { getEstudantesDoNucleo, getNucleoInfo } from "@/lib/queries/gestao";
+import { getEstudantesDoNucleo, getNucleoInfo, getTurmasDoNucleo } from "@/lib/queries/gestao";
+import { ImportarPlanilhaForm } from "@/components/gestao/ImportarPlanilhaForm";
 
 const STATUS_LABEL: Record<string, string> = {
   EM_AVALIACAO: "Em avaliação",
   PRESENTE: "Presente",
   FALTANTE: "Faltante",
   DESISTENTE: "Desistente",
+  TRANSFERIDO: "Transferido",
 };
 
 const STATUS_TONE: Record<string, string> = {
@@ -15,19 +17,21 @@ const STATUS_TONE: Record<string, string> = {
   PRESENTE: "bg-teal/10 text-teal",
   FALTANTE: "bg-yellow/20 text-yellow-ink",
   DESISTENTE: "bg-ink-faint/10 text-ink-faint",
+  TRANSFERIDO: "bg-ink-faint/10 text-ink-faint",
 };
 
 export default async function EstudantesPage() {
   const session = await auth();
   if (!session?.user?.nucleoId) redirect("/login");
 
-  const [matriculas, nucleoInfo] = await Promise.all([
+  const somenteLeitura = session.user.role === "PROFESSOR";
+
+  const [matriculas, nucleoInfo, turmas] = await Promise.all([
     getEstudantesDoNucleo(session.user.nucleoId),
     getNucleoInfo(session.user.nucleoId),
+    somenteLeitura ? Promise.resolve([]) : getTurmasDoNucleo(session.user.nucleoId),
   ]);
   const nucleoNome = nucleoInfo?.nome ?? "";
-
-  const somenteLeitura = session.user.role === "PROFESSOR";
 
   if (somenteLeitura) {
     return (
@@ -86,6 +90,17 @@ export default async function EstudantesPage() {
           </a>
         )}
       </div>
+
+      {(session.user.role === "COORDENACAO" || session.user.role === "ADMIN") && (
+        <div className="bg-surface border border-border rounded-[18px] p-5 mb-4">
+          <ImportarPlanilhaForm turmas={turmas} />
+          <p className="text-xs text-ink-faint mt-2">
+            A planilha precisa estar publicada como CSV (Arquivo → Compartilhar → Publicar na Web →
+            formato CSV) e colada no link do perfil do núcleo. Só nome, e-mail e celular são
+            importados — CPF, RG e dados bancários nunca entram no sistema.
+          </p>
+        </div>
+      )}
 
       <div className="bg-surface border border-border rounded-[18px] p-5">
         {matriculas.map((m) => (

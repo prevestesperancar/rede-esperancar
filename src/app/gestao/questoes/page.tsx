@@ -1,8 +1,13 @@
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
 import { getTodasQuestoes } from "@/lib/queries/banco";
 import { NovaQuestaoForm } from "@/components/gestao/NovaQuestaoForm";
 import { ApagarQuestaoButton } from "@/components/gestao/ApagarQuestaoButton";
 
-export default async function AdminQuestoesPage() {
+export default async function GestaoQuestoesPage() {
+  const session = await auth();
+  if (!session?.user || session.user.role === "APOIO_PSICOSSOCIAL") redirect("/gestao");
+
   const questoes = await getTodasQuestoes();
 
   return (
@@ -10,6 +15,7 @@ export default async function AdminQuestoesPage() {
       <h1 className="font-display text-2xl mb-1">Banco de questões</h1>
       <p className="text-sm text-ink-soft mb-7">
         Questões de múltipla escolha (ENEM/UERJ) usadas no simulado dinâmico do portal do aluno.
+        Essas questões são compartilhadas entre todos os núcleos.
       </p>
 
       <div className="bg-surface border border-border rounded-[18px] p-5 mb-7">

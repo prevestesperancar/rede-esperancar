@@ -8,6 +8,7 @@ const STATUS_OPTIONS = [
   { value: "PRESENTE", label: "Presente" },
   { value: "FALTANTE", label: "Faltante" },
   { value: "DESISTENTE", label: "Desistente" },
+  { value: "TRANSFERIDO", label: "Transferido" },
 ];
 
 const inputClass =

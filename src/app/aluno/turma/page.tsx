@@ -51,9 +51,6 @@ export default async function AlunoTurmaPage() {
     if (!numero) return null;
     return `https://wa.me/${numero.startsWith("55") ? numero : `55${numero}`}`;
   };
-  const colegas = turma.matriculas.filter(
-    (m) => m.estudante.userId !== session.user.id
-  );
 
   const initials = (nome: string) =>
     nome.split(" ").slice(0, 2).map((p) => p[0]).join("").toUpperCase();
@@ -100,21 +97,6 @@ export default async function AlunoTurmaPage() {
             )}
           </div>
         ))}
-      </div>
-
-      <div className="font-bold text-sm mb-3">Colegas de turma</div>
-      <div className="bg-surface border border-border rounded-2xl divide-y divide-border">
-        {colegas.map((m) => (
-          <div key={m.id} className="flex items-center gap-2.5 px-4 py-3">
-            <div className="w-1.5 h-1.5 rounded-full bg-teal" />
-            <span className="text-sm">{m.estudante.user.nome}</span>
-          </div>
-        ))}
-        {colegas.length === 0 && (
-          <p className="text-sm text-ink-faint px-4 py-3">
-            Nenhum colega matriculado ainda.
-          </p>
-        )}
       </div>
     </div>
   );

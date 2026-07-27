@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { apagarQuestaoBanco } from "@/actions/admin";
+import { apagarQuestaoBanco } from "@/actions/gestao";
 
 export function ApagarQuestaoButton({ questaoId }: { questaoId: string }) {
   const [pending, startTransition] = useTransition();

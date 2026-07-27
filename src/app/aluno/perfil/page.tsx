@@ -19,8 +19,17 @@ export default async function AlunoPerfilPage() {
   return (
     <div>
       <div className="flex items-center gap-3.5 mb-7">
-        <div className="w-14 h-14 rounded-full bg-terracotta text-white flex items-center justify-center font-display text-lg flex-shrink-0">
-          {primeiroNome[0]}
+        <div className="w-14 h-14 rounded-full bg-terracotta text-white flex items-center justify-center font-display text-lg flex-shrink-0 overflow-hidden">
+          {estudante.user.fotoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={estudante.user.fotoUrl}
+              alt={estudante.user.nome}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            primeiroNome[0]
+          )}
         </div>
         <div>
           <h1 className="font-display text-xl">Meu perfil</h1>

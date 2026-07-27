@@ -29,6 +29,7 @@ enum StatusEstudante {
   PRESENTE
   FALTANTE
   DESISTENTE
+  TRANSFERIDO
 }
 
 model User {

@@ -1,7 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
-import { atualizarProfessor } from "@/actions/gestao";
+import { useActionState, useTransition } from "react";
+import { atualizarProfessor, removerFotoProfessor } from "@/actions/gestao";
 
 export function EditarProfessorForm({
   professorId,
@@ -19,6 +19,7 @@ export function EditarProfessorForm({
   fotoUrl?: string | null;
 }) {
   const [message, action, pending] = useActionState(atualizarProfessor, undefined);
+  const [removendo, startRemover] = useTransition();
 
   return (
     <form action={action} className="bg-surface border border-border rounded-[18px] p-5 flex flex-col gap-3">
@@ -89,10 +90,17 @@ export function EditarProfessorForm({
           className="w-full rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink file:mr-3 file:rounded-full file:border-0 file:bg-yellow file:text-yellow-ink file:font-bold file:text-xs file:px-3 file:py-1.5"
         />
         {fotoUrl && (
-          <label className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-ink-soft">
-            <input type="checkbox" name="removerFoto" />
-            Remover foto
-          </label>
+          <button
+            type="button"
+            disabled={removendo}
+            onClick={() => {
+              if (!confirm("Remover a foto deste professor?")) return;
+              startRemover(() => removerFotoProfessor(professorId));
+            }}
+            className="mt-2 text-xs font-bold text-terracotta disabled:opacity-60"
+          >
+            {removendo ? "Removendo…" : "Remover foto"}
+          </button>
         )}
       </div>
       {message && <p className="text-sm font-semibold text-teal">{message}</p>}

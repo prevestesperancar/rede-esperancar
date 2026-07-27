@@ -68,7 +68,11 @@ export async function getTurmasDoNucleo(nucleoId: string) {
 
 export async function getEstudantesDoNucleo(nucleoId: string) {
   return prisma.matricula.findMany({
-    where: { status: "APROVADA", turma: { nucleoId } },
+    where: {
+      status: "APROVADA",
+      turma: { nucleoId },
+      estudante: { status: { notIn: ["DESISTENTE", "TRANSFERIDO"] } },
+    },
     include: { estudante: { include: { user: true } }, turma: true },
     orderBy: { createdAt: "asc" },
   });

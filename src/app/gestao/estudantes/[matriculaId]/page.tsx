@@ -11,6 +11,7 @@ const STATUS_LABEL: Record<string, string> = {
   PRESENTE: "Presente",
   FALTANTE: "Faltante",
   DESISTENTE: "Desistente",
+  TRANSFERIDO: "Transferido",
 };
 
 const STATUS_TONE: Record<string, string> = {
@@ -18,6 +19,7 @@ const STATUS_TONE: Record<string, string> = {
   PRESENTE: "bg-teal/10 text-teal",
   FALTANTE: "bg-yellow/20 text-yellow-ink",
   DESISTENTE: "bg-ink-faint/10 text-ink-faint",
+  TRANSFERIDO: "bg-ink-faint/10 text-ink-faint",
 };
 
 function idade(dataNascimento: Date | null) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { criarQuestaoBanco } from "@/actions/admin";
+import { criarQuestaoBanco } from "@/actions/gestao";
 
 const inputClass =
   "w-full rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink";

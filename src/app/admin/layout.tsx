@@ -20,6 +20,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Link href="/admin/usuarios" className="hover:text-ink">
             Usuários
           </Link>
+          <Link href="/admin/questoes" className="hover:text-ink">
+            Banco de questões
+          </Link>
           <form action={logout}>
             <button type="submit" className="hover:text-ink">
               Sair

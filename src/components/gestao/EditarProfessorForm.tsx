@@ -9,12 +9,14 @@ export function EditarProfessorForm({
   email,
   telefone,
   materia,
+  fotoUrl,
 }: {
   professorId: string;
   nome: string;
   email: string;
   telefone: string | null;
   materia: string | null;
+  fotoUrl?: string | null;
 }) {
   const [message, action, pending] = useActionState(atualizarProfessor, undefined);
 
@@ -72,12 +74,26 @@ export function EditarProfessorForm({
         <label className="block text-xs font-bold text-ink-faint uppercase tracking-wide mb-1">
           Foto
         </label>
+        {fotoUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={fotoUrl}
+            alt={nome}
+            className="w-16 h-16 rounded-full object-cover mb-2"
+          />
+        )}
         <input
           name="foto"
           type="file"
           accept="image/*"
           className="w-full rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink file:mr-3 file:rounded-full file:border-0 file:bg-yellow file:text-yellow-ink file:font-bold file:text-xs file:px-3 file:py-1.5"
         />
+        {fotoUrl && (
+          <label className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-ink-soft">
+            <input type="checkbox" name="removerFoto" />
+            Remover foto
+          </label>
+        )}
       </div>
       {message && <p className="text-sm font-semibold text-teal">{message}</p>}
       <button

@@ -158,7 +158,7 @@ export default async function Home() {
                 {nucleo.nome}
               </div>
               <div className="text-[13px] text-ink-faint font-mono mt-1">
-                {nucleo.cidade} — {nucleo.estado}
+                {nucleo.bairro}, {nucleo.cidade} — {nucleo.estado}
               </div>
               <div className="flex gap-4 mt-4 pt-4 border-t border-border text-[13px] text-ink-soft">
                 <span>{nucleo.turmas.length} turma(s)</span>

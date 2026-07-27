@@ -21,6 +21,13 @@ export async function getNucleoNome(nucleoId: string) {
   return nucleo?.nome ?? "";
 }
 
+export async function getNucleoInfo(nucleoId: string) {
+  return prisma.nucleo.findUnique({
+    where: { id: nucleoId },
+    select: { nome: true, googleSheetsUrl: true },
+  });
+}
+
 export async function getGestaoStats(nucleoId: string) {
   const [estudantesAtivos, turmas, professores, matriculas] = await Promise.all([
     prisma.matricula.count({

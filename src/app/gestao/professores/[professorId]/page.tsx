@@ -50,6 +50,7 @@ export default async function ProfessorDetalhePage({
           email={professor.email}
           telefone={professor.telefone}
           materia={professor.materia}
+          fotoUrl={professor.fotoUrl}
         />
       </div>
 

@@ -61,11 +61,12 @@ model Nucleo {
   slug        String   @unique
   cidade      String
   estado      String
-  bairro      String?
+  bairro      String
   endereco    String?
   descricao   String?
   fotoUrl     String?
   instagram   String?
+  googleSheetsUrl String?
   ativo       Boolean  @default(true)
   createdAt   DateTime @default(now())
 
@@ -285,6 +286,23 @@ model Frequencia {
   turma     Turma     @relation(fields: [turmaId], references: [id])
 
   @@unique([estudanteId, turmaId, data])
+}
+
+model QuestaoBanco {
+  id              String   @id @default(cuid())
+  prova           String // "ENEM" | "UERJ"
+  materia         String
+  ano             Int?
+  enunciado       String
+  opcaoA          String
+  opcaoB          String
+  opcaoC          String
+  opcaoD          String
+  opcaoE          String?
+  respostaCorreta String // "A" | "B" | "C" | "D" | "E"
+  createdAt       DateTime @default(now())
+
+  @@index([prova, materia])
 }
 
 model Simulado {

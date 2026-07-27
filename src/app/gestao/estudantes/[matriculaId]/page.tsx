@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { getEstudanteDetalhe } from "@/lib/queries/gestao";
 import { EditarEstudanteForm } from "@/components/gestao/EditarEstudanteForm";
 import { EditarEmailEstudanteForm } from "@/components/gestao/EditarEmailEstudanteForm";
+import { ApoioStatusForm } from "@/components/gestao/ApoioStatusForm";
 
 const STATUS_LABEL: Record<string, string> = {
   EM_AVALIACAO: "Em avaliação",
@@ -150,6 +151,13 @@ export default async function EstudanteDetalhePage({
           )}
         </div>
       </div>
+
+      {session.user.role === "APOIO_PSICOSSOCIAL" && (
+      <div className="bg-surface border border-border rounded-[18px] p-5">
+        <div className="font-extrabold text-sm mb-3">Status e acompanhamento</div>
+        <ApoioStatusForm estudanteId={estudante.id} status={estudante.status} />
+      </div>
+      )}
 
       {session.user.role !== "APOIO_PSICOSSOCIAL" && (
       <div className="bg-surface border border-border rounded-[18px] p-5">

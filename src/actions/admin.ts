@@ -31,8 +31,8 @@ export async function criarNucleo(
   const coordEmail = formData.get("coordEmail") as string;
   const coordSenha = formData.get("coordSenha") as string;
 
-  if (!nome || !slug || !cidade || !estado) {
-    return "Preencha nome, slug, cidade e estado do núcleo.";
+  if (!nome || !slug || !cidade || !estado || !bairro) {
+    return "Preencha nome, slug, bairro, cidade e estado do núcleo.";
   }
   if (!coordNome || !coordEmail || !coordSenha) {
     return "Preencha os dados do coordenador responsável.";
@@ -87,7 +87,8 @@ export async function editarNucleoAdmin(
   const descricao = formData.get("descricao") as string;
   const ativo = formData.get("ativo") === "on";
 
-  if (!nome || !cidade || !estado) return "Preencha nome, cidade e estado.";
+  if (!nome || !cidade || !estado || !bairro)
+    return "Preencha nome, bairro, cidade e estado.";
 
   await prisma.nucleo.update({
     where: { id: nucleoId },
@@ -130,6 +131,49 @@ export async function atualizarConteudoSite(
   revalidatePath("/quem-somos");
   revalidatePath("/contato");
   return "Conteúdo atualizado!";
+}
+
+export async function criarQuestaoBanco(_prevState: string | undefined, formData: FormData) {
+  await requireAdmin();
+
+  const prova = formData.get("prova") as string;
+  const materia = formData.get("materia") as string;
+  const anoStr = formData.get("ano") as string;
+  const enunciado = formData.get("enunciado") as string;
+  const opcaoA = formData.get("opcaoA") as string;
+  const opcaoB = formData.get("opcaoB") as string;
+  const opcaoC = formData.get("opcaoC") as string;
+  const opcaoD = formData.get("opcaoD") as string;
+  const opcaoE = formData.get("opcaoE") as string;
+  const respostaCorreta = formData.get("respostaCorreta") as string;
+
+  if (!prova || !materia || !enunciado || !opcaoA || !opcaoB || !opcaoC || !opcaoD || !respostaCorreta) {
+    return "Preencha prova, matéria, enunciado, as alternativas e a resposta correta.";
+  }
+
+  await prisma.questaoBanco.create({
+    data: {
+      prova,
+      materia,
+      ano: anoStr ? Number(anoStr) : null,
+      enunciado,
+      opcaoA,
+      opcaoB,
+      opcaoC,
+      opcaoD,
+      opcaoE: opcaoE || null,
+      respostaCorreta,
+    },
+  });
+
+  revalidatePath("/admin/questoes");
+  return "Questão adicionada!";
+}
+
+export async function apagarQuestaoBanco(questaoId: string) {
+  await requireAdmin();
+  await prisma.questaoBanco.delete({ where: { id: questaoId } });
+  revalidatePath("/admin/questoes");
 }
 
 const ROLES_EDITAVEIS = ["PROFESSOR", "COORDENACAO", "APOIO_PSICOSSOCIAL", "ADMIN"];

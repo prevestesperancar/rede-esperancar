@@ -34,7 +34,7 @@ export function NovoNucleoForm() {
         </div>
         <div>
           <label className={labelClass}>Bairro</label>
-          <input name="bairro" className={inputClass} />
+          <input name="bairro" required className={inputClass} />
         </div>
       </div>
       <div>

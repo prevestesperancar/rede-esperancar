@@ -6,6 +6,7 @@ import { EditarPerfilForm } from "@/components/common/EditarPerfilForm";
 import { AlterarSenhaForm } from "@/components/common/AlterarSenhaForm";
 import { CapaNucleoForm } from "@/components/gestao/CapaNucleoForm";
 import { InstagramNucleoForm } from "@/components/gestao/InstagramNucleoForm";
+import { GoogleSheetsNucleoForm } from "@/components/gestao/GoogleSheetsNucleoForm";
 
 export default async function GestaoPerfilPage() {
   const session = await auth();
@@ -27,7 +28,12 @@ export default async function GestaoPerfilPage() {
 
       <div className="bg-surface border border-border rounded-[18px] p-5 mb-4">
         <div className="font-extrabold text-sm mb-3">Editar dados</div>
-        <EditarPerfilForm nome={user.nome} telefone={user.telefone} fotoUrl={user.fotoUrl} />
+        <EditarPerfilForm
+          nome={user.nome}
+          telefone={user.telefone}
+          email={user.email}
+          fotoUrl={user.fotoUrl}
+        />
       </div>
 
       <div className="bg-surface border border-border rounded-[18px] p-5 mb-6">
@@ -42,9 +48,17 @@ export default async function GestaoPerfilPage() {
             <CapaNucleoForm fotoUrl={nucleo.fotoUrl} />
           </div>
 
-          <div className="bg-surface border border-border rounded-[18px] p-5 mb-6">
+          <div className="bg-surface border border-border rounded-[18px] p-5 mb-4">
             <div className="font-extrabold text-sm mb-3">Instagram do núcleo</div>
             <InstagramNucleoForm instagram={nucleo.instagram} />
+          </div>
+
+          <div className="bg-surface border border-border rounded-[18px] p-5 mb-6">
+            <div className="font-extrabold text-sm mb-3">Planilha do Google Sheets</div>
+            <p className="text-xs text-ink-faint mb-3">
+              Cole aqui o link da planilha com os estudantes já inscritos deste núcleo.
+            </p>
+            <GoogleSheetsNucleoForm googleSheetsUrl={nucleo.googleSheetsUrl} />
           </div>
         </>
       )}

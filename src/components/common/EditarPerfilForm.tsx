@@ -6,10 +6,12 @@ import { editarPerfil } from "@/actions/auth";
 export function EditarPerfilForm({
   nome,
   telefone,
+  email,
   fotoUrl,
 }: {
   nome: string;
   telefone: string | null;
+  email?: string;
   fotoUrl?: string | null;
 }) {
   const [message, action, pending] = useActionState(editarPerfil, undefined);
@@ -36,6 +38,12 @@ export function EditarPerfilForm({
             accept="image/*"
             className="w-full rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink file:mr-3 file:rounded-full file:border-0 file:bg-yellow file:text-yellow-ink file:font-bold file:text-xs file:px-3 file:py-1.5"
           />
+          {fotoUrl && (
+            <label className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-ink-soft">
+              <input type="checkbox" name="removerFoto" />
+              Remover foto de perfil
+            </label>
+          )}
         </div>
       )}
       <div>
@@ -49,6 +57,23 @@ export function EditarPerfilForm({
           className="w-full rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink"
         />
       </div>
+      {email !== undefined && (
+        <div>
+          <label className="block text-xs font-bold text-ink-faint uppercase tracking-wide mb-1">
+            E-mail
+          </label>
+          <input
+            name="email"
+            type="email"
+            defaultValue={email}
+            required
+            className="w-full rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink"
+          />
+          <p className="text-xs text-ink-faint mt-1">
+            Ao trocar o e-mail, você precisará entrar novamente com o novo e-mail.
+          </p>
+        </div>
+      )}
       <div>
         <label className="block text-xs font-bold text-ink-faint uppercase tracking-wide mb-1">
           Telefone

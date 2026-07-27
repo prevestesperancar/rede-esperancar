@@ -59,6 +59,7 @@ export default async function AlunoPerfilPage() {
         <EditarPerfilForm
           nome={estudante.user.nome}
           telefone={estudante.user.telefone}
+          email={estudante.user.email}
           fotoUrl={estudante.user.fotoUrl}
         />
       </div>

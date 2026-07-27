@@ -38,6 +38,8 @@ const ITEMS_APOIO = [
   { href: "/gestao/simulados", label: "Desempenho em simulados", icon: "📝" },
 ];
 
+const ITEMS_ADMIN = [{ href: "/admin/usuarios", label: "Usuários", icon: "🔑" }];
+
 const ROLE_LABEL: Record<string, string> = {
   COORDENACAO: "Coordenação",
   PROFESSOR: "Professor(a)",
@@ -63,6 +65,8 @@ export function Sidebar({
       ? ITEMS_PROFESSOR
       : role === "APOIO_PSICOSSOCIAL"
       ? ITEMS_APOIO
+      : role === "ADMIN"
+      ? ITEMS_ADMIN
       : ITEMS_COORDENACAO;
 
   return (

@@ -78,9 +78,19 @@ export async function editarPerfil(
 
   const nome = formData.get("nome") as string;
   const telefone = formData.get("telefone") as string;
+  const email = formData.get("email") as string | null;
   const foto = formData.get("foto") as File | null;
+  const removerFoto = formData.get("removerFoto") === "on";
 
   if (!nome) return "O nome não pode ficar em branco.";
+
+  if (email) {
+    const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+    if (email !== user?.email) {
+      const emailExistente = await prisma.user.findUnique({ where: { email } });
+      if (emailExistente) return "Já existe um usuário com esse e-mail.";
+    }
+  }
 
   const fotoUrl = foto && foto.size > 0 ? await salvarArquivo(foto, "perfis") : null;
 
@@ -89,7 +99,8 @@ export async function editarPerfil(
     data: {
       nome,
       telefone: telefone || null,
-      ...(fotoUrl ? { fotoUrl } : {}),
+      ...(email ? { email } : {}),
+      ...(fotoUrl ? { fotoUrl } : removerFoto ? { fotoUrl: null } : {}),
     },
   });
 
@@ -97,5 +108,10 @@ export async function editarPerfil(
   revalidatePath("/aluno/perfil");
   revalidatePath("/gestao");
   revalidatePath("/gestao/perfil");
+
+  if (email && email !== session.user.email) {
+    await signOut({ redirectTo: "/login" });
+  }
+
   return "Perfil atualizado!";
 }

@@ -40,7 +40,7 @@ export default async function CarteirinhaPage() {
         <>
           <div
             id="carteirinha"
-            className="bg-ink text-paper rounded-[22px] p-6 relative overflow-hidden mb-6 max-w-sm mx-auto shadow-lg"
+            className="bg-terracotta text-paper rounded-[22px] p-6 relative overflow-hidden mb-6 max-w-sm mx-auto shadow-lg"
           >
             <div className="flex items-center gap-2 mb-5">
               <span className="text-lg">✱</span>

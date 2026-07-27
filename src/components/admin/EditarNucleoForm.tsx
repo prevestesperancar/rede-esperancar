@@ -21,7 +21,7 @@ export function EditarNucleoForm({
   nome: string;
   cidade: string;
   estado: string;
-  bairro: string | null;
+  bairro: string;
   endereco: string | null;
   descricao: string | null;
   ativo: boolean;
@@ -46,7 +46,7 @@ export function EditarNucleoForm({
         </div>
         <div>
           <label className={labelClass}>Bairro</label>
-          <input name="bairro" defaultValue={bairro ?? ""} className={inputClass} />
+          <input name="bairro" defaultValue={bairro} required className={inputClass} />
         </div>
       </div>
       <div>

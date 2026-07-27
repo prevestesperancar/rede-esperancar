@@ -8,6 +8,7 @@ const ITEMS = [
   { href: "/aluno/turma", label: "Turma", icon: "👥" },
   { href: "/aluno/materiais", label: "Materiais", icon: "📚" },
   { href: "/aluno/monitorias", label: "Monitorias", icon: "🧩" },
+  { href: "/aluno/questoes", label: "Questões", icon: "📝" },
   { href: "/aluno/perfil", label: "Perfil", icon: "👤" },
 ];
 

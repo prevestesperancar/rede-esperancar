@@ -74,12 +74,11 @@ export default async function AlunoTurmaPage() {
           >
             <div className="w-14 h-14 rounded-full mx-auto mb-2 relative overflow-hidden bg-ink text-paper flex items-center justify-center font-display text-sm">
               {p.fotoUrl ? (
-                <Image
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
                   src={p.fotoUrl}
                   alt={p.nome}
-                  fill
-                  sizes="56px"
-                  className="object-cover"
+                  className="w-full h-full object-cover"
                 />
               ) : (
                 initials(p.nome)

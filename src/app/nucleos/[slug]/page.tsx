@@ -71,7 +71,7 @@ export default async function NucleoPage({
               {nucleo.nome}
             </h1>
             <div className="font-mono text-[13px] text-ink-faint mt-3">
-              📍 {nucleo.cidade} — {nucleo.estado}
+              📍 {nucleo.bairro}, {nucleo.cidade} — {nucleo.estado}
             </div>
             <p className="mt-4.5 max-w-[52ch] text-lg text-ink-soft">
               {nucleo.descricao}
@@ -87,13 +87,11 @@ export default async function NucleoPage({
           </div>
           {nucleo.fotoUrl && (
             <div className="relative rounded-[18px] overflow-hidden shadow-lg aspect-[4/3]">
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={nucleo.fotoUrl}
                 alt={nucleo.nome}
-                fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover"
-                priority
+                className="w-full h-full object-cover"
               />
             </div>
           )}
@@ -186,12 +184,11 @@ export default async function NucleoPage({
               <div key={p.nome} className="text-center">
                 <div className="w-16 h-16 rounded-full mx-auto mb-3 relative overflow-hidden bg-ink text-paper flex items-center justify-center font-display text-base">
                   {p.fotoUrl ? (
-                    <Image
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
                       src={p.fotoUrl}
                       alt={p.nome}
-                      fill
-                      sizes="64px"
-                      className="object-cover"
+                      className="w-full h-full object-cover"
                     />
                   ) : (
                     initials(p.nome)

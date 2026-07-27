@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { getEstudantesDoNucleo, getNucleoNome } from "@/lib/queries/gestao";
+import { getEstudantesDoNucleo, getNucleoInfo } from "@/lib/queries/gestao";
 
 const STATUS_LABEL: Record<string, string> = {
   EM_AVALIACAO: "Em avaliação",
@@ -21,10 +21,11 @@ export default async function EstudantesPage() {
   const session = await auth();
   if (!session?.user?.nucleoId) redirect("/login");
 
-  const [matriculas, nucleoNome] = await Promise.all([
+  const [matriculas, nucleoInfo] = await Promise.all([
     getEstudantesDoNucleo(session.user.nucleoId),
-    getNucleoNome(session.user.nucleoId),
+    getNucleoInfo(session.user.nucleoId),
   ]);
+  const nucleoNome = nucleoInfo?.nome ?? "";
 
   const somenteLeitura = session.user.role === "PROFESSOR";
 
@@ -74,6 +75,16 @@ export default async function EstudantesPage() {
           </div>
           <h1 className="font-display text-2xl">Estudantes</h1>
         </div>
+        {nucleoInfo?.googleSheetsUrl && (
+          <a
+            href={nucleoInfo.googleSheetsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-bold text-sm px-4 py-2.5 rounded-full border border-border-strong text-ink-soft hover:text-ink"
+          >
+            📊 Ver planilha de inscritos
+          </a>
+        )}
       </div>
 
       <div className="bg-surface border border-border rounded-[18px] p-5">

@@ -145,6 +145,42 @@ export async function atualizarEstudante(
   return "Dados atualizados!";
 }
 
+export async function atualizarStatusEstudante(
+  _prevState: string | undefined,
+  formData: FormData
+) {
+  const gestor = await requireAcessoEstudante();
+
+  const estudanteId = formData.get("estudanteId") as string;
+  const status = formData.get("status") as string;
+  const ultimoContatoObs = formData.get("ultimoContatoObs") as string;
+
+  if (!estudanteId) return "Estudante não encontrado.";
+
+  const estudante = await prisma.estudante.findUnique({
+    where: { id: estudanteId },
+    include: { user: true },
+  });
+  if (!estudante) return "Estudante não encontrado.";
+  if (gestor.role !== "ADMIN" && estudante.user.nucleoId !== gestor.nucleoId) {
+    return "Estudante não encontrado neste núcleo.";
+  }
+
+  await prisma.estudante.update({
+    where: { id: estudanteId },
+    data: {
+      status: status as "EM_AVALIACAO" | "PRESENTE" | "FALTANTE" | "DESISTENTE",
+      ...(ultimoContatoObs
+        ? { ultimoContatoObs, ultimoContato: new Date() }
+        : {}),
+    },
+  });
+
+  revalidatePath("/gestao/estudantes");
+  revalidatePath(`/gestao/estudantes/${estudanteId}`);
+  return "Status atualizado!";
+}
+
 export async function aprovarMatricula(matriculaId: string) {
   const user = await requireCoordenacao();
 
@@ -611,6 +647,7 @@ export async function atualizarProfessor(_prevState: string | undefined, formDat
   const telefone = formData.get("telefone") as string;
   const materia = formData.get("materia") as string;
   const foto = formData.get("foto") as File | null;
+  const removerFoto = formData.get("removerFoto") === "on";
 
   const professor = await prisma.user.findUnique({ where: { id: professorId } });
   if (!professor || professor.nucleoId !== user.nucleoId) return "Professor não encontrado neste núcleo.";
@@ -632,7 +669,7 @@ export async function atualizarProfessor(_prevState: string | undefined, formDat
       email,
       telefone: telefone || null,
       materia: materia || null,
-      ...(fotoUrl ? { fotoUrl } : {}),
+      ...(fotoUrl ? { fotoUrl } : removerFoto ? { fotoUrl: null } : {}),
     },
   });
 
@@ -693,6 +730,25 @@ export async function atualizarInstagramNucleo(
   revalidatePath("/gestao/perfil");
   revalidatePath("/nucleos");
   return "Instagram atualizado!";
+}
+
+export async function atualizarGoogleSheetsNucleo(
+  _prevState: string | undefined,
+  formData: FormData
+) {
+  const user = await requireCoordenacao();
+  if (!user.nucleoId) return "Núcleo não encontrado.";
+
+  const googleSheetsUrl = formData.get("googleSheetsUrl") as string;
+
+  await prisma.nucleo.update({
+    where: { id: user.nucleoId },
+    data: { googleSheetsUrl: googleSheetsUrl || null },
+  });
+
+  revalidatePath("/gestao/perfil");
+  revalidatePath("/gestao/estudantes");
+  return "Link da planilha atualizado!";
 }
 
 function corrigirAutomaticamente(gabarito: string, respostas: string) {

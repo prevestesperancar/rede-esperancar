@@ -1004,18 +1004,10 @@ export async function importarEstudantesPlanilha(
   const turma = await prisma.turma.findUnique({ where: { id: turmaId } });
   if (!turma || turma.nucleoId !== user.nucleoId) return "Turma não encontrada neste núcleo.";
 
-  const nucleo = await prisma.nucleo.findUnique({ where: { id: user.nucleoId } });
-  if (!nucleo?.googleSheetsUrl) return "Cole o link da planilha no perfil do núcleo antes de importar.";
+  const arquivo = formData.get("arquivo") as File | null;
+  if (!arquivo || arquivo.size === 0) return "Selecione o arquivo CSV exportado da planilha.";
 
-  let csvText: string;
-  try {
-    const resposta = await fetch(nucleo.googleSheetsUrl);
-    if (!resposta.ok) return "Não consegui abrir o link da planilha. Confira se ele está público (Publicar na Web).";
-    csvText = await resposta.text();
-  } catch {
-    return "Não consegui abrir o link da planilha. Confira se ele está correto.";
-  }
-
+  const csvText = await arquivo.text();
   const linhas = parseCsv(csvText);
   if (linhas.length < 2) return "A planilha parece vazia.";
 

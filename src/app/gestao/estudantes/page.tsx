@@ -95,9 +95,9 @@ export default async function EstudantesPage() {
         <div className="bg-surface border border-border rounded-[18px] p-5 mb-4">
           <ImportarPlanilhaForm turmas={turmas} />
           <p className="text-xs text-ink-faint mt-2">
-            A planilha precisa estar publicada como CSV (Arquivo → Compartilhar → Publicar na Web →
-            formato CSV) e colada no link do perfil do núcleo. Só nome, e-mail e celular são
-            importados — CPF, RG e dados bancários nunca entram no sistema.
+            No Google Sheets: Arquivo → Fazer download → Valores separados por vírgula (.csv), e
+            envie o arquivo baixado aqui. Só nome, e-mail e celular são importados — CPF, RG e
+            dados bancários nunca entram no sistema. Nada é publicado na internet.
           </p>
         </div>
       )}

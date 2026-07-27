@@ -9,7 +9,7 @@ import { ApagarEstudanteButton } from "@/components/gestao/ApagarEstudanteButton
 
 const STATUS_LABEL: Record<string, string> = {
   EM_AVALIACAO: "Em avaliação",
-  PRESENTE: "Presente",
+  PRESENTE: "Ativo",
   FALTANTE: "Faltante",
   DESISTENTE: "Desistente",
   TRANSFERIDO: "Transferido",
@@ -167,6 +167,7 @@ export default async function EstudanteDetalhePage({
         <div className="font-extrabold text-sm mb-3">Editar informações do estudante</div>
         <EditarEstudanteForm
           estudanteId={estudante.id}
+          nome={estudante.user.nome}
           status={estudante.status}
           telefone={estudante.user.telefone}
           dataNascimento={estudante.dataNascimento}

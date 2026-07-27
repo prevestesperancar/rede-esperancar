@@ -5,7 +5,7 @@ import { atualizarStatusEstudante } from "@/actions/gestao";
 
 const STATUS_OPTIONS = [
   { value: "EM_AVALIACAO", label: "Em avaliação" },
-  { value: "PRESENTE", label: "Presente" },
+  { value: "PRESENTE", label: "Ativo" },
   { value: "FALTANTE", label: "Faltante" },
   { value: "DESISTENTE", label: "Desistente" },
   { value: "TRANSFERIDO", label: "Transferido" },

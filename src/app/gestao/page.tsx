@@ -12,11 +12,13 @@ import {
   getGradeDoProfessor,
   getMonitoriasDoProfessor,
   getTurmasDoProfessor,
+  getPerfilEstudantesAtivos,
 } from "@/lib/queries/gestao";
 import { AprovarRecusarButtons } from "@/components/gestao/AprovarRecusarButtons";
 import { NovaProvaForm } from "@/components/gestao/NovaProvaForm";
 import { ApagarItemButton } from "@/components/gestao/ApagarItemButton";
 import { FrequenciaDashboard } from "@/components/gestao/FrequenciaDashboard";
+import { PerfilEstudantesChart } from "@/components/gestao/PerfilEstudantesChart";
 import { apagarProva } from "@/actions/gestao";
 
 export default async function GestaoDashboardPage({
@@ -119,7 +121,7 @@ export default async function GestaoDashboardPage({
     );
   }
 
-  const [stats, pendentes, turmas, avisos, provas, frequencias, nucleoNome] = await Promise.all([
+  const [stats, pendentes, turmas, avisos, provas, frequencias, nucleoNome, perfil] = await Promise.all([
     getGestaoStats(nucleoId),
     getInscricoesPendentes(nucleoId),
     getTurmasDoNucleo(nucleoId),
@@ -127,6 +129,7 @@ export default async function GestaoDashboardPage({
     getProvasDoNucleo(nucleoId),
     getFrequenciaResumoDoNucleo(nucleoId, dataSelecionada),
     getNucleoNome(nucleoId),
+    getPerfilEstudantesAtivos(nucleoId),
   ]);
 
   return (
@@ -178,6 +181,13 @@ export default async function GestaoDashboardPage({
           </div>
         </div>
       </div>
+
+      <PerfilEstudantesChart
+        total={perfil.total}
+        genero={perfil.genero}
+        racaCor={perfil.racaCor}
+        rendaFamiliar={perfil.rendaFamiliar}
+      />
 
       <FrequenciaDashboard turmas={frequencias} data={dataSelecionada} />
 

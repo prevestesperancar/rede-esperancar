@@ -5,7 +5,13 @@ import bcrypt from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { salvarArquivo } from "@/lib/upload";
-import { parseCsv, encontrarColuna, parseDataBr } from "@/lib/csv";
+import { parseCsv, parseDataBr } from "@/lib/csv";
+import {
+  classificarSituacaoEscolar,
+  classificarProvas,
+  classificarRendaFamiliar,
+  classificarSimNao,
+} from "@/lib/estudante-opcoes";
 
 const GESTAO_ROLES = ["PROFESSOR", "COORDENACAO", "ADMIN"];
 const COORDENACAO_ROLES = ["COORDENACAO", "ADMIN"];
@@ -73,6 +79,7 @@ export async function atualizarEstudante(
   const gestor = await requireCoordenacao();
 
   const estudanteId = formData.get("estudanteId") as string;
+  const nome = formData.get("nome") as string;
   const status = formData.get("status") as string;
   const telefone = formData.get("telefone") as string;
   const dataNascimento = formData.get("dataNascimento") as string;
@@ -95,6 +102,7 @@ export async function atualizarEstudante(
   const ultimoContatoObs = formData.get("ultimoContatoObs") as string;
 
   if (!estudanteId) return "Estudante não encontrado.";
+  if (!nome) return "O nome não pode ficar em branco.";
 
   const boolOrNull = (v: string) => (v === "" ? undefined : v === "sim");
 
@@ -109,7 +117,7 @@ export async function atualizarEstudante(
 
   await prisma.user.update({
     where: { id: estudante.userId },
-    data: { telefone: telefone || null },
+    data: { nome, telefone: telefone || null },
   });
 
   await prisma.estudante.update({
@@ -1012,16 +1020,44 @@ export async function importarEstudantesPlanilha(
   if (linhas.length < 2) return "A planilha parece vazia.";
 
   const cabecalho = linhas[0];
-  const idxEmail = encontrarColuna(cabecalho, ["e-mail", "email"]);
-  const idxNome = encontrarColuna(cabecalho, ["nome completo", "nome"]);
-  const idxTelefone = encontrarColuna(cabecalho, ["celular", "telefone", "whatsapp"]);
-  const idxNascimento = encontrarColuna(cabecalho, ["nascimento"]);
-  const idxEscola = encontrarColuna(cabecalho, ["escola"]);
-  const idxCidade = encontrarColuna(cabecalho, ["cidade", "municipio"]);
-  const idxBairro = encontrarColuna(cabecalho, ["bairro"]);
-  const idxSexo = encontrarColuna(cabecalho, ["sexo", "genero"]);
-  const idxCursoDesejado = encontrarColuna(cabecalho, ["curso desejado", "curso"]);
-  const idxUniversidadeDesejada = encontrarColuna(cabecalho, ["universidade desejada", "universidade"]);
+  const usados = new Set<number>();
+  const pegar = (termos: string[]) => {
+    const normalizados = cabecalho.map((h) =>
+      h
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .trim()
+    );
+    for (const termo of termos) {
+      const index = normalizados.findIndex((h, i) => !usados.has(i) && h.includes(termo));
+      if (index !== -1) {
+        usados.add(index);
+        return index;
+      }
+    }
+    return -1;
+  };
+
+  const idxEmail = pegar(["e-mail", "email"]);
+  const idxNome = pegar(["nome completo", "nome"]);
+  const idxTelefone = pegar(["celular", "telefone", "whatsapp"]);
+  const idxNascimento = pegar(["nascimento"]);
+  const idxSituacaoEscolar = pegar(["situacao escolar", "serie", "ano escolar"]);
+  const idxEscola = pegar(["nome da escola", "escola"]);
+  const idxEscolaPublica = pegar(["escola publica", "rede publica"]);
+  const idxCidade = pegar(["cidade", "municipio"]);
+  const idxBairro = pegar(["bairro"]);
+  const idxSexo = pegar(["sexo", "genero"]);
+  const idxRacaCor = pegar(["raca", "cor"]);
+  const idxCursoDesejado = pegar(["curso desejado", "curso"]);
+  const idxUniversidadeDesejada = pegar(["universidade desejada", "universidade"]);
+  const idxProvas = pegar(["provas que vai fazer", "enem", "uerj", "vestibular"]);
+  const idxJaFezEnem = pegar(["ja fez", "primeira vez"]);
+  const idxRendaFamiliar = pegar(["renda"]);
+  const idxPessoasEmCasa = pegar(["pessoas na", "pessoas em casa", "moradores"]);
+  const idxTrabalha = pegar(["trabalha"]);
+  const idxMotivacao = pegar(["motivacao", "por que voce quer", "por que você quer"]);
 
   if (idxEmail === -1 || idxNome === -1) {
     return "Não encontrei colunas de nome e e-mail na planilha. Confira o cabeçalho.";
@@ -1038,13 +1074,25 @@ export async function importarEstudantesPlanilha(
     const nome = (linha[idxNome] ?? "").trim();
     const telefone = idxTelefone !== -1 ? (linha[idxTelefone] ?? "").trim() : "";
     const dataNascimento = idxNascimento !== -1 ? parseDataBr(linha[idxNascimento] ?? "") : null;
+    const situacaoEscolar =
+      idxSituacaoEscolar !== -1 ? classificarSituacaoEscolar(linha[idxSituacaoEscolar] ?? "") : undefined;
     const escola = idxEscola !== -1 ? (linha[idxEscola] ?? "").trim() : "";
+    const escolaPublica = idxEscolaPublica !== -1 ? classificarSimNao(linha[idxEscolaPublica] ?? "") : undefined;
     const municipio = idxCidade !== -1 ? (linha[idxCidade] ?? "").trim() : "";
     const bairro = idxBairro !== -1 ? (linha[idxBairro] ?? "").trim() : "";
     const sexoGenero = idxSexo !== -1 ? (linha[idxSexo] ?? "").trim() : "";
+    const racaCor = idxRacaCor !== -1 ? (linha[idxRacaCor] ?? "").trim() : "";
     const cursoDesejado = idxCursoDesejado !== -1 ? (linha[idxCursoDesejado] ?? "").trim() : "";
     const universidadeDesejada =
       idxUniversidadeDesejada !== -1 ? (linha[idxUniversidadeDesejada] ?? "").trim() : "";
+    const provasQueVaiFazer = idxProvas !== -1 ? classificarProvas(linha[idxProvas] ?? "") : undefined;
+    const jaFezEnem = idxJaFezEnem !== -1 ? classificarSimNao(linha[idxJaFezEnem] ?? "") : undefined;
+    const rendaFamiliar =
+      idxRendaFamiliar !== -1 ? classificarRendaFamiliar(linha[idxRendaFamiliar] ?? "") : undefined;
+    const pessoasEmCasaTexto = idxPessoasEmCasa !== -1 ? (linha[idxPessoasEmCasa] ?? "").trim() : "";
+    const pessoasEmCasa = pessoasEmCasaTexto ? Number(pessoasEmCasaTexto.replace(/\D/g, "")) : undefined;
+    const trabalha = idxTrabalha !== -1 ? classificarSimNao(linha[idxTrabalha] ?? "") : undefined;
+    const motivacao = idxMotivacao !== -1 ? (linha[idxMotivacao] ?? "").trim() : "";
 
     if (!email || !nome) {
       ignorados++;
@@ -1071,33 +1119,59 @@ export async function importarEstudantesPlanilha(
     }
 
     const estudanteExistente = await prisma.estudante.findUnique({ where: { userId: usuario.id } });
+    const preencher = <T,>(atual: T | null | undefined, novo: T | undefined) =>
+      atual ?? novo ?? undefined;
 
-    const estudante = estudanteExistente
-      ? await prisma.estudante.update({
-          where: { userId: usuario.id },
-          data: {
-            dataNascimento: estudanteExistente.dataNascimento ?? dataNascimento ?? undefined,
-            escola: estudanteExistente.escola ?? (escola || undefined),
-            municipio: estudanteExistente.municipio ?? (municipio || undefined),
-            bairro: estudanteExistente.bairro ?? (bairro || undefined),
-            sexoGenero: estudanteExistente.sexoGenero ?? (sexoGenero || undefined),
-            cursoDesejado: estudanteExistente.cursoDesejado ?? (cursoDesejado || undefined),
-            universidadeDesejada:
-              estudanteExistente.universidadeDesejada ?? (universidadeDesejada || undefined),
-          },
-        })
-      : await prisma.estudante.create({
-          data: {
-            userId: usuario.id,
-            dataNascimento: dataNascimento ?? undefined,
-            escola: escola || undefined,
-            municipio: municipio || undefined,
-            bairro: bairro || undefined,
-            sexoGenero: sexoGenero || undefined,
-            cursoDesejado: cursoDesejado || undefined,
-            universidadeDesejada: universidadeDesejada || undefined,
-          },
-        });
+    let estudante;
+    if (estudanteExistente) {
+      const dadosAtualizacao = {
+          dataNascimento: preencher(estudanteExistente.dataNascimento, dataNascimento),
+          situacaoEscolar: preencher(estudanteExistente.situacaoEscolar, situacaoEscolar),
+          escola: preencher(estudanteExistente.escola, escola || undefined),
+          escolaPublica: preencher(estudanteExistente.escolaPublica, escolaPublica),
+          municipio: preencher(estudanteExistente.municipio, municipio || undefined),
+          bairro: preencher(estudanteExistente.bairro, bairro || undefined),
+          sexoGenero: preencher(estudanteExistente.sexoGenero, sexoGenero || undefined),
+          racaCor: preencher(estudanteExistente.racaCor, racaCor || undefined),
+          cursoDesejado: preencher(estudanteExistente.cursoDesejado, cursoDesejado || undefined),
+          universidadeDesejada: preencher(
+            estudanteExistente.universidadeDesejada,
+            universidadeDesejada || undefined
+          ),
+          provasQueVaiFazer: preencher(estudanteExistente.provasQueVaiFazer, provasQueVaiFazer),
+          jaFezEnem: preencher(estudanteExistente.jaFezEnem, jaFezEnem),
+          rendaFamiliar: preencher(estudanteExistente.rendaFamiliar, rendaFamiliar),
+          pessoasEmCasa: preencher(estudanteExistente.pessoasEmCasa, pessoasEmCasa),
+          trabalha: preencher(estudanteExistente.trabalha, trabalha),
+          motivacao: preencher(estudanteExistente.motivacao, motivacao || undefined),
+      };
+      estudante = await prisma.estudante.update({
+        where: { userId: usuario.id },
+        data: dadosAtualizacao,
+      });
+    } else {
+      estudante = await prisma.estudante.create({
+        data: {
+          userId: usuario.id,
+          dataNascimento: dataNascimento ?? undefined,
+          situacaoEscolar,
+          escola: escola || undefined,
+          escolaPublica,
+          municipio: municipio || undefined,
+          bairro: bairro || undefined,
+          sexoGenero: sexoGenero || undefined,
+          racaCor: racaCor || undefined,
+          cursoDesejado: cursoDesejado || undefined,
+          universidadeDesejada: universidadeDesejada || undefined,
+          provasQueVaiFazer,
+          jaFezEnem,
+          rendaFamiliar,
+          pessoasEmCasa,
+          trabalha,
+          motivacao: motivacao || undefined,
+        },
+      });
+    }
 
     const matriculaExistente = await prisma.matricula.findUnique({
       where: { estudanteId_turmaId: { estudanteId: estudante.id, turmaId } },

@@ -31,7 +31,11 @@ export async function getNucleoInfo(nucleoId: string) {
 export async function getGestaoStats(nucleoId: string) {
   const [estudantesAtivos, turmas, professores, matriculas] = await Promise.all([
     prisma.matricula.count({
-      where: { status: "APROVADA", turma: { nucleoId } },
+      where: {
+        status: "APROVADA",
+        turma: { nucleoId },
+        estudante: { status: { notIn: ["DESISTENTE", "TRANSFERIDO"] } },
+      },
     }),
     prisma.turma.count({ where: { nucleoId, ativo: true } }),
     prisma.user.count({ where: { nucleoId, role: "PROFESSOR" } }),
@@ -42,6 +46,40 @@ export async function getGestaoStats(nucleoId: string) {
   ]);
 
   return { estudantesAtivos, turmas, professores };
+}
+
+export async function getPerfilEstudantesAtivos(nucleoId: string) {
+  const matriculas = await prisma.matricula.findMany({
+    where: {
+      status: "APROVADA",
+      turma: { nucleoId },
+      estudante: { status: { notIn: ["DESISTENTE", "TRANSFERIDO"] } },
+    },
+    select: {
+      estudante: {
+        select: { sexoGenero: true, racaCor: true, rendaFamiliar: true },
+      },
+    },
+    distinct: ["estudanteId"],
+  });
+
+  const contar = (valores: (string | null)[]) => {
+    const contagem = new Map<string, number>();
+    for (const v of valores) {
+      const chave = v || "Não informado";
+      contagem.set(chave, (contagem.get(chave) ?? 0) + 1);
+    }
+    return [...contagem.entries()]
+      .map(([label, total]) => ({ label, total }))
+      .sort((a, b) => b.total - a.total);
+  };
+
+  return {
+    total: matriculas.length,
+    genero: contar(matriculas.map((m) => m.estudante.sexoGenero)),
+    racaCor: contar(matriculas.map((m) => m.estudante.racaCor)),
+    rendaFamiliar: contar(matriculas.map((m) => m.estudante.rendaFamiliar)),
+  };
 }
 
 export async function getInscricoesPendentes(nucleoId: string) {

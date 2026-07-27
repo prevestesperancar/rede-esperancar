@@ -6,7 +6,7 @@ import { ImportarPlanilhaForm } from "@/components/gestao/ImportarPlanilhaForm";
 
 const STATUS_LABEL: Record<string, string> = {
   EM_AVALIACAO: "Em avaliação",
-  PRESENTE: "Presente",
+  PRESENTE: "Ativo",
   FALTANTE: "Faltante",
   DESISTENTE: "Desistente",
   TRANSFERIDO: "Transferido",

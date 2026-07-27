@@ -6,7 +6,7 @@ import {
   getFrequenciaGeralTurma,
   getNucleoNome,
 } from "@/lib/queries/gestao";
-import { apagarDisciplinaGrade } from "@/actions/gestao";
+import { apagarDisciplinaGrade, apagarTurma } from "@/actions/gestao";
 import { NovaDisciplinaGradeForm } from "@/components/gestao/NovaDisciplinaGradeForm";
 import { NovaTurmaForm } from "@/components/gestao/NovaTurmaForm";
 import { EditarTurmaForm } from "@/components/gestao/EditarTurmaForm";
@@ -61,6 +61,12 @@ export default async function TurmasPage() {
                 <span className="text-[11px] font-bold uppercase text-teal bg-teal/10 px-2.5 py-1 rounded-full">
                   {turma.matriculas.length}/{turma.capacidade} vagas
                 </span>
+                <ApagarItemButton
+                  id={turma.id}
+                  action={apagarTurma}
+                  confirmMessage={`Excluir a turma "${turma.nome} — ${turma.periodo}"? Isso remove todas as matrículas e a grade de horários dela permanentemente.`}
+                  label="Excluir turma"
+                />
               </div>
             </div>
             <div className="h-1.5 bg-border rounded-full overflow-hidden mb-4">

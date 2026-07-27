@@ -5,6 +5,7 @@ import { getEstudanteDetalhe } from "@/lib/queries/gestao";
 import { EditarEstudanteForm } from "@/components/gestao/EditarEstudanteForm";
 import { EditarEmailEstudanteForm } from "@/components/gestao/EditarEmailEstudanteForm";
 import { ApoioStatusForm } from "@/components/gestao/ApoioStatusForm";
+import { ApagarEstudanteButton } from "@/components/gestao/ApagarEstudanteButton";
 
 const STATUS_LABEL: Record<string, string> = {
   EM_AVALIACAO: "Em avaliação",
@@ -187,6 +188,12 @@ export default async function EstudanteDetalhePage({
           motivacao={estudante.motivacao}
         />
       </div>
+      )}
+
+      {(session.user.role === "COORDENACAO" || session.user.role === "ADMIN") && (
+        <div className="mt-4">
+          <ApagarEstudanteButton estudanteId={estudante.id} />
+        </div>
       )}
     </div>
   );

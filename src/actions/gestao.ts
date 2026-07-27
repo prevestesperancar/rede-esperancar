@@ -1115,3 +1115,46 @@ export async function importarEstudantesPlanilha(
   revalidatePath("/gestao/turmas");
   return `Importação concluída: ${criados} aluno(s) novo(s) criado(s), ${matriculados} matrícula(s) adicionada(s), ${ignorados} linha(s) ignorada(s). A senha padrão para quem foi criado agora é "esperancar123" — avise os alunos para trocarem no perfil.`;
 }
+
+export async function apagarEstudante(estudanteId: string) {
+  const user = await requireCoordenacao();
+
+  const estudante = await prisma.estudante.findUnique({
+    where: { id: estudanteId },
+    include: { user: true },
+  });
+  if (!estudante || (user.role !== "ADMIN" && estudante.user.nucleoId !== user.nucleoId)) {
+    throw new Error("Estudante não encontrado neste núcleo.");
+  }
+
+  await prisma.frequencia.deleteMany({ where: { estudanteId } });
+  await prisma.simuladoResposta.deleteMany({ where: { estudanteId } });
+  await prisma.redacao.deleteMany({ where: { estudanteId } });
+  await prisma.matricula.deleteMany({ where: { estudanteId } });
+  await prisma.estudante.delete({ where: { id: estudanteId } });
+  await prisma.user.delete({ where: { id: estudante.userId } });
+
+  revalidatePath("/gestao/estudantes");
+  revalidatePath("/gestao/turmas");
+}
+
+export async function apagarTurma(turmaId: string) {
+  const user = await requireCoordenacao();
+
+  const turma = await prisma.turma.findUnique({ where: { id: turmaId } });
+  if (!turma || turma.nucleoId !== user.nucleoId) {
+    throw new Error("Turma não encontrada neste núcleo.");
+  }
+
+  await prisma.aviso.updateMany({ where: { turmaId }, data: { turmaId: null } });
+  await prisma.monitoria.updateMany({ where: { turmaId }, data: { turmaId: null } });
+  await prisma.frequencia.deleteMany({ where: { turmaId } });
+  await prisma.matricula.deleteMany({ where: { turmaId } });
+  await prisma.turmaDisciplina.deleteMany({ where: { turmaId } });
+  await prisma.turma.delete({ where: { id: turmaId } });
+
+  revalidatePath("/gestao/turmas");
+  revalidatePath("/gestao/estudantes");
+  revalidatePath("/");
+  revalidatePath("/nucleos");
+}

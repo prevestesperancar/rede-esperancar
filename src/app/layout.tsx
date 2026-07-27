@@ -25,6 +25,10 @@ export const metadata: Metadata = {
   description: "Uma rede de pré-vestibulares sociais e gratuitos.",
 };
 
+// O site inteiro depende de dados ao vivo (núcleos, turmas, sessão do
+// usuário) — nunca deve ser pré-renderizado como página estática no build.
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({
   children,
 }: Readonly<{

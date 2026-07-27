@@ -18,7 +18,7 @@ function Campo({ label, valor }: { label: string; valor: string | number | null 
       <div className="font-mono text-[10px] font-bold uppercase tracking-wide text-ink-faint">
         {label}
       </div>
-      <div className="text-sm">{valor ?? valor === 0 ? valor : "—"}</div>
+      <div className="text-sm">{valor === null || valor === undefined || valor === "" ? "—" : valor}</div>
     </div>
   );
 }

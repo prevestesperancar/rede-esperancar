@@ -56,3 +56,24 @@ export function encontrarColuna(cabecalhos: string[], termos: string[]) {
   }
   return -1;
 }
+
+export function parseDataBr(valor: string): Date | null {
+  const texto = valor.trim();
+  if (!texto) return null;
+
+  const brasileiro = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (brasileiro) {
+    const [, dia, mes, ano] = brasileiro;
+    const data = new Date(Number(ano), Number(mes) - 1, Number(dia));
+    return Number.isNaN(data.getTime()) ? null : data;
+  }
+
+  const iso = texto.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (iso) {
+    const [, ano, mes, dia] = iso;
+    const data = new Date(Number(ano), Number(mes) - 1, Number(dia));
+    return Number.isNaN(data.getTime()) ? null : data;
+  }
+
+  return null;
+}

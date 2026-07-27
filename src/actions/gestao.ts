@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { salvarArquivo } from "@/lib/upload";
-import { parseCsv, encontrarColuna } from "@/lib/csv";
+import { parseCsv, encontrarColuna, parseDataBr } from "@/lib/csv";
 
 const GESTAO_ROLES = ["PROFESSOR", "COORDENACAO", "ADMIN"];
 const COORDENACAO_ROLES = ["COORDENACAO", "ADMIN"];
@@ -1015,6 +1015,13 @@ export async function importarEstudantesPlanilha(
   const idxEmail = encontrarColuna(cabecalho, ["e-mail", "email"]);
   const idxNome = encontrarColuna(cabecalho, ["nome completo", "nome"]);
   const idxTelefone = encontrarColuna(cabecalho, ["celular", "telefone", "whatsapp"]);
+  const idxNascimento = encontrarColuna(cabecalho, ["nascimento"]);
+  const idxEscola = encontrarColuna(cabecalho, ["escola"]);
+  const idxCidade = encontrarColuna(cabecalho, ["cidade", "municipio"]);
+  const idxBairro = encontrarColuna(cabecalho, ["bairro"]);
+  const idxSexo = encontrarColuna(cabecalho, ["sexo", "genero"]);
+  const idxCursoDesejado = encontrarColuna(cabecalho, ["curso desejado", "curso"]);
+  const idxUniversidadeDesejada = encontrarColuna(cabecalho, ["universidade desejada", "universidade"]);
 
   if (idxEmail === -1 || idxNome === -1) {
     return "Não encontrei colunas de nome e e-mail na planilha. Confira o cabeçalho.";
@@ -1030,6 +1037,14 @@ export async function importarEstudantesPlanilha(
     const email = (linha[idxEmail] ?? "").trim().toLowerCase();
     const nome = (linha[idxNome] ?? "").trim();
     const telefone = idxTelefone !== -1 ? (linha[idxTelefone] ?? "").trim() : "";
+    const dataNascimento = idxNascimento !== -1 ? parseDataBr(linha[idxNascimento] ?? "") : null;
+    const escola = idxEscola !== -1 ? (linha[idxEscola] ?? "").trim() : "";
+    const municipio = idxCidade !== -1 ? (linha[idxCidade] ?? "").trim() : "";
+    const bairro = idxBairro !== -1 ? (linha[idxBairro] ?? "").trim() : "";
+    const sexoGenero = idxSexo !== -1 ? (linha[idxSexo] ?? "").trim() : "";
+    const cursoDesejado = idxCursoDesejado !== -1 ? (linha[idxCursoDesejado] ?? "").trim() : "";
+    const universidadeDesejada =
+      idxUniversidadeDesejada !== -1 ? (linha[idxUniversidadeDesejada] ?? "").trim() : "";
 
     if (!email || !nome) {
       ignorados++;
@@ -1055,11 +1070,34 @@ export async function importarEstudantesPlanilha(
       continue;
     }
 
-    const estudante = await prisma.estudante.upsert({
-      where: { userId: usuario.id },
-      update: {},
-      create: { userId: usuario.id },
-    });
+    const estudanteExistente = await prisma.estudante.findUnique({ where: { userId: usuario.id } });
+
+    const estudante = estudanteExistente
+      ? await prisma.estudante.update({
+          where: { userId: usuario.id },
+          data: {
+            dataNascimento: estudanteExistente.dataNascimento ?? dataNascimento ?? undefined,
+            escola: estudanteExistente.escola ?? (escola || undefined),
+            municipio: estudanteExistente.municipio ?? (municipio || undefined),
+            bairro: estudanteExistente.bairro ?? (bairro || undefined),
+            sexoGenero: estudanteExistente.sexoGenero ?? (sexoGenero || undefined),
+            cursoDesejado: estudanteExistente.cursoDesejado ?? (cursoDesejado || undefined),
+            universidadeDesejada:
+              estudanteExistente.universidadeDesejada ?? (universidadeDesejada || undefined),
+          },
+        })
+      : await prisma.estudante.create({
+          data: {
+            userId: usuario.id,
+            dataNascimento: dataNascimento ?? undefined,
+            escola: escola || undefined,
+            municipio: municipio || undefined,
+            bairro: bairro || undefined,
+            sexoGenero: sexoGenero || undefined,
+            cursoDesejado: cursoDesejado || undefined,
+            universidadeDesejada: universidadeDesejada || undefined,
+          },
+        });
 
     const matriculaExistente = await prisma.matricula.findUnique({
       where: { estudanteId_turmaId: { estudanteId: estudante.id, turmaId } },

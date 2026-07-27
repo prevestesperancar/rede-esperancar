@@ -96,8 +96,10 @@ export default async function EstudantesPage() {
           <ImportarPlanilhaForm turmas={turmas} />
           <p className="text-xs text-ink-faint mt-2">
             No Google Sheets: Arquivo → Fazer download → Valores separados por vírgula (.csv), e
-            envie o arquivo baixado aqui. Só nome, e-mail e celular são importados — CPF, RG e
-            dados bancários nunca entram no sistema. Nada é publicado na internet.
+            envie o arquivo baixado aqui. Nome, e-mail, celular, data de nascimento, escola,
+            cidade/bairro, sexo/gênero e curso/universidade desejada são importados quando essas
+            colunas existirem — CPF, RG e dados bancários nunca entram no sistema. Nada é
+            publicado na internet.
           </p>
         </div>
       )}

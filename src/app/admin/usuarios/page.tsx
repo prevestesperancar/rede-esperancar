@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getUsuariosAdmin, getNucleosAdmin } from "@/lib/queries/admin";
 import { EditarAcessoForm } from "@/components/admin/EditarAcessoForm";
 import { NovoUsuarioForm } from "@/components/admin/NovoUsuarioForm";
@@ -93,9 +94,16 @@ export default async function AdminUsuariosPage({
               </div>
             </div>
             {u.role === "ESTUDANTE" ? (
-              <p className="text-xs text-ink-faint">
-                Edite os dados desse aluno pela tela de Estudantes, na gestão do núcleo dele.
-              </p>
+              u.estudante?.matriculas[0] ? (
+                <Link
+                  href={`/gestao/estudantes/${u.estudante.matriculas[0].id}`}
+                  className="text-xs font-bold text-terracotta"
+                >
+                  Ver e editar dados do aluno →
+                </Link>
+              ) : (
+                <p className="text-xs text-ink-faint">Esse aluno ainda não tem matrícula em nenhuma turma.</p>
+              )
             ) : (
               <EditarAcessoForm
                 userId={u.id}

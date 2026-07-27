@@ -10,22 +10,24 @@ export default async function GestaoLayout({
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  if (!session.user.nucleoId) redirect("/");
+  if (session.user.role !== "ADMIN" && !session.user.nucleoId) redirect("/");
 
-  const [nucleo, pendentesCount] = await Promise.all([
-    prisma.nucleo.findUnique({ where: { id: session.user.nucleoId } }),
-    prisma.matricula.count({
-      where: { status: "PENDENTE", turma: { nucleoId: session.user.nucleoId } },
-    }),
-  ]);
+  const [nucleo, pendentesCount] = session.user.nucleoId
+    ? await Promise.all([
+        prisma.nucleo.findUnique({ where: { id: session.user.nucleoId } }),
+        prisma.matricula.count({
+          where: { status: "PENDENTE", turma: { nucleoId: session.user.nucleoId } },
+        }),
+      ])
+    : [null, 0];
 
-  if (!nucleo) redirect("/");
+  if (session.user.role !== "ADMIN" && !nucleo) redirect("/");
 
   return (
     <div className="flex min-h-screen">
       <Sidebar
         userName={session.user.name ?? ""}
-        nucleoNome={nucleo.nome}
+        nucleoNome={nucleo?.nome ?? "Admin"}
         pendentesCount={pendentesCount}
         role={session.user.role}
       />

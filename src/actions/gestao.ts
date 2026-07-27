@@ -50,7 +50,7 @@ export async function atualizarEmailEstudante(
     where: { id: estudanteId },
     include: { user: true },
   });
-  if (!estudante || estudante.user.nucleoId !== user.nucleoId) {
+  if (!estudante || (user.role !== "ADMIN" && estudante.user.nucleoId !== user.nucleoId)) {
     return "Estudante não encontrado neste núcleo.";
   }
 
@@ -69,7 +69,7 @@ export async function atualizarEstudante(
   _prevState: string | undefined,
   formData: FormData
 ) {
-  await requireCoordenacao();
+  const gestor = await requireCoordenacao();
 
   const estudanteId = formData.get("estudanteId") as string;
   const status = formData.get("status") as string;
@@ -97,8 +97,14 @@ export async function atualizarEstudante(
 
   const boolOrNull = (v: string) => (v === "" ? undefined : v === "sim");
 
-  const estudante = await prisma.estudante.findUnique({ where: { id: estudanteId } });
+  const estudante = await prisma.estudante.findUnique({
+    where: { id: estudanteId },
+    include: { user: true },
+  });
   if (!estudante) return "Estudante não encontrado.";
+  if (gestor.role !== "ADMIN" && estudante.user.nucleoId !== gestor.nucleoId) {
+    return "Estudante não encontrado neste núcleo.";
+  }
 
   await prisma.user.update({
     where: { id: estudante.userId },
@@ -779,4 +785,91 @@ export async function apagarAviso(avisoId: string) {
 
   revalidatePath("/gestao");
   revalidatePath("/gestao/avisos");
+}
+
+const PAPEIS_NUCLEO_EDITAVEIS = ["PROFESSOR", "APOIO_PSICOSSOCIAL"];
+
+export async function criarUsuarioNucleo(_prevState: string | undefined, formData: FormData) {
+  const gestor = await requireCoordenacao();
+
+  const nome = formData.get("nome") as string;
+  const email = formData.get("email") as string;
+  const senha = formData.get("senha") as string;
+  const role = formData.get("role") as string;
+
+  if (!nome || !email || !senha) return "Preencha nome, e-mail e senha.";
+  if (senha.length < 6) return "A senha precisa ter pelo menos 6 caracteres.";
+  if (!PAPEIS_NUCLEO_EDITAVEIS.includes(role)) return "Papel inválido.";
+
+  const existente = await prisma.user.findUnique({ where: { email } });
+  if (existente) return "Já existe um usuário com esse e-mail.";
+
+  const passwordHash = await bcrypt.hash(senha, 10);
+
+  await prisma.user.create({
+    data: {
+      nome,
+      email,
+      passwordHash,
+      role: role as "PROFESSOR" | "APOIO_PSICOSSOCIAL",
+      nucleoId: gestor.nucleoId!,
+    },
+  });
+
+  revalidatePath("/gestao/usuarios");
+  return "Usuário criado!";
+}
+
+export async function alterarAcessoUsuarioNucleo(
+  _prevState: string | undefined,
+  formData: FormData
+) {
+  const gestor = await requireCoordenacao();
+
+  const userId = formData.get("userId") as string;
+  const email = formData.get("email") as string;
+  const role = formData.get("role") as string;
+
+  if (!email) return "Preencha o e-mail.";
+  if (!PAPEIS_NUCLEO_EDITAVEIS.includes(role)) return "Papel inválido.";
+
+  const usuario = await prisma.user.findUnique({ where: { id: userId } });
+  if (!usuario || usuario.nucleoId !== gestor.nucleoId) return "Usuário não encontrado neste núcleo.";
+  if (!PAPEIS_NUCLEO_EDITAVEIS.includes(usuario.role)) {
+    return "Esse usuário não pode ser editado por aqui.";
+  }
+
+  if (email !== usuario.email) {
+    const emailExistente = await prisma.user.findUnique({ where: { email } });
+    if (emailExistente) return "Já existe um usuário com esse e-mail.";
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { email, role: role as "PROFESSOR" | "APOIO_PSICOSSOCIAL" },
+  });
+
+  revalidatePath("/gestao/usuarios");
+  return "Acesso atualizado!";
+}
+
+export async function redefinirSenhaUsuarioNucleo(
+  _prevState: string | undefined,
+  formData: FormData
+) {
+  const gestor = await requireCoordenacao();
+
+  const userId = formData.get("userId") as string;
+  const novaSenha = formData.get("novaSenha") as string;
+
+  if (!novaSenha || novaSenha.length < 6) return "A senha precisa ter pelo menos 6 caracteres.";
+
+  const usuario = await prisma.user.findUnique({ where: { id: userId } });
+  if (!usuario || usuario.nucleoId !== gestor.nucleoId) return "Usuário não encontrado neste núcleo.";
+
+  const passwordHash = await bcrypt.hash(novaSenha, 10);
+  await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+
+  revalidatePath("/gestao/usuarios");
+  return "Senha redefinida!";
 }

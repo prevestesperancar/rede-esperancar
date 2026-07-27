@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getEstudanteByUserId, getTurmaAtivaDoEstudante } from "@/lib/queries/aluno";
@@ -55,8 +56,19 @@ export default async function AlunoPerfilPage() {
         <div className="font-mono text-[11px] font-bold uppercase tracking-wide text-ink-faint mb-2.5">
           Editar dados
         </div>
-        <EditarPerfilForm nome={estudante.user.nome} telefone={estudante.user.telefone} />
+        <EditarPerfilForm
+          nome={estudante.user.nome}
+          telefone={estudante.user.telefone}
+          fotoUrl={estudante.user.fotoUrl}
+        />
       </div>
+
+      <Link
+        href="/aluno/carteirinha"
+        className="block bg-yellow text-yellow-ink font-extrabold text-sm text-center py-3.5 rounded-full mb-6"
+      >
+        Ver minha carteirinha de estudante →
+      </Link>
 
       <div className="bg-surface border border-border rounded-2xl p-4 mb-6">
         <div className="font-mono text-[11px] font-bold uppercase tracking-wide text-ink-faint mb-2.5">

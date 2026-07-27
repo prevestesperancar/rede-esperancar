@@ -42,10 +42,14 @@ export default async function EstudanteDetalhePage({
 }) {
   const { matriculaId } = await params;
   const session = await auth();
-  if (!session?.user?.nucleoId) redirect("/login");
+  if (!session?.user) redirect("/login");
   if (session.user.role === "PROFESSOR") redirect("/gestao/estudantes");
+  if (session.user.role !== "ADMIN" && !session.user.nucleoId) redirect("/login");
 
-  const matricula = await getEstudanteDetalhe(matriculaId, session.user.nucleoId);
+  const matricula = await getEstudanteDetalhe(
+    matriculaId,
+    session.user.role === "ADMIN" ? undefined : session.user.nucleoId!
+  );
   if (!matricula) notFound();
 
   const { estudante, turma } = matricula;
@@ -54,8 +58,11 @@ export default async function EstudanteDetalhePage({
 
   return (
     <div className="max-w-2xl">
-      <Link href="/gestao/estudantes" className="text-sm font-bold text-ink-soft hover:text-ink">
-        ← Estudantes
+      <Link
+        href={session.user.role === "ADMIN" ? "/admin/usuarios" : "/gestao/estudantes"}
+        className="text-sm font-bold text-ink-soft hover:text-ink"
+      >
+        {session.user.role === "ADMIN" ? "← Usuários" : "← Estudantes"}
       </Link>
 
       <div className="flex items-center gap-3.5 mt-3 mb-7">

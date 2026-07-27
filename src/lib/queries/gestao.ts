@@ -1,5 +1,18 @@
 import { prisma } from "@/lib/prisma";
 
+export async function getUsuariosDoNucleo(nucleoId: string, role?: string) {
+  return prisma.user.findMany({
+    where: {
+      nucleoId,
+      ...(role ? { role: role as "ESTUDANTE" | "PROFESSOR" | "COORDENACAO" | "APOIO_PSICOSSOCIAL" } : {}),
+    },
+    include: {
+      estudante: { include: { matriculas: { orderBy: { createdAt: "desc" }, take: 1 } } },
+    },
+    orderBy: [{ role: "asc" }, { nome: "asc" }],
+  });
+}
+
 export async function getNucleoNome(nucleoId: string) {
   const nucleo = await prisma.nucleo.findUnique({
     where: { id: nucleoId },
@@ -296,12 +309,12 @@ export async function getFrequenciaDetalhadaDoNucleo(nucleoId: string) {
   });
 }
 
-export async function getEstudanteDetalhe(matriculaId: string, nucleoId: string) {
+export async function getEstudanteDetalhe(matriculaId: string, nucleoId?: string) {
   return prisma.matricula.findFirst({
-    where: { id: matriculaId, turma: { nucleoId } },
+    where: { id: matriculaId, ...(nucleoId ? { turma: { nucleoId } } : {}) },
     include: {
       estudante: { include: { user: true } },
-      turma: true,
+      turma: { include: { nucleo: true } },
     },
   });
 }

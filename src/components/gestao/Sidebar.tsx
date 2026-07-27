@@ -18,6 +18,7 @@ const ITEMS_COORDENACAO = [
   { href: "/gestao/frequencia", label: "Frequência detalhada", icon: "📊" },
   { href: "/gestao/formularios", label: "Formulários", icon: "🗂️" },
   { href: "/gestao/inscricoes", label: "Inscrições", icon: "📋" },
+  { href: "/gestao/usuarios", label: "Usuários", icon: "🔑" },
 ];
 
 const ITEMS_PROFESSOR = [

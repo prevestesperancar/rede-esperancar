@@ -1,11 +1,14 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import {
   getEstudanteByUserId,
   getTurmaAtivaDoEstudante,
   getProximasProvasPorTipo,
 } from "@/lib/queries/aluno";
+import { getSolicitacoesDoEstudante } from "@/lib/queries/agendamento";
 import { GradeCard } from "@/components/aluno/GradeCard";
+import { MinhasSolicitacoesList } from "@/components/aluno/MinhasSolicitacoesList";
 
 function diasAte(data: Date) {
   const hoje = new Date();
@@ -27,6 +30,22 @@ export default async function AlunoDashboardPage() {
     ? await getProximasProvasPorTipo(session.user.nucleoId)
     : { enem: null, uerj: null, outras: [] };
   const primeiroNome = estudante.user.nome.split(" ")[0];
+
+  const [todasSolicitacoes, nucleoLinks] = session.user.nucleoId
+    ? await Promise.all([
+        getSolicitacoesDoEstudante(estudante.id),
+        prisma.nucleo.findUnique({
+          where: { id: session.user.nucleoId },
+          select: { linkMonitoriaProfessor: true, linkApoioPsicossocial: true },
+        }),
+      ])
+    : [[], null];
+
+  const solicitacoesEmAndamento = todasSolicitacoes.filter(
+    (s) => s.status === "AGUARDANDO_ESCOLHA" || s.status === "CONFIRMADO"
+  );
+  const solicitacoesMonitoria = solicitacoesEmAndamento.filter((s) => s.tipo === "MONITORIA");
+  const solicitacoesApoio = solicitacoesEmAndamento.filter((s) => s.tipo === "APOIO");
 
   const dias = turma
     ? [...new Set(turma.disciplinas.map((d) => d.diaSemana))]
@@ -81,6 +100,29 @@ export default async function AlunoDashboardPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {(solicitacoesMonitoria.length > 0 || solicitacoesApoio.length > 0) && (
+        <div className="mb-5 flex flex-col gap-4">
+          {solicitacoesMonitoria.length > 0 && (
+            <div>
+              <div className="font-bold text-sm mb-2.5">📌 Sua monitoria</div>
+              <MinhasSolicitacoesList
+                solicitacoes={solicitacoesMonitoria}
+                link={nucleoLinks?.linkMonitoriaProfessor ?? null}
+              />
+            </div>
+          )}
+          {solicitacoesApoio.length > 0 && (
+            <div>
+              <div className="font-bold text-sm mb-2.5">📌 Seu apoio psicossocial</div>
+              <MinhasSolicitacoesList
+                solicitacoes={solicitacoesApoio}
+                link={nucleoLinks?.linkApoioPsicossocial ?? null}
+              />
+            </div>
+          )}
         </div>
       )}
 

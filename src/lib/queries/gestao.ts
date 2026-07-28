@@ -83,6 +83,39 @@ export async function getPerfilEstudantesAtivos(nucleoId: string) {
       .sort((a, b) => b.total - a.total);
   };
 
+  // Respostas de curso são texto livre e costumam combinar mais de uma opção
+  // (ex: "Direito ou Pedagogia"), então cada curso mencionado conta separadamente.
+  const CURSOS_PALAVRAS_CHAVE = [
+    "Direito", "Medicina", "Enfermagem", "Psicologia", "Pedagogia",
+    "Administração", "Engenharia", "Fisioterapia", "Nutrição", "Farmácia",
+    "Odontologia", "Arquitetura", "Fonoaudiologia", "Biologia", "Biomedicina",
+    "Veterinária", "Educação Física", "Serviço Social", "Contabilidade",
+    "Jornalismo", "Publicidade", "Sistemas de Informação", "Ciência da Computação",
+    "Letras", "História", "Geografia", "Matemática", "Química", "Física",
+  ];
+  const contarCursos = (valores: (string | null)[]) => {
+    const contagem = new Map<string, number>();
+    let semCorrespondencia = 0;
+    for (const v of valores) {
+      if (!v) continue;
+      const encontrados = CURSOS_PALAVRAS_CHAVE.filter((palavra) =>
+        v.toLowerCase().includes(palavra.toLowerCase())
+      );
+      if (encontrados.length === 0) {
+        semCorrespondencia++;
+        continue;
+      }
+      for (const palavra of encontrados) {
+        contagem.set(palavra, (contagem.get(palavra) ?? 0) + 1);
+      }
+    }
+    const resultado = [...contagem.entries()]
+      .map(([label, total]) => ({ label, total }))
+      .sort((a, b) => b.total - a.total);
+    if (semCorrespondencia > 0) resultado.push({ label: "Outros/não identificado", total: semCorrespondencia });
+    return resultado;
+  };
+
   const idades = matriculas
     .map((m) => m.estudante.dataNascimento)
     .filter((d): d is Date => d !== null)
@@ -125,7 +158,7 @@ export async function getPerfilEstudantesAtivos(nucleoId: string) {
     genero: contar(matriculas.map((m) => m.estudante.sexoGenero)),
     racaCor: contar(matriculas.map((m) => m.estudante.racaCor)),
     rendaFamiliar: contar(matriculas.map((m) => m.estudante.rendaFamiliar)),
-    cursoDesejado: contar(matriculas.map((m) => m.estudante.cursoDesejado)).slice(0, 6),
+    cursoDesejado: contarCursos(matriculas.map((m) => m.estudante.cursoDesejado)).slice(0, 6),
     bairroMunicipio: bairroMunicipio.slice(0, 6),
     idadeMedia,
     presencaMediaMes,

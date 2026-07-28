@@ -41,8 +41,10 @@ export async function solicitarMonitoria(
     },
   });
 
+  revalidatePath("/aluno");
   revalidatePath("/aluno/monitorias");
   revalidatePath("/gestao/monitorias");
+  revalidatePath("/gestao");
   return "Solicitação enviada! O professor vai sugerir horários.";
 }
 
@@ -64,6 +66,7 @@ export async function solicitarApoio(
     },
   });
 
+  revalidatePath("/aluno");
   revalidatePath("/aluno/apoio");
   revalidatePath("/gestao");
   return "Solicitação enviada! O apoio psicossocial vai sugerir horários.";
@@ -126,6 +129,7 @@ export async function responderSolicitacao(
 
   revalidatePath("/gestao/monitorias");
   revalidatePath("/gestao");
+  revalidatePath("/aluno");
   revalidatePath("/aluno/monitorias");
   revalidatePath("/aluno/apoio");
   return "Horários enviados ao estudante!";
@@ -162,6 +166,7 @@ export async function escolherHorarioSolicitacao(
     data: { status: "CONFIRMADO", escolhaData, confirmadoEm: new Date() },
   });
 
+  revalidatePath("/aluno");
   revalidatePath("/aluno/monitorias");
   revalidatePath("/aluno/apoio");
   revalidatePath("/gestao/monitorias");

@@ -22,7 +22,13 @@ import { FrequenciaDashboard } from "@/components/gestao/FrequenciaDashboard";
 import { PerfilEstudantesChart } from "@/components/gestao/PerfilEstudantesChart";
 import { AniversariantesCard } from "@/components/gestao/AniversariantesCard";
 import { apagarProva } from "@/actions/gestao";
-import { getSolicitacoesApoioPendentes, getSolicitacoesApoioConfirmadas, getSolicitacoesAtrasadas } from "@/lib/queries/agendamento";
+import {
+  getSolicitacoesApoioPendentes,
+  getSolicitacoesApoioConfirmadas,
+  getSolicitacoesAtrasadas,
+  getSolicitacoesPendentesDoProfessor,
+  getSolicitacoesConfirmadasDoProfessor,
+} from "@/lib/queries/agendamento";
 import { SolicitacoesPendentesCard } from "@/components/gestao/SolicitacoesPendentesCard";
 import { SolicitacoesConfirmadasCard } from "@/components/gestao/SolicitacoesConfirmadasCard";
 import { SolicitacoesAtrasadasCard } from "@/components/gestao/SolicitacoesAtrasadasCard";
@@ -124,13 +130,19 @@ export default async function GestaoDashboardPage({
   }
 
   if (session.user.role === "PROFESSOR") {
-    const [nucleoNome, grade, monitorias, turmaIds] = await Promise.all([
+    const [nucleoNome, grade, monitorias, turmaIds, monitoriaPendentes, monitoriaConfirmadas] = await Promise.all([
       getNucleoNome(nucleoId),
       getGradeDoProfessor(session.user.id),
       getMonitoriasDoProfessor(session.user.id),
       getTurmasDoProfessor(session.user.id),
+      getSolicitacoesPendentesDoProfessor(session.user.id),
+      getSolicitacoesConfirmadasDoProfessor(session.user.id),
     ]);
     const frequencias = await getFrequenciaResumoDoNucleo(nucleoId, dataSelecionada, turmaIds);
+    const nucleoLink = await prisma.nucleo.findUnique({
+      where: { id: nucleoId },
+      select: { linkMonitoriaProfessor: true },
+    });
 
     return (
       <div>
@@ -138,6 +150,16 @@ export default async function GestaoDashboardPage({
           {nucleoNome}
         </div>
         <h1 className="font-display text-2xl mb-6">Meu painel</h1>
+
+        <SolicitacoesPendentesCard
+          titulo="Solicitações de monitoria"
+          solicitacoes={monitoriaPendentes}
+        />
+        <SolicitacoesConfirmadasCard
+          titulo="Monitorias confirmadas"
+          solicitacoes={monitoriaConfirmadas}
+          link={nucleoLink?.linkMonitoriaProfessor ?? null}
+        />
 
         <div className="bg-surface border border-border rounded-[18px] p-5 mb-4">
           <h3 className="font-extrabold text-[15px] mb-3.5">Meu horário de aula</h3>

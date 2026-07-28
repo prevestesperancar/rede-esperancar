@@ -1120,8 +1120,10 @@ export async function importarEstudantesPlanilha(
     }
 
     const estudanteExistente = await prisma.estudante.findUnique({ where: { userId: usuario.id } });
+    // A reimportação deve corrigir dados errados: o valor novo da planilha
+    // prevalece quando presente, mantendo o valor atual só se a planilha vier vazia.
     const preencher = <T,>(atual: T | null | undefined, novo: T | undefined) =>
-      atual ?? novo ?? undefined;
+      novo ?? atual ?? undefined;
 
     let estudante;
     if (estudanteExistente) {

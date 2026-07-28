@@ -1,10 +1,20 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import ExcelJS from "exceljs";
+import { PDFDocument, StandardFonts, rgb, type PDFImage } from "pdf-lib";
 import { auth } from "@/lib/auth";
 import { getEstudantesDoNucleo, getNucleoNome } from "@/lib/queries/gestao";
 
 const PERMITIDOS = ["PROFESSOR", "COORDENACAO", "APOIO_PSICOSSOCIAL", "ADMIN"];
+
+function sabadosDoMes(ano: number, mes: number) {
+  const dias: number[] = [];
+  const data = new Date(ano, mes, 1);
+  while (data.getMonth() === mes) {
+    if (data.getDay() === 6) dias.push(data.getDate());
+    data.setDate(data.getDate() + 1);
+  }
+  return dias;
+}
 
 export async function GET() {
   const session = await auth();
@@ -17,61 +27,129 @@ export async function GET() {
     getNucleoNome(session.user.nucleoId),
   ]);
 
-  const workbook = new ExcelJS.Workbook();
-  const sheet = workbook.addWorksheet("Lista de presença");
+  const hoje = new Date();
+  const sabados = sabadosDoMes(hoje.getFullYear(), hoje.getMonth());
+  const nomeMes = hoje.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
 
-  sheet.columns = [
-    { width: 4 },
-    { width: 34 },
-    { width: 22 },
-    { width: 28 },
-  ];
+  const pdf = await PDFDocument.create();
+  const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const fontRegular = await pdf.embedFont(StandardFonts.Helvetica);
 
+  let logoImage: PDFImage | null;
   try {
-    const logoBuffer = await readFile(
-      path.join(process.cwd(), "public", "images", "logo-icon.png")
-    );
-    const imageId = workbook.addImage({
-      buffer: logoBuffer as unknown as ExcelJS.Buffer,
-      extension: "png",
-    });
-    sheet.addImage(imageId, { tl: { col: 0, row: 0 }, ext: { width: 48, height: 48 } });
+    const logoBuffer = await readFile(path.join(process.cwd(), "public", "images", "logo-icon.png"));
+    logoImage = await pdf.embedPng(logoBuffer);
   } catch {
-    // segue sem a logo se o arquivo não existir
+    logoImage = null;
   }
 
-  sheet.mergeCells("B1:D1");
-  sheet.getCell("B1").value = "Rede Esperançar — Lista de presença";
-  sheet.getCell("B1").font = { bold: true, size: 14 };
+  const pageWidth = 841.89; // A4 paisagem
+  const pageHeight = 595.28;
+  const margem = 36;
+  const colNome = 200;
+  const colTurma = 90;
+  const colSabado = (pageWidth - margem * 2 - colNome - colTurma) / Math.max(sabados.length, 1);
+  const alturaLinha = 22;
+  const alturaCabecalho = 90;
+  const linhasPorPagina = Math.floor((pageHeight - margem * 2 - alturaCabecalho) / alturaLinha);
 
-  sheet.mergeCells("B2:D2");
-  sheet.getCell("B2").value = nucleoNome;
-  sheet.getCell("B2").font = { size: 11, color: { argb: "FF666666" } };
+  function desenharCabecalho(page: import("pdf-lib").PDFPage, topoY: number) {
+    if (logoImage) {
+      const escala = 28 / logoImage.height;
+      page.drawImage(logoImage, {
+        x: margem,
+        y: topoY - 28,
+        width: logoImage.width * escala,
+        height: 28,
+      });
+    }
+    page.drawText("Rede Esperançar — Lista de presença", {
+      x: margem + (logoImage ? 40 : 0),
+      y: topoY - 14,
+      size: 14,
+      font: fontBold,
+      color: rgb(0.1, 0.1, 0.1),
+    });
+    page.drawText(`${nucleoNome} · ${nomeMes}`, {
+      x: margem + (logoImage ? 40 : 0),
+      y: topoY - 30,
+      size: 10,
+      font: fontRegular,
+      color: rgb(0.4, 0.4, 0.4),
+    });
 
-  sheet.mergeCells("B3:D3");
-  sheet.getCell("B3").value = `Data: ______ / ______ / __________`;
-  sheet.getCell("B3").font = { size: 11 };
+    const headerY = topoY - 55;
+    page.drawLine({
+      start: { x: margem, y: headerY - 4 },
+      end: { x: pageWidth - margem, y: headerY - 4 },
+      thickness: 1,
+      color: rgb(0.75, 0.75, 0.75),
+    });
+    page.drawText("Nome", { x: margem, y: headerY, size: 9, font: fontBold });
+    page.drawText("Turma", { x: margem + colNome, y: headerY, size: 9, font: fontBold });
+    sabados.forEach((dia, i) => {
+      const x = margem + colNome + colTurma + i * colSabado;
+      page.drawText(`${String(dia).padStart(2, "0")}/${String(hoje.getMonth() + 1).padStart(2, "0")}`, {
+        x: x + colSabado / 2 - 12,
+        y: headerY,
+        size: 8,
+        font: fontBold,
+      });
+    });
+    return headerY - 10;
+  }
 
-  sheet.addRow([]);
+  let pagina = pdf.addPage([pageWidth, pageHeight]);
+  let y = desenharCabecalho(pagina, pageHeight - margem);
+  let linhaAtual = 0;
 
-  const headerRow = sheet.addRow(["", "Nome", "Turma", "Assinatura"]);
-  headerRow.font = { bold: true };
-  headerRow.eachCell((cell) => {
-    cell.border = { bottom: { style: "thin" } };
-  });
+  for (const m of matriculas) {
+    if (linhaAtual >= linhasPorPagina) {
+      pagina = pdf.addPage([pageWidth, pageHeight]);
+      y = desenharCabecalho(pagina, pageHeight - margem);
+      linhaAtual = 0;
+    }
 
-  matriculas.forEach((m) => {
-    const row = sheet.addRow(["", m.estudante.user.nome, `${m.turma.nome} · ${m.turma.periodo}`, ""]);
-    row.getCell(4).border = { bottom: { style: "thin", color: { argb: "FFCCCCCC" } } };
-    row.height = 22;
-  });
+    y -= alturaLinha;
+    linhaAtual++;
 
-  const buffer = await workbook.xlsx.writeBuffer();
-  const nomeArquivo = `lista-presenca-${nucleoNome.toLowerCase().replace(/\s+/g, "-")}.xlsx`;
+    pagina.drawText(m.estudante.user.nome, { x: margem, y: y + 6, size: 9, font: fontRegular });
+    pagina.drawText(`${m.turma.nome} · ${m.turma.periodo}`, {
+      x: margem + colNome,
+      y: y + 6,
+      size: 8,
+      font: fontRegular,
+      color: rgb(0.35, 0.35, 0.35),
+    });
 
-  return new Response(buffer, {
+    sabados.forEach((_, i) => {
+      const x = margem + colNome + colTurma + i * colSabado;
+      const boxSize = 14;
+      const boxX = x + colSabado / 2 - boxSize / 2;
+      pagina.drawRectangle({
+        x: boxX,
+        y: y,
+        width: boxSize,
+        height: boxSize,
+        borderColor: rgb(0.6, 0.6, 0.6),
+        borderWidth: 0.75,
+      });
+    });
+
+    pagina.drawLine({
+      start: { x: margem, y },
+      end: { x: pageWidth - margem, y },
+      thickness: 0.5,
+      color: rgb(0.9, 0.9, 0.9),
+    });
+  }
+
+  const bytes = await pdf.save();
+  const nomeArquivo = `lista-presenca-${nucleoNome.toLowerCase().replace(/\s+/g, "-")}.pdf`;
+
+  return new Response(Buffer.from(bytes), {
     headers: {
-      "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="${nomeArquivo}"`,
     },
   });

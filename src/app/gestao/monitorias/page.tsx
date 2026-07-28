@@ -81,11 +81,13 @@ export default async function GestaoMonitoriasPage() {
                 />
               </div>
             </div>
-            <ApagarItemButton
-              id={m.id}
-              action={apagarMonitoria}
-              confirmMessage="Apagar esta monitoria?"
-            />
+            {(!isProfessor || m.professorId === session.user.id) && (
+              <ApagarItemButton
+                id={m.id}
+                action={apagarMonitoria}
+                confirmMessage="Apagar esta monitoria?"
+              />
+            )}
           </div>
         ))}
         {monitorias.length === 0 && (

@@ -156,13 +156,12 @@ export default async function EstudanteDetalhePage({
       </div>
 
       {session.user.role === "APOIO_PSICOSSOCIAL" && (
-      <div className="bg-surface border border-border rounded-[18px] p-5">
+      <div className="bg-surface border border-border rounded-[18px] p-5 mb-4">
         <div className="font-extrabold text-sm mb-3">Status e acompanhamento</div>
         <ApoioStatusForm estudanteId={estudante.id} status={estudante.status} />
       </div>
       )}
 
-      {session.user.role !== "APOIO_PSICOSSOCIAL" && (
       <div className="bg-surface border border-border rounded-[18px] p-5">
         <div className="font-extrabold text-sm mb-3">Editar informações do estudante</div>
         <EditarEstudanteForm
@@ -187,9 +186,9 @@ export default async function EstudanteDetalhePage({
           pessoasEmCasa={estudante.pessoasEmCasa}
           trabalha={estudante.trabalha}
           motivacao={estudante.motivacao}
+          observacoesInternas={estudante.observacoesInternas}
         />
       </div>
-      )}
 
       {(session.user.role === "COORDENACAO" || session.user.role === "ADMIN") && (
         <div className="mt-4">

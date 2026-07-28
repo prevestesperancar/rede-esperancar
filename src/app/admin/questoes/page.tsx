@@ -1,9 +1,9 @@
-import { getTodasQuestoes } from "@/lib/queries/banco";
+import { getTodasQuestoes, getTodasDisciplinas } from "@/lib/queries/banco";
 import { NovaQuestaoForm } from "@/components/gestao/NovaQuestaoForm";
 import { ApagarQuestaoButton } from "@/components/gestao/ApagarQuestaoButton";
 
 export default async function AdminQuestoesPage() {
-  const questoes = await getTodasQuestoes();
+  const [questoes, disciplinas] = await Promise.all([getTodasQuestoes(), getTodasDisciplinas()]);
 
   return (
     <div>
@@ -14,7 +14,7 @@ export default async function AdminQuestoesPage() {
 
       <div className="bg-surface border border-border rounded-[18px] p-5 mb-7">
         <div className="font-extrabold text-sm mb-3">Nova questão</div>
-        <NovaQuestaoForm />
+        <NovaQuestaoForm disciplinas={disciplinas} />
       </div>
 
       <div className="bg-surface border border-border rounded-[18px] divide-y divide-border">

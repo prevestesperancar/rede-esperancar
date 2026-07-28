@@ -61,7 +61,12 @@ export function classificarProvas(texto: string): string | undefined {
 export function classificarRendaFamiliar(texto: string): string | undefined {
   const t = normalizar(texto);
   if (!t) return undefined;
+
+  const opcaoExata = RENDA_FAMILIAR_OPCOES.find((o) => normalizar(o) === t);
+  if (opcaoExata) return opcaoExata;
+
   if (t.includes("nao inform") || t.includes("prefiro")) return RENDA_FAMILIAR_OPCOES[5];
+
   const numero = Number(t.replace(/[^\d,.]/g, "").replace(",", "."));
   if (!numero || Number.isNaN(numero)) return undefined;
   if (numero <= 218) return RENDA_FAMILIAR_OPCOES[0];

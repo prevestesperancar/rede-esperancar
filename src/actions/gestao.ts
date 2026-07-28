@@ -76,7 +76,7 @@ export async function atualizarEstudante(
   _prevState: string | undefined,
   formData: FormData
 ) {
-  const gestor = await requireCoordenacao();
+  const gestor = await requireAcessoEstudante();
 
   const estudanteId = formData.get("estudanteId") as string;
   const nome = formData.get("nome") as string;
@@ -100,6 +100,7 @@ export async function atualizarEstudante(
   const trabalha = formData.get("trabalha") as string;
   const motivacao = formData.get("motivacao") as string;
   const ultimoContatoObs = formData.get("ultimoContatoObs") as string;
+  const observacoesInternas = formData.get("observacoesInternas") as string;
 
   if (!estudanteId) return "Estudante não encontrado.";
   if (!nome) return "O nome não pode ficar em branco.";
@@ -147,6 +148,7 @@ export async function atualizarEstudante(
       motivacao,
       ultimoContatoObs,
       ultimoContato: ultimoContatoObs ? new Date() : undefined,
+      observacoesInternas,
     },
   });
 
@@ -391,6 +393,9 @@ export async function apagarMonitoria(monitoriaId: string) {
   const monitoria = await prisma.monitoria.findUnique({ where: { id: monitoriaId } });
   if (!monitoria || monitoria.nucleoId !== user.nucleoId) {
     throw new Error("Monitoria não encontrada neste núcleo.");
+  }
+  if (user.role === "PROFESSOR" && monitoria.professorId !== user.id) {
+    throw new Error("Você só pode excluir monitorias vinculadas a você.");
   }
   await prisma.monitoria.delete({ where: { id: monitoriaId } });
   revalidatePath("/gestao/monitorias");
@@ -1015,53 +1020,46 @@ export async function importarEstudantesPlanilha(
   const arquivo = formData.get("arquivo") as File | null;
   if (!arquivo || arquivo.size === 0) return "Selecione o arquivo CSV exportado da planilha.";
 
+  const mapeamentoTexto = formData.get("mapeamento") as string;
+  if (!mapeamentoTexto) return "Mapeie as colunas da planilha antes de importar.";
+  let mapeamento: Record<string, string>;
+  try {
+    mapeamento = JSON.parse(mapeamentoTexto);
+  } catch {
+    return "Mapeamento de colunas inválido.";
+  }
+
+  const idxDe = (campo: string) => {
+    const entrada = Object.entries(mapeamento).find(([, v]) => v === campo);
+    return entrada ? Number(entrada[0]) : -1;
+  };
+
+  const idxEmail = idxDe("email");
+  const idxNome = idxDe("nome");
+  const idxTelefone = idxDe("telefone");
+  const idxNascimento = idxDe("dataNascimento");
+  const idxSituacaoEscolar = idxDe("situacaoEscolar");
+  const idxEscola = idxDe("escola");
+  const idxEscolaPublica = idxDe("escolaPublica");
+  const idxCidade = idxDe("municipio");
+  const idxBairro = idxDe("bairro");
+  const idxSexo = idxDe("sexoGenero");
+  const idxRacaCor = idxDe("racaCor");
+  const idxCursoDesejado = idxDe("cursoDesejado");
+  const idxProvas = idxDe("provasQueVaiFazer");
+  const idxJaFezEnem = idxDe("jaFezEnem");
+  const idxRendaFamiliar = idxDe("rendaFamiliar");
+  const idxPessoasEmCasa = idxDe("pessoasEmCasa");
+  const idxTrabalha = idxDe("trabalha");
+  const idxMotivacao = idxDe("motivacao");
+
+  if (idxEmail === -1 || idxNome === -1) {
+    return "Mapeie ao menos as colunas de nome e e-mail antes de importar.";
+  }
+
   const csvText = await arquivo.text();
   const linhas = parseCsv(csvText);
   if (linhas.length < 2) return "A planilha parece vazia.";
-
-  const cabecalho = linhas[0];
-  const usados = new Set<number>();
-  const pegar = (termos: string[]) => {
-    const normalizados = cabecalho.map((h) =>
-      h
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[̀-ͯ]/g, "")
-        .trim()
-    );
-    for (const termo of termos) {
-      const index = normalizados.findIndex((h, i) => !usados.has(i) && h.includes(termo));
-      if (index !== -1) {
-        usados.add(index);
-        return index;
-      }
-    }
-    return -1;
-  };
-
-  const idxEmail = pegar(["e-mail", "email"]);
-  const idxNome = pegar(["nome completo", "nome"]);
-  const idxTelefone = pegar(["celular", "telefone", "whatsapp"]);
-  const idxNascimento = pegar(["nascimento"]);
-  const idxSituacaoEscolar = pegar(["situacao escolar", "serie", "ano escolar"]);
-  const idxEscola = pegar(["nome da escola", "escola"]);
-  const idxEscolaPublica = pegar(["escola publica", "rede publica"]);
-  const idxCidade = pegar(["cidade", "municipio"]);
-  const idxBairro = pegar(["bairro"]);
-  const idxSexo = pegar(["sexo", "genero"]);
-  const idxRacaCor = pegar(["raca", "cor"]);
-  const idxCursoDesejado = pegar(["curso desejado", "curso"]);
-  const idxUniversidadeDesejada = pegar(["universidade desejada", "universidade"]);
-  const idxProvas = pegar(["provas que vai fazer", "enem", "uerj", "vestibular"]);
-  const idxJaFezEnem = pegar(["ja fez", "primeira vez"]);
-  const idxRendaFamiliar = pegar(["renda"]);
-  const idxPessoasEmCasa = pegar(["pessoas na", "pessoas em casa", "moradores"]);
-  const idxTrabalha = pegar(["trabalha"]);
-  const idxMotivacao = pegar(["motivacao", "por que voce quer", "por que você quer"]);
-
-  if (idxEmail === -1 || idxNome === -1) {
-    return "Não encontrei colunas de nome e e-mail na planilha. Confira o cabeçalho.";
-  }
 
   const senhaPadrao = await bcrypt.hash("esperancar123", 10);
 
@@ -1083,8 +1081,6 @@ export async function importarEstudantesPlanilha(
     const sexoGenero = idxSexo !== -1 ? (linha[idxSexo] ?? "").trim() : "";
     const racaCor = idxRacaCor !== -1 ? (linha[idxRacaCor] ?? "").trim() : "";
     const cursoDesejado = idxCursoDesejado !== -1 ? (linha[idxCursoDesejado] ?? "").trim() : "";
-    const universidadeDesejada =
-      idxUniversidadeDesejada !== -1 ? (linha[idxUniversidadeDesejada] ?? "").trim() : "";
     const provasQueVaiFazer = idxProvas !== -1 ? classificarProvas(linha[idxProvas] ?? "") : undefined;
     const jaFezEnem = idxJaFezEnem !== -1 ? classificarSimNao(linha[idxJaFezEnem] ?? "") : undefined;
     const rendaFamiliar =
@@ -1134,10 +1130,6 @@ export async function importarEstudantesPlanilha(
           sexoGenero: preencher(estudanteExistente.sexoGenero, sexoGenero || undefined),
           racaCor: preencher(estudanteExistente.racaCor, racaCor || undefined),
           cursoDesejado: preencher(estudanteExistente.cursoDesejado, cursoDesejado || undefined),
-          universidadeDesejada: preencher(
-            estudanteExistente.universidadeDesejada,
-            universidadeDesejada || undefined
-          ),
           provasQueVaiFazer: preencher(estudanteExistente.provasQueVaiFazer, provasQueVaiFazer),
           jaFezEnem: preencher(estudanteExistente.jaFezEnem, jaFezEnem),
           rendaFamiliar: preencher(estudanteExistente.rendaFamiliar, rendaFamiliar),
@@ -1162,7 +1154,6 @@ export async function importarEstudantesPlanilha(
           sexoGenero: sexoGenero || undefined,
           racaCor: racaCor || undefined,
           cursoDesejado: cursoDesejado || undefined,
-          universidadeDesejada: universidadeDesejada || undefined,
           provasQueVaiFazer,
           jaFezEnem,
           rendaFamiliar,

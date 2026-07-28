@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getEstudantesDoNucleo, getNucleoInfo, getTurmasDoNucleo } from "@/lib/queries/gestao";
 import { ImportarPlanilhaForm } from "@/components/gestao/ImportarPlanilhaForm";
+import { FiltroStatusEstudantes } from "@/components/gestao/FiltroStatusEstudantes";
 
 const STATUS_LABEL: Record<string, string> = {
   EM_AVALIACAO: "Em avaliação",
@@ -20,14 +21,19 @@ const STATUS_TONE: Record<string, string> = {
   TRANSFERIDO: "bg-ink-faint/10 text-ink-faint",
 };
 
-export default async function EstudantesPage() {
+export default async function EstudantesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
   const session = await auth();
   if (!session?.user?.nucleoId) redirect("/login");
 
+  const { status } = await searchParams;
   const somenteLeitura = session.user.role === "PROFESSOR";
 
   const [matriculas, nucleoInfo, turmas] = await Promise.all([
-    getEstudantesDoNucleo(session.user.nucleoId),
+    getEstudantesDoNucleo(session.user.nucleoId, status),
     getNucleoInfo(session.user.nucleoId),
     somenteLeitura ? Promise.resolve([]) : getTurmasDoNucleo(session.user.nucleoId),
   ]);
@@ -79,6 +85,13 @@ export default async function EstudantesPage() {
           </div>
           <h1 className="font-display text-2xl">Estudantes</h1>
         </div>
+        <FiltroStatusEstudantes statusAtual={status} />
+        <a
+          href="/api/exportar-estudantes"
+          className="font-bold text-sm px-4 py-2.5 rounded-full border border-border-strong text-ink-soft hover:text-ink"
+        >
+          ⬇️ Exportar CSV
+        </a>
         {nucleoInfo?.googleSheetsUrl && (
           <a
             href={nucleoInfo.googleSheetsUrl}
@@ -95,11 +108,10 @@ export default async function EstudantesPage() {
         <div className="bg-surface border border-border rounded-[18px] p-5 mb-4">
           <ImportarPlanilhaForm turmas={turmas} />
           <p className="text-xs text-ink-faint mt-2">
-            No Google Sheets: Arquivo → Fazer download → Valores separados por vírgula (.csv), e
-            envie o arquivo baixado aqui. Nome, e-mail, celular, data de nascimento, escola,
-            cidade/bairro, sexo/gênero e curso/universidade desejada são importados quando essas
-            colunas existirem — CPF, RG e dados bancários nunca entram no sistema. Nada é
-            publicado na internet.
+            No Google Sheets: Arquivo → Fazer download → Valores separados por vírgula (.csv).
+            Depois de escolher o arquivo, diga o que cada coluna significa antes de importar —
+            assim nenhum dado cai no campo errado. Nunca importe CPF, RG ou dados bancários.
+            Nada é publicado na internet.
           </p>
         </div>
       )}

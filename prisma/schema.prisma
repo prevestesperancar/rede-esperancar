@@ -114,6 +114,7 @@ model Estudante {
   status          StatusEstudante @default(EM_AVALIACAO)
   ultimoContato   DateTime?
   ultimoContatoObs String?
+  observacoesInternas String?
 
   // Dados coletados na inscrição (não sensíveis — CPF/RG/dados bancários ficam só na planilha)
   dataNascimento  DateTime?

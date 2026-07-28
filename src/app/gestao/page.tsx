@@ -13,12 +13,14 @@ import {
   getMonitoriasDoProfessor,
   getTurmasDoProfessor,
   getPerfilEstudantesAtivos,
+  getAniversariantesProximos,
 } from "@/lib/queries/gestao";
 import { AprovarRecusarButtons } from "@/components/gestao/AprovarRecusarButtons";
 import { NovaProvaForm } from "@/components/gestao/NovaProvaForm";
 import { ApagarItemButton } from "@/components/gestao/ApagarItemButton";
 import { FrequenciaDashboard } from "@/components/gestao/FrequenciaDashboard";
 import { PerfilEstudantesChart } from "@/components/gestao/PerfilEstudantesChart";
+import { AniversariantesCard } from "@/components/gestao/AniversariantesCard";
 import { apagarProva } from "@/actions/gestao";
 
 export default async function GestaoDashboardPage({
@@ -33,14 +35,52 @@ export default async function GestaoDashboardPage({
   const dataSelecionada = data ?? new Date().toISOString().slice(0, 10);
 
   if (session.user.role === "APOIO_PSICOSSOCIAL") {
-    const nucleoNome = await getNucleoNome(nucleoId);
+    const [nucleoNome, stats, perfil, frequencias, aniversariantes] = await Promise.all([
+      getNucleoNome(nucleoId),
+      getGestaoStats(nucleoId),
+      getPerfilEstudantesAtivos(nucleoId),
+      getFrequenciaResumoDoNucleo(nucleoId, dataSelecionada),
+      getAniversariantesProximos(nucleoId),
+    ]);
+
     return (
       <div>
         <div className="font-mono text-xs font-bold text-terracotta uppercase tracking-wide mb-1.5">
           {nucleoNome}
         </div>
         <h1 className="font-display text-2xl mb-6">Apoio psicossocial</h1>
-        <div className="grid sm:grid-cols-2 gap-4 max-w-xl">
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 mb-7">
+          <div className="bg-surface border border-border rounded-2xl p-4">
+            <div className="font-mono font-bold text-2xl">{stats.estudantesAtivos}</div>
+            <div className="text-xs font-semibold text-ink-soft mt-0.5">Estudantes ativos</div>
+          </div>
+          <div className="bg-surface border border-border rounded-2xl p-4">
+            <div className="font-mono font-bold text-2xl">{stats.turmas}</div>
+            <div className="text-xs font-semibold text-ink-soft mt-0.5">Turmas</div>
+          </div>
+          <div className="bg-surface border border-border rounded-2xl p-4">
+            <div className="font-mono font-bold text-2xl">{stats.professores}</div>
+            <div className="text-xs font-semibold text-ink-soft mt-0.5">Professores</div>
+          </div>
+        </div>
+
+        <AniversariantesCard aniversariantes={aniversariantes} />
+
+        <PerfilEstudantesChart
+          total={perfil.total}
+          genero={perfil.genero}
+          racaCor={perfil.racaCor}
+          rendaFamiliar={perfil.rendaFamiliar}
+          cursoDesejado={perfil.cursoDesejado}
+          bairroMunicipio={perfil.bairroMunicipio}
+          idadeMedia={perfil.idadeMedia}
+          presencaMediaMes={perfil.presencaMediaMes}
+        />
+
+        <FrequenciaDashboard turmas={frequencias} data={dataSelecionada} />
+
+        <div className="grid sm:grid-cols-2 gap-4 max-w-xl mt-4">
           <Link
             href="/gestao/frequencia"
             className="bg-surface border border-border rounded-[18px] p-5 hover:-translate-y-0.5 transition-transform"
@@ -121,16 +161,18 @@ export default async function GestaoDashboardPage({
     );
   }
 
-  const [stats, pendentes, turmas, avisos, provas, frequencias, nucleoNome, perfil] = await Promise.all([
-    getGestaoStats(nucleoId),
-    getInscricoesPendentes(nucleoId),
-    getTurmasDoNucleo(nucleoId),
-    getAvisosDoNucleo(nucleoId),
-    getProvasDoNucleo(nucleoId),
-    getFrequenciaResumoDoNucleo(nucleoId, dataSelecionada),
-    getNucleoNome(nucleoId),
-    getPerfilEstudantesAtivos(nucleoId),
-  ]);
+  const [stats, pendentes, turmas, avisos, provas, frequencias, nucleoNome, perfil, aniversariantes] =
+    await Promise.all([
+      getGestaoStats(nucleoId),
+      getInscricoesPendentes(nucleoId),
+      getTurmasDoNucleo(nucleoId),
+      getAvisosDoNucleo(nucleoId),
+      getProvasDoNucleo(nucleoId),
+      getFrequenciaResumoDoNucleo(nucleoId, dataSelecionada),
+      getNucleoNome(nucleoId),
+      getPerfilEstudantesAtivos(nucleoId),
+      getAniversariantesProximos(nucleoId),
+    ]);
 
   return (
     <div>
@@ -182,11 +224,17 @@ export default async function GestaoDashboardPage({
         </div>
       </div>
 
+      <AniversariantesCard aniversariantes={aniversariantes} />
+
       <PerfilEstudantesChart
         total={perfil.total}
         genero={perfil.genero}
         racaCor={perfil.racaCor}
         rendaFamiliar={perfil.rendaFamiliar}
+        cursoDesejado={perfil.cursoDesejado}
+        bairroMunicipio={perfil.bairroMunicipio}
+        idadeMedia={perfil.idadeMedia}
+        presencaMediaMes={perfil.presencaMediaMes}
       />
 
       <FrequenciaDashboard turmas={frequencias} data={dataSelecionada} />

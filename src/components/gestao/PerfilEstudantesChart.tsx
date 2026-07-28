@@ -28,11 +28,19 @@ export function PerfilEstudantesChart({
   genero,
   racaCor,
   rendaFamiliar,
+  cursoDesejado,
+  bairroMunicipio,
+  idadeMedia,
+  presencaMediaMes,
 }: {
   total: number;
   genero: { label: string; total: number }[];
   racaCor: { label: string; total: number }[];
   rendaFamiliar: { label: string; total: number }[];
+  cursoDesejado: { label: string; total: number }[];
+  bairroMunicipio: { label: string; total: number }[];
+  idadeMedia: number | null;
+  presencaMediaMes: number | null;
 }) {
   return (
     <div className="bg-surface border border-border rounded-[18px] p-5 mb-4">
@@ -45,26 +53,60 @@ export function PerfilEstudantesChart({
       {total === 0 ? (
         <p className="text-sm text-ink-faint">Nenhum estudante ativo ainda.</p>
       ) : (
-        <div className="grid sm:grid-cols-3 gap-5">
-          <div>
-            <div className="text-xs font-bold text-ink-faint uppercase tracking-wide mb-2.5">
-              Gênero
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mb-5">
+            <div className="bg-paper rounded-2xl p-3.5">
+              <div className="font-mono font-bold text-xl">
+                {idadeMedia !== null ? `${idadeMedia}` : "—"}
+              </div>
+              <div className="text-[11px] font-semibold text-ink-soft mt-0.5">Idade média</div>
             </div>
-            <Barra dados={genero} />
-          </div>
-          <div>
-            <div className="text-xs font-bold text-ink-faint uppercase tracking-wide mb-2.5">
-              Raça/cor
+            <div className="bg-paper rounded-2xl p-3.5">
+              <div className="font-mono font-bold text-xl">
+                {presencaMediaMes !== null ? `${presencaMediaMes}%` : "—"}
+              </div>
+              <div className="text-[11px] font-semibold text-ink-soft mt-0.5">
+                Presença média no mês
+              </div>
             </div>
-            <Barra dados={racaCor} />
           </div>
-          <div>
-            <div className="text-xs font-bold text-ink-faint uppercase tracking-wide mb-2.5">
-              Renda familiar
+
+          <div className="grid sm:grid-cols-3 gap-5 mb-5">
+            <div>
+              <div className="text-xs font-bold text-ink-faint uppercase tracking-wide mb-2.5">
+                Gênero
+              </div>
+              <Barra dados={genero} />
             </div>
-            <Barra dados={rendaFamiliar} />
+            <div>
+              <div className="text-xs font-bold text-ink-faint uppercase tracking-wide mb-2.5">
+                Raça/cor
+              </div>
+              <Barra dados={racaCor} />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-ink-faint uppercase tracking-wide mb-2.5">
+                Renda familiar
+              </div>
+              <Barra dados={rendaFamiliar} />
+            </div>
           </div>
-        </div>
+
+          <div className="grid sm:grid-cols-2 gap-5">
+            <div>
+              <div className="text-xs font-bold text-ink-faint uppercase tracking-wide mb-2.5">
+                Curso desejado
+              </div>
+              <Barra dados={cursoDesejado} />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-ink-faint uppercase tracking-wide mb-2.5">
+                Bairro/município
+              </div>
+              <Barra dados={bairroMunicipio} />
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

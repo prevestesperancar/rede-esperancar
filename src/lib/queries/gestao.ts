@@ -56,8 +56,17 @@ export async function getPerfilEstudantesAtivos(nucleoId: string) {
       estudante: { status: { notIn: ["DESISTENTE", "TRANSFERIDO"] } },
     },
     select: {
+      estudanteId: true,
       estudante: {
-        select: { sexoGenero: true, racaCor: true, rendaFamiliar: true },
+        select: {
+          sexoGenero: true,
+          racaCor: true,
+          rendaFamiliar: true,
+          cursoDesejado: true,
+          bairro: true,
+          municipio: true,
+          dataNascimento: true,
+        },
       },
     },
     distinct: ["estudanteId"],
@@ -74,12 +83,87 @@ export async function getPerfilEstudantesAtivos(nucleoId: string) {
       .sort((a, b) => b.total - a.total);
   };
 
+  const idades = matriculas
+    .map((m) => m.estudante.dataNascimento)
+    .filter((d): d is Date => d !== null)
+    .map((d) => {
+      const hoje = new Date();
+      let anos = hoje.getFullYear() - d.getFullYear();
+      const mes = hoje.getMonth() - d.getMonth();
+      if (mes < 0 || (mes === 0 && hoje.getDate() < d.getDate())) anos--;
+      return anos;
+    });
+  const idadeMedia = idades.length
+    ? Math.round((idades.reduce((a, b) => a + b, 0) / idades.length) * 10) / 10
+    : null;
+
+  const bairroMunicipio = contar(
+    matriculas.map((m) =>
+      m.estudante.bairro && m.estudante.municipio
+        ? `${m.estudante.bairro} — ${m.estudante.municipio}`
+        : m.estudante.bairro || m.estudante.municipio
+    )
+  );
+
+  const inicioMes = new Date();
+  inicioMes.setDate(1);
+  inicioMes.setHours(0, 0, 0, 0);
+
+  const estudanteIds = matriculas.map((m) => m.estudanteId);
+  const frequenciasMes = estudanteIds.length
+    ? await prisma.frequencia.findMany({
+        where: { estudanteId: { in: estudanteIds }, data: { gte: inicioMes } },
+        select: { presente: true },
+      })
+    : [];
+  const presencaMediaMes = frequenciasMes.length
+    ? Math.round((frequenciasMes.filter((f) => f.presente).length / frequenciasMes.length) * 100)
+    : null;
+
   return {
     total: matriculas.length,
     genero: contar(matriculas.map((m) => m.estudante.sexoGenero)),
     racaCor: contar(matriculas.map((m) => m.estudante.racaCor)),
     rendaFamiliar: contar(matriculas.map((m) => m.estudante.rendaFamiliar)),
+    cursoDesejado: contar(matriculas.map((m) => m.estudante.cursoDesejado)).slice(0, 6),
+    bairroMunicipio: bairroMunicipio.slice(0, 6),
+    idadeMedia,
+    presencaMediaMes,
   };
+}
+
+export async function getAniversariantesProximos(nucleoId: string, dias = 7) {
+  const matriculas = await prisma.matricula.findMany({
+    where: {
+      status: "APROVADA",
+      turma: { nucleoId },
+      estudante: {
+        status: { notIn: ["DESISTENTE", "TRANSFERIDO"] },
+        dataNascimento: { not: null },
+      },
+    },
+    select: {
+      estudante: { select: { id: true, dataNascimento: true, user: { select: { nome: true } } } },
+    },
+    distinct: ["estudanteId"],
+  });
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  return matriculas
+    .map((m) => {
+      const nascimento = m.estudante.dataNascimento!;
+      const aniversarioEsteAno = new Date(hoje.getFullYear(), nascimento.getMonth(), nascimento.getDate());
+      let diff = Math.round((aniversarioEsteAno.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+      if (diff < 0) {
+        const aniversarioProximoAno = new Date(hoje.getFullYear() + 1, nascimento.getMonth(), nascimento.getDate());
+        diff = Math.round((aniversarioProximoAno.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+      }
+      return { estudanteId: m.estudante.id, nome: m.estudante.user.nome, dataNascimento: nascimento, diasRestantes: diff };
+    })
+    .filter((a) => a.diasRestantes <= dias)
+    .sort((a, b) => a.diasRestantes - b.diasRestantes);
 }
 
 export async function getInscricoesPendentes(nucleoId: string) {
@@ -104,12 +188,14 @@ export async function getTurmasDoNucleo(nucleoId: string) {
   });
 }
 
-export async function getEstudantesDoNucleo(nucleoId: string) {
+export async function getEstudantesDoNucleo(nucleoId: string, statusFiltro?: string) {
   return prisma.matricula.findMany({
     where: {
       status: "APROVADA",
       turma: { nucleoId },
-      estudante: { status: { notIn: ["DESISTENTE", "TRANSFERIDO"] } },
+      estudante: statusFiltro
+        ? { status: statusFiltro as "EM_AVALIACAO" | "PRESENTE" | "FALTANTE" | "DESISTENTE" | "TRANSFERIDO" }
+        : { status: { notIn: ["DESISTENTE", "TRANSFERIDO"] } },
     },
     include: { estudante: { include: { user: true } }, turma: true },
     orderBy: { createdAt: "asc" },

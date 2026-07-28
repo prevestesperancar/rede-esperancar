@@ -51,6 +51,7 @@ export function EditarEstudanteForm({
   pessoasEmCasa,
   trabalha,
   motivacao,
+  observacoesInternas,
 }: {
   estudanteId: string;
   nome: string;
@@ -73,6 +74,7 @@ export function EditarEstudanteForm({
   pessoasEmCasa: number | null;
   trabalha: boolean | null;
   motivacao: string | null;
+  observacoesInternas: string | null;
 }) {
   const [message, action, pending] = useActionState(atualizarEstudante, undefined);
   const [municipioSel, setMunicipioSel] = useState(municipio ?? "Rio de Janeiro");
@@ -303,6 +305,17 @@ export function EditarEstudanteForm({
           name="ultimoContatoObs"
           rows={2}
           placeholder="Ex: Ligamos hoje, confirmou presença no sábado."
+          className={`${inputClass} resize-none`}
+        />
+      </div>
+
+      <div>
+        <label className={labelClass}>Observações internas (só a equipe vê, o aluno não)</label>
+        <textarea
+          name="observacoesInternas"
+          defaultValue={observacoesInternas ?? ""}
+          rows={3}
+          placeholder="Anotações sensíveis para a equipe — nunca aparece para o estudante."
           className={`${inputClass} resize-none`}
         />
       </div>

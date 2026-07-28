@@ -25,3 +25,7 @@ export async function getQuestoesAleatorias(
 export async function getTodasQuestoes() {
   return prisma.questaoBanco.findMany({ orderBy: [{ prova: "asc" }, { materia: "asc" }] });
 }
+
+export async function getTodasDisciplinas() {
+  return prisma.disciplina.findMany({ orderBy: { nome: "asc" } });
+}

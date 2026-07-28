@@ -57,6 +57,15 @@ export function encontrarColuna(cabecalhos: string[], termos: string[]) {
   return -1;
 }
 
+export function toCsv(linhas: (string | number | null | undefined)[][]) {
+  const escapar = (valor: string | number | null | undefined) => {
+    const texto = valor === null || valor === undefined ? "" : String(valor);
+    if (/[",\n]/.test(texto)) return `"${texto.replace(/"/g, '""')}"`;
+    return texto;
+  };
+  return linhas.map((linha) => linha.map(escapar).join(",")).join("\r\n");
+}
+
 export function parseDataBr(valor: string): Date | null {
   const texto = valor.trim();
   if (!texto) return null;

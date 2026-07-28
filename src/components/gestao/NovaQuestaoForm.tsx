@@ -7,7 +7,7 @@ const inputClass =
   "w-full rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink";
 const labelClass = "block text-xs font-bold text-ink-faint uppercase tracking-wide mb-1";
 
-export function NovaQuestaoForm() {
+export function NovaQuestaoForm({ disciplinas }: { disciplinas: { id: string; nome: string }[] }) {
   const [message, action, pending] = useActionState(criarQuestaoBanco, undefined);
 
   return (
@@ -23,7 +23,14 @@ export function NovaQuestaoForm() {
         </div>
         <div>
           <label className={labelClass}>Matéria</label>
-          <input name="materia" required placeholder="Ex: Matemática" className={inputClass} />
+          <select name="materia" required className={`${inputClass} bg-surface`}>
+            <option value="">Selecione</option>
+            {disciplinas.map((d) => (
+              <option key={d.id} value={d.nome}>
+                {d.nome}
+              </option>
+            ))}
+          </select>
         </div>
         <div>
           <label className={labelClass}>Ano</label>

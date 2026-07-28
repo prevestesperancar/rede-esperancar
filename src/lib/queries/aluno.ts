@@ -45,9 +45,13 @@ export async function getTurmaAtivaDoEstudante(estudanteId: string) {
   return { ...matricula.turma, avisos };
 }
 
-export async function getMateriaisDoNucleo(nucleoId: string) {
+export async function getMateriaisDoNucleo(nucleoId: string, estudanteId?: string) {
   return prisma.material.findMany({
     where: { nucleoId },
+    include: {
+      disciplina: true,
+      favoritos: estudanteId ? { where: { estudanteId } } : false,
+    },
     orderBy: { createdAt: "desc" },
   });
 }

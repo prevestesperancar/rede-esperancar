@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { NotificationBell } from "@/components/common/NotificationBell";
 
 const ITEMS_COORDENACAO = [
   { href: "/gestao", label: "Dashboard", icon: "🏠" },
@@ -12,6 +13,7 @@ const ITEMS_COORDENACAO = [
   { href: "/gestao/materiais", label: "Materiais", icon: "📚" },
   { href: "/gestao/historias", label: "Histórias", icon: "💬" },
   { href: "/gestao/monitorias", label: "Monitorias", icon: "🧩" },
+  { href: "/gestao/redacoes", label: "Redação", icon: "✍️" },
   { href: "/gestao/eventos", label: "Eventos", icon: "📅" },
   { href: "/gestao/avisos", label: "Avisos", icon: "📢" },
   { href: "/gestao/simulados", label: "Simulados", icon: "📝" },
@@ -27,6 +29,7 @@ const ITEMS_PROFESSOR = [
   { href: "/gestao/estudantes", label: "Estudantes", icon: "🧑‍🎓" },
   { href: "/gestao/materiais", label: "Materiais", icon: "📚" },
   { href: "/gestao/monitorias", label: "Monitorias", icon: "🧩" },
+  { href: "/gestao/redacoes", label: "Redação", icon: "✍️" },
   { href: "/gestao/eventos", label: "Eventos", icon: "📅" },
   { href: "/gestao/avisos", label: "Avisos", icon: "📢" },
   { href: "/gestao/simulados", label: "Simulados", icon: "📝" },
@@ -55,12 +58,23 @@ export function Sidebar({
   pendentesCount,
   role,
   fotoUrl,
+  notificacoes = [],
+  naoLidas = 0,
 }: {
   userName: string;
   nucleoNome: string;
   pendentesCount: number;
   role: string;
   fotoUrl?: string | null;
+  notificacoes?: {
+    id: string;
+    tipo: string;
+    mensagem: string;
+    link: string | null;
+    lida: boolean;
+    createdAt: Date;
+  }[];
+  naoLidas?: number;
 }) {
   const pathname = usePathname();
 
@@ -75,15 +89,18 @@ export function Sidebar({
 
   return (
     <aside className="w-[230px] flex-shrink-0 bg-ink text-paper p-[18px] flex flex-col sticky top-0 h-screen">
-      <div className="flex items-center gap-2.5 mb-7">
-        <Image
-          src="/images/logo-icon.png"
-          alt="Rede Esperançar"
-          width={28}
-          height={28}
-          className="w-7 h-7"
-        />
-        <span className="font-display text-sm">Esperançar</span>
+      <div className="flex items-center justify-between gap-2.5 mb-7">
+        <div className="flex items-center gap-2.5">
+          <Image
+            src="/images/logo-icon.png"
+            alt="Rede Esperançar"
+            width={28}
+            height={28}
+            className="w-7 h-7"
+          />
+          <span className="font-display text-sm">Esperançar</span>
+        </div>
+        <NotificationBell notificacoes={notificacoes} naoLidas={naoLidas} dark />
       </div>
 
       <nav className="flex flex-col gap-1 flex-1">

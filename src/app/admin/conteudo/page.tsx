@@ -8,13 +8,15 @@ export default async function AdminConteudoPage() {
     <div>
       <h1 className="font-display text-2xl mb-1">Conteúdo do site</h1>
       <p className="text-sm text-ink-soft mb-7">
-        Edite o texto público de &ldquo;Quem somos nós&rdquo; e os dados de contato geral da rede.
+        Edite o texto público de &ldquo;Quem somos nós&rdquo;, &ldquo;Monitoria&rdquo;, &ldquo;Cotas e permanência&rdquo; e os dados de contato geral da rede.
       </p>
       <ConteudoSiteForm
         quemSomosTexto={conteudo?.quemSomosTexto ?? null}
         contatoEmail={conteudo?.contatoEmail ?? null}
         contatoTelefone={conteudo?.contatoTelefone ?? null}
         contatoEndereco={conteudo?.contatoEndereco ?? null}
+        monitoriaTexto={conteudo?.monitoriaTexto ?? null}
+        cotasTexto={conteudo?.cotasTexto ?? null}
       />
     </div>
   );

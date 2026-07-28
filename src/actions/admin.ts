@@ -111,6 +111,8 @@ export async function atualizarConteudoSite(
   const contatoEmail = formData.get("contatoEmail") as string;
   const contatoTelefone = formData.get("contatoTelefone") as string;
   const contatoEndereco = formData.get("contatoEndereco") as string;
+  const monitoriaTexto = formData.get("monitoriaTexto") as string;
+  const cotasTexto = formData.get("cotasTexto") as string;
 
   const existente = await prisma.conteudoSite.findFirst();
 
@@ -119,6 +121,8 @@ export async function atualizarConteudoSite(
     contatoEmail: contatoEmail || null,
     contatoTelefone: contatoTelefone || null,
     contatoEndereco: contatoEndereco || null,
+    monitoriaTexto: monitoriaTexto || null,
+    cotasTexto: cotasTexto || null,
   };
 
   if (existente) {
@@ -130,6 +134,8 @@ export async function atualizarConteudoSite(
   revalidatePath("/admin/conteudo");
   revalidatePath("/quem-somos");
   revalidatePath("/contato");
+  revalidatePath("/monitoria");
+  revalidatePath("/cotas-e-permanencia");
   return "Conteúdo atualizado!";
 }
 

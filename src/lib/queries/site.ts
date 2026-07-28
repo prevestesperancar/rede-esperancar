@@ -57,6 +57,21 @@ export async function getEventosPublicos() {
   });
 }
 
+export async function getGaleriaEventosPublica(limit = 24) {
+  return prisma.galeriaEvento.findMany({
+    orderBy: { data: "desc" },
+    take: limit,
+    include: { nucleo: { select: { nome: true } } },
+  });
+}
+
+export async function getNucleosComCoordenadas() {
+  return prisma.nucleo.findMany({
+    where: { ativo: true, latitude: { not: null }, longitude: { not: null } },
+    select: { id: true, nome: true, slug: true, bairro: true, cidade: true, latitude: true, longitude: true },
+  });
+}
+
 export async function getDepoimentosPublicos() {
   return prisma.depoimento.findMany({
     orderBy: { createdAt: "desc" },

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Sidebar } from "@/components/gestao/Sidebar";
+import { getNotificacoesDoUsuario, getContagemNaoLidas } from "@/lib/queries/notificacoes";
 
 export default async function GestaoLayout({
   children,
@@ -24,6 +25,11 @@ export default async function GestaoLayout({
 
   if (session.user.role !== "ADMIN" && !nucleo) redirect("/");
 
+  const [notificacoes, naoLidas] = await Promise.all([
+    getNotificacoesDoUsuario(session.user.id),
+    getContagemNaoLidas(session.user.id),
+  ]);
+
   return (
     <div className="flex min-h-screen">
       <Sidebar
@@ -32,6 +38,8 @@ export default async function GestaoLayout({
         pendentesCount={pendentesCount}
         role={session.user.role}
         fotoUrl={usuario?.fotoUrl ?? null}
+        notificacoes={notificacoes}
+        naoLidas={naoLidas}
       />
       <main className="flex-1 min-w-0 p-9">{children}</main>
     </div>

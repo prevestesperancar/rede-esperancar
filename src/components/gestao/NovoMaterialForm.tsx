@@ -3,7 +3,14 @@
 import { useActionState } from "react";
 import { criarMaterial } from "@/actions/gestao";
 
-export function NovoMaterialForm() {
+const TIPO_LABEL: Record<string, string> = {
+  SLIDE: "Slide",
+  EXERCICIO: "Exercício",
+  VIDEO: "Vídeo",
+  OUTRO: "Outro",
+};
+
+export function NovoMaterialForm({ disciplinas }: { disciplinas: { id: string; nome: string }[] }) {
   const [error, action, pending] = useActionState(criarMaterial, undefined);
 
   return (
@@ -21,9 +28,39 @@ export function NovoMaterialForm() {
         rows={2}
         className="rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink resize-none"
       />
+      <div className="grid sm:grid-cols-3 gap-3">
+        <select
+          name="disciplinaId"
+          defaultValue=""
+          className="rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink bg-surface"
+        >
+          <option value="">Sem disciplina</option>
+          {disciplinas.map((d) => (
+            <option key={d.id} value={d.id}>
+              {d.nome}
+            </option>
+          ))}
+        </select>
+        <input
+          name="aula"
+          placeholder="Aula (ex: Aula 3 — Funções)"
+          className="rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink"
+        />
+        <select
+          name="tipo"
+          defaultValue="OUTRO"
+          className="rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink bg-surface"
+        >
+          {Object.entries(TIPO_LABEL).map(([valor, label]) => (
+            <option key={valor} value={valor}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </div>
       <div>
         <label className="block text-xs font-bold text-ink-faint uppercase tracking-wide mb-1">
-          Arquivo (PDF, imagem...)
+          Arquivo (PDF, imagem, link de vídeo em anexo...)
         </label>
         <input
           name="arquivo"

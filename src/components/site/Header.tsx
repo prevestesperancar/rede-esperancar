@@ -16,10 +16,14 @@ export function Header() {
           Rede Esperançar
         </span>
       </Link>
-      <nav className="hidden md:flex gap-7 font-semibold text-sm text-ink-soft">
+      <nav className="hidden lg:flex gap-5 font-semibold text-sm text-ink-soft">
         <Link href="/quem-somos">Quem somos nós?</Link>
         <Link href="/nucleos">Prés</Link>
+        <Link href="/mapa">Mapa das unidades</Link>
+        <Link href="/monitoria">Monitoria</Link>
+        <Link href="/cotas-e-permanencia">Cotas e permanência</Link>
         <Link href="/materiais">Materiais</Link>
+        <Link href="/eventos">Eventos</Link>
         <Link href="/contato">Contato</Link>
       </nav>
       <Link

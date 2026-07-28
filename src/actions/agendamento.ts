@@ -41,6 +41,15 @@ export async function solicitarMonitoria(
     },
   });
 
+  await prisma.notificacao.create({
+    data: {
+      userId: professorId,
+      tipo: "AGENDAMENTO",
+      mensagem: `${session.user.name ?? "Um estudante"} pediu uma monitoria.`,
+      link: "/gestao/monitorias",
+    },
+  });
+
   revalidatePath("/aluno");
   revalidatePath("/aluno/monitorias");
   revalidatePath("/gestao/monitorias");
@@ -65,6 +74,21 @@ export async function solicitarApoio(
       mensagem: mensagem || null,
     },
   });
+
+  const equipeApoio = await prisma.user.findMany({
+    where: { nucleoId: session.user.nucleoId, role: "APOIO_PSICOSSOCIAL" },
+    select: { id: true },
+  });
+  if (equipeApoio.length > 0) {
+    await prisma.notificacao.createMany({
+      data: equipeApoio.map((a) => ({
+        userId: a.id,
+        tipo: "AGENDAMENTO",
+        mensagem: `${session.user.name ?? "Um estudante"} pediu uma conversa com o apoio psicossocial.`,
+        link: "/gestao",
+      })),
+    });
+  }
 
   revalidatePath("/aluno");
   revalidatePath("/aluno/apoio");
@@ -127,6 +151,24 @@ export async function responderSolicitacao(
     },
   });
 
+  const estudanteParaNotificar = await prisma.estudante.findUnique({
+    where: { id: solicitacao.estudanteId },
+    select: { userId: true },
+  });
+  if (estudanteParaNotificar) {
+    await prisma.notificacao.create({
+      data: {
+        userId: estudanteParaNotificar.userId,
+        tipo: "AGENDAMENTO",
+        mensagem:
+          solicitacao.tipo === "MONITORIA"
+            ? "O professor sugeriu horários pra sua monitoria — escolha um."
+            : "O apoio psicossocial sugeriu horários pra conversar — escolha um.",
+        link: solicitacao.tipo === "MONITORIA" ? "/aluno/monitorias" : "/aluno/apoio",
+      },
+    });
+  }
+
   revalidatePath("/gestao/monitorias");
   revalidatePath("/gestao");
   revalidatePath("/aluno");
@@ -139,7 +181,7 @@ export async function escolherHorarioSolicitacao(
   solicitacaoId: string,
   escolha: 1 | 2 | 3
 ): Promise<string | undefined> {
-  const { estudante } = await requireEstudante();
+  const { session, estudante } = await requireEstudante();
 
   const solicitacao = await prisma.solicitacaoAgendamento.findUnique({ where: { id: solicitacaoId } });
   if (!solicitacao || solicitacao.estudanteId !== estudante.id) return "Solicitação não encontrada.";
@@ -165,6 +207,20 @@ export async function escolherHorarioSolicitacao(
     where: { id: solicitacaoId },
     data: { status: "CONFIRMADO", escolhaData, confirmadoEm: new Date() },
   });
+
+  const destinatarioId = solicitacao.professorId ?? solicitacao.respondidoPorId;
+  if (destinatarioId) {
+    await prisma.notificacao.create({
+      data: {
+        userId: destinatarioId,
+        tipo: "AGENDAMENTO",
+        mensagem: `${session.user.name ?? "O estudante"} confirmou um horário de ${
+          solicitacao.tipo === "MONITORIA" ? "monitoria" : "conversa"
+        }.`,
+        link: solicitacao.tipo === "MONITORIA" ? "/gestao/monitorias" : "/gestao",
+      },
+    });
+  }
 
   revalidatePath("/aluno");
   revalidatePath("/aluno/monitorias");

@@ -8,11 +8,15 @@ export function ConteudoSiteForm({
   contatoEmail,
   contatoTelefone,
   contatoEndereco,
+  monitoriaTexto,
+  cotasTexto,
 }: {
   quemSomosTexto: string | null;
   contatoEmail: string | null;
   contatoTelefone: string | null;
   contatoEndereco: string | null;
+  monitoriaTexto: string | null;
+  cotasTexto: string | null;
 }) {
   const [message, action, pending] = useActionState(atualizarConteudoSite, undefined);
 
@@ -25,6 +29,30 @@ export function ConteudoSiteForm({
         <textarea
           name="quemSomosTexto"
           defaultValue={quemSomosTexto ?? ""}
+          rows={8}
+          placeholder="Deixe em branco para usar o texto padrão do site."
+          className="w-full rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink resize-none"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-bold text-ink-faint uppercase tracking-wide mb-1">
+          Texto da página &ldquo;Monitoria&rdquo;
+        </label>
+        <textarea
+          name="monitoriaTexto"
+          defaultValue={monitoriaTexto ?? ""}
+          rows={8}
+          placeholder="Deixe em branco para usar o texto padrão do site."
+          className="w-full rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink resize-none"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-bold text-ink-faint uppercase tracking-wide mb-1">
+          Texto da página &ldquo;Cotas e permanência na universidade&rdquo;
+        </label>
+        <textarea
+          name="cotasTexto"
+          defaultValue={cotasTexto ?? ""}
           rows={8}
           placeholder="Deixe em branco para usar o texto padrão do site."
           className="w-full rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink resize-none"

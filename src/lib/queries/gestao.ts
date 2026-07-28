@@ -267,6 +267,7 @@ export async function getProfessoresDoNucleo(nucleoId: string) {
 export async function getMateriaisDoNucleoGestao(nucleoId: string) {
   return prisma.material.findMany({
     where: { nucleoId },
+    include: { disciplina: true },
     orderBy: { createdAt: "desc" },
   });
 }
@@ -323,6 +324,13 @@ export async function getDepoimentosDoNucleo(nucleoId: string) {
   return prisma.depoimento.findMany({
     where: { nucleoId },
     orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function getGaleriaEventosDoNucleo(nucleoId: string) {
+  return prisma.galeriaEvento.findMany({
+    where: { nucleoId },
+    orderBy: { data: "desc" },
   });
 }
 

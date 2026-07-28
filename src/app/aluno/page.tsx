@@ -104,12 +104,20 @@ export default async function AlunoDashboardPage() {
         </div>
       )}
 
-      <Link
-        href="/aluno/apoio"
-        className="flex items-center justify-center gap-2 bg-terracotta/10 text-terracotta font-extrabold text-sm py-3 rounded-full mb-5"
-      >
-        💬 Falar com o apoio psicossocial
-      </Link>
+      <div className="grid grid-cols-2 gap-3 mb-5">
+        <Link
+          href="/aluno/apoio"
+          className="flex items-center justify-center gap-2 bg-terracotta/10 text-terracotta font-extrabold text-sm py-3 rounded-full"
+        >
+          💬 Apoio psicossocial
+        </Link>
+        <Link
+          href="/aluno/redacao"
+          className="flex items-center justify-center gap-2 bg-yellow/20 text-yellow-ink font-extrabold text-sm py-3 rounded-full"
+        >
+          ✍️ Redação
+        </Link>
+      </div>
 
       {(solicitacoesMonitoria.length > 0 || solicitacoesApoio.length > 0) && (
         <div className="mb-5 flex flex-col gap-4">
@@ -132,6 +140,15 @@ export default async function AlunoDashboardPage() {
             </div>
           )}
         </div>
+      )}
+
+      {turma && (
+        <Link
+          href="/aluno/cronograma"
+          className="flex items-center justify-center gap-2 bg-teal/10 text-teal font-extrabold text-sm py-3 rounded-full mb-5"
+        >
+          🗓️ Ver meu cronograma de estudos
+        </Link>
       )}
 
       {turma ? (

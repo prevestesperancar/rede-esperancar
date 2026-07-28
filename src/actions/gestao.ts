@@ -270,6 +270,9 @@ export async function criarMaterial(_prevState: string | undefined, formData: Fo
   const descricao = formData.get("descricao") as string;
   const arquivo = formData.get("arquivo") as File | null;
   const publico = formData.get("publico") === "on";
+  const disciplinaId = formData.get("disciplinaId") as string;
+  const aula = formData.get("aula") as string;
+  const tipo = (formData.get("tipo") as string) || "OUTRO";
 
   if (!titulo || !arquivo || arquivo.size === 0) return "Preencha título e selecione o arquivo.";
 
@@ -283,7 +286,16 @@ export async function criarMaterial(_prevState: string | undefined, formData: Fo
   if (!arquivoUrl) return "Não foi possível enviar o arquivo.";
 
   await prisma.material.create({
-    data: { titulo, descricao, arquivoUrl, publico, nucleoId: user.nucleoId },
+    data: {
+      titulo,
+      descricao,
+      arquivoUrl,
+      publico,
+      tipo,
+      aula: aula || null,
+      disciplinaId: disciplinaId || null,
+      nucleoId: user.nucleoId,
+    },
   });
 
   revalidatePath("/gestao/materiais");
@@ -525,6 +537,49 @@ export async function apagarDepoimento(depoimentoId: string) {
   await prisma.depoimento.delete({ where: { id: depoimentoId } });
   revalidatePath("/gestao/historias");
   revalidatePath("/");
+}
+
+export async function criarGaleriaEvento(_prevState: string | undefined, formData: FormData) {
+  const user = await requireCoordenacao();
+
+  const legenda = formData.get("legenda") as string;
+  const dataStr = formData.get("data") as string;
+  const imagem = formData.get("imagem") as File | null;
+
+  if (!imagem || imagem.size === 0) return "Selecione uma foto do evento.";
+
+  let imagemUrl: string | null;
+  try {
+    imagemUrl = await salvarArquivo(imagem, "galeria-eventos");
+  } catch (error) {
+    if (error instanceof ArquivoInvalidoError) return error.message;
+    throw error;
+  }
+  if (!imagemUrl) return "Não foi possível enviar a foto.";
+
+  await prisma.galeriaEvento.create({
+    data: {
+      imagemUrl,
+      legenda: legenda || null,
+      data: dataStr ? new Date(dataStr) : new Date(),
+      nucleoId: user.nucleoId,
+    },
+  });
+
+  revalidatePath("/gestao/eventos");
+  revalidatePath("/eventos");
+  return undefined;
+}
+
+export async function apagarGaleriaEvento(itemId: string) {
+  const user = await requireCoordenacao();
+  const item = await prisma.galeriaEvento.findUnique({ where: { id: itemId } });
+  if (!item || item.nucleoId !== user.nucleoId) {
+    throw new Error("Foto não encontrada neste núcleo.");
+  }
+  await prisma.galeriaEvento.delete({ where: { id: itemId } });
+  revalidatePath("/gestao/eventos");
+  revalidatePath("/eventos");
 }
 
 export async function criarProfessor(_prevState: string | undefined, formData: FormData) {

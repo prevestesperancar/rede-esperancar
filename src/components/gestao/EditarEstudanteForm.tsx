@@ -43,6 +43,7 @@ export function EditarEstudanteForm({
   escola,
   escolaPublica,
   cotista,
+  bolsista,
   jaFezEnem,
   cursoDesejado,
   universidadeDesejada,
@@ -66,6 +67,7 @@ export function EditarEstudanteForm({
   escola: string | null;
   escolaPublica: boolean | null;
   cotista: boolean | null;
+  bolsista: boolean | null;
   jaFezEnem: boolean | null;
   cursoDesejado: string | null;
   universidadeDesejada: string | null;
@@ -205,6 +207,14 @@ export function EditarEstudanteForm({
         <div>
           <label className={labelClass}>Cotista?</label>
           <select name="cotista" defaultValue={boolValue(cotista)} className={`${inputClass} bg-surface`}>
+            <option value="">Não informado</option>
+            <option value="sim">Sim</option>
+            <option value="nao">Não</option>
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Bolsista?</label>
+          <select name="bolsista" defaultValue={boolValue(bolsista)} className={`${inputClass} bg-surface`}>
             <option value="">Não informado</option>
             <option value="sim">Sim</option>
             <option value="nao">Não</option>

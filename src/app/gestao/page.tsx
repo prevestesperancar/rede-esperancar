@@ -22,6 +22,11 @@ import { FrequenciaDashboard } from "@/components/gestao/FrequenciaDashboard";
 import { PerfilEstudantesChart } from "@/components/gestao/PerfilEstudantesChart";
 import { AniversariantesCard } from "@/components/gestao/AniversariantesCard";
 import { apagarProva } from "@/actions/gestao";
+import { getSolicitacoesApoioPendentes, getSolicitacoesApoioConfirmadas, getSolicitacoesAtrasadas } from "@/lib/queries/agendamento";
+import { SolicitacoesPendentesCard } from "@/components/gestao/SolicitacoesPendentesCard";
+import { SolicitacoesConfirmadasCard } from "@/components/gestao/SolicitacoesConfirmadasCard";
+import { SolicitacoesAtrasadasCard } from "@/components/gestao/SolicitacoesAtrasadasCard";
+import { prisma } from "@/lib/prisma";
 
 export default async function GestaoDashboardPage({
   searchParams,
@@ -35,13 +40,17 @@ export default async function GestaoDashboardPage({
   const dataSelecionada = data ?? new Date().toISOString().slice(0, 10);
 
   if (session.user.role === "APOIO_PSICOSSOCIAL") {
-    const [nucleoNome, stats, perfil, frequencias, aniversariantes] = await Promise.all([
-      getNucleoNome(nucleoId),
-      getGestaoStats(nucleoId),
-      getPerfilEstudantesAtivos(nucleoId),
-      getFrequenciaResumoDoNucleo(nucleoId, dataSelecionada),
-      getAniversariantesProximos(nucleoId),
-    ]);
+    const [nucleoNome, stats, perfil, frequencias, aniversariantes, apoioPendentes, apoioConfirmadas, nucleo] =
+      await Promise.all([
+        getNucleoNome(nucleoId),
+        getGestaoStats(nucleoId),
+        getPerfilEstudantesAtivos(nucleoId),
+        getFrequenciaResumoDoNucleo(nucleoId, dataSelecionada),
+        getAniversariantesProximos(nucleoId),
+        getSolicitacoesApoioPendentes(nucleoId),
+        getSolicitacoesApoioConfirmadas(nucleoId),
+        prisma.nucleo.findUnique({ where: { id: nucleoId }, select: { linkApoioPsicossocial: true } }),
+      ]);
 
     return (
       <div>
@@ -66,6 +75,16 @@ export default async function GestaoDashboardPage({
         </div>
 
         <AniversariantesCard aniversariantes={aniversariantes} />
+
+        <SolicitacoesPendentesCard
+          titulo="Solicitações de conversa"
+          solicitacoes={apoioPendentes}
+        />
+        <SolicitacoesConfirmadasCard
+          titulo="Conversas confirmadas"
+          solicitacoes={apoioConfirmadas}
+          link={nucleo?.linkApoioPsicossocial ?? null}
+        />
 
         <PerfilEstudantesChart
           total={perfil.total}
@@ -161,7 +180,7 @@ export default async function GestaoDashboardPage({
     );
   }
 
-  const [stats, pendentes, turmas, avisos, provas, frequencias, nucleoNome, perfil, aniversariantes] =
+  const [stats, pendentes, turmas, avisos, provas, frequencias, nucleoNome, perfil, aniversariantes, atrasadas] =
     await Promise.all([
       getGestaoStats(nucleoId),
       getInscricoesPendentes(nucleoId),
@@ -172,6 +191,7 @@ export default async function GestaoDashboardPage({
       getNucleoNome(nucleoId),
       getPerfilEstudantesAtivos(nucleoId),
       getAniversariantesProximos(nucleoId),
+      getSolicitacoesAtrasadas(nucleoId),
     ]);
 
   return (
@@ -225,6 +245,8 @@ export default async function GestaoDashboardPage({
       </div>
 
       <AniversariantesCard aniversariantes={aniversariantes} />
+
+      <SolicitacoesAtrasadasCard solicitacoes={atrasadas} />
 
       <PerfilEstudantesChart
         total={perfil.total}

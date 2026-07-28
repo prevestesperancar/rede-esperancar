@@ -1,18 +1,55 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { importarEstudantesPlanilha } from "@/actions/gestao";
 import { parseCsv } from "@/lib/csv";
 import { CAMPOS_IMPORTACAO } from "@/lib/import-planilha-campos";
 
-function palpite(cabecalho: string): string {
-  const h = cabecalho
+const PALPITES: { termos: string[]; campo: string }[] = [
+  { termos: ["e-mail", "email"], campo: "email" },
+  { termos: ["nome completo", "nome"], campo: "nome" },
+  { termos: ["celular", "telefone", "whatsapp"], campo: "telefone" },
+  { termos: ["nascimento"], campo: "dataNascimento" },
+  { termos: ["situacao escolar", "serie", "ano escolar"], campo: "situacaoEscolar" },
+  { termos: ["nome da escola", "escola"], campo: "escola" },
+  { termos: ["escola publica", "rede publica"], campo: "escolaPublica" },
+  { termos: ["cidade", "municipio"], campo: "municipio" },
+  { termos: ["bairro"], campo: "bairro" },
+  { termos: ["sexo", "genero"], campo: "sexoGenero" },
+  { termos: ["raca", "cor"], campo: "racaCor" },
+  { termos: ["curso desejado", "curso"], campo: "cursoDesejado" },
+  { termos: ["provas que vai fazer", "vestibular"], campo: "provasQueVaiFazer" },
+  { termos: ["ja fez", "primeira vez"], campo: "jaFezEnem" },
+  { termos: ["renda"], campo: "rendaFamiliar" },
+  { termos: ["pessoas na", "pessoas em casa", "moradores"], campo: "pessoasEmCasa" },
+  { termos: ["trabalha"], campo: "trabalha" },
+  { termos: ["motivacao", "por que voce quer", "por que você quer"], campo: "motivacao" },
+];
+
+function normalizar(texto: string) {
+  return texto
     .toLowerCase()
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "");
-  if (h.includes("e-mail") || h.includes("email")) return "email";
-  if (h.includes("nome completo") || h === "nome") return "nome";
-  return "ignorar";
+}
+
+function gerarPalpites(cabecalho: string[]): Record<number, string> {
+  const usados = new Set<string>();
+  const mapa: Record<number, string> = {};
+  for (const { termos, campo } of PALPITES) {
+    if (usados.has(campo)) continue;
+    const index = cabecalho.findIndex(
+      (h, i) => mapa[i] === undefined && termos.some((t) => normalizar(h).includes(t))
+    );
+    if (index !== -1) {
+      mapa[index] = campo;
+      usados.add(campo);
+    }
+  }
+  cabecalho.forEach((_, i) => {
+    if (mapa[i] === undefined) mapa[i] = "ignorar";
+  });
+  return mapa;
 }
 
 export function ImportarPlanilhaForm({
@@ -25,6 +62,14 @@ export function ImportarPlanilhaForm({
   const [mapeamento, setMapeamento] = useState<Record<number, string>>({});
   const formRef = useRef<HTMLFormElement>(null);
 
+  useEffect(() => {
+    if (message?.startsWith("Importação concluída")) {
+      setCabecalho(null);
+      setMapeamento({});
+      formRef.current?.reset();
+    }
+  }, [message]);
+
   async function handleArquivo(e: React.ChangeEvent<HTMLInputElement>) {
     const arquivo = e.target.files?.[0];
     if (!arquivo) {
@@ -36,11 +81,7 @@ export function ImportarPlanilhaForm({
     if (linhas.length === 0) return;
     const header = linhas[0];
     setCabecalho(header);
-    const inicial: Record<number, string> = {};
-    header.forEach((h, i) => {
-      inicial[i] = palpite(h);
-    });
-    setMapeamento(inicial);
+    setMapeamento(gerarPalpites(header));
   }
 
   const mapeamentoJson = JSON.stringify(mapeamento);

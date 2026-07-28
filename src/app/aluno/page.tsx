@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import {
   getEstudanteByUserId,
   getTurmaAtivaDoEstudante,
-  getProximaProva,
+  getProximasProvasPorTipo,
 } from "@/lib/queries/aluno";
 import { GradeCard } from "@/components/aluno/GradeCard";
 
@@ -23,9 +23,9 @@ export default async function AlunoDashboardPage() {
   if (!estudante) redirect("/login");
 
   const turma = await getTurmaAtivaDoEstudante(estudante.id);
-  const proximaProva = session.user.nucleoId
-    ? await getProximaProva(session.user.nucleoId)
-    : null;
+  const provas = session.user.nucleoId
+    ? await getProximasProvasPorTipo(session.user.nucleoId)
+    : { enem: null, uerj: null, outras: [] };
   const primeiroNome = estudante.user.nome.split(" ")[0];
 
   const dias = turma
@@ -66,14 +66,21 @@ export default async function AlunoDashboardPage() {
         </div>
       </div>
 
-      {proximaProva && (
-        <div className="inline-flex items-center gap-2 bg-surface border border-border rounded-full pl-2 pr-3.5 py-2 mb-6">
-          <div className="bg-terracotta text-white font-mono font-bold text-xs w-[26px] h-[26px] rounded-full flex items-center justify-center">
-            {diasAte(proximaProva.data)}
-          </div>
-          <div className="text-xs font-bold text-ink-soft">
-            dias até {proximaProva.nome}
-          </div>
+      {(provas.enem || provas.uerj || provas.outras.length > 0) && (
+        <div className="flex flex-wrap gap-2 mb-6">
+          {[provas.enem, provas.uerj, ...provas.outras].filter(Boolean).map((prova) => (
+            <div
+              key={prova!.id}
+              className="inline-flex items-center gap-2 bg-surface border border-border rounded-full pl-2 pr-3.5 py-2"
+            >
+              <div className="bg-terracotta text-white font-mono font-bold text-xs w-[26px] h-[26px] rounded-full flex items-center justify-center">
+                {diasAte(prova!.data)}
+              </div>
+              <div className="text-xs font-bold text-ink-soft">
+                dias até {prova!.nome}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 

@@ -52,6 +52,8 @@ model User {
   disciplinasQueLeciona TurmaDisciplina[]
   nucleosQueCoordena    Nucleo[]          @relation("CoordenadorDoNucleo")
   monitoriasComoProfessor Monitoria[]
+  solicitacoesComoProfessor    SolicitacaoAgendamento[] @relation("SolicitacaoProfessor")
+  solicitacoesRespondidas      SolicitacaoAgendamento[] @relation("SolicitacaoRespondidoPor")
 
   @@index([nucleoId])
 }
@@ -68,6 +70,8 @@ model Nucleo {
   fotoUrl     String?
   instagram   String?
   googleSheetsUrl String?
+  linkMonitoriaProfessor String?
+  linkApoioPsicossocial  String?
   ativo       Boolean  @default(true)
   createdAt   DateTime @default(now())
 
@@ -84,6 +88,52 @@ model Nucleo {
   depoimentos Depoimento[]
   monitorias  Monitoria[]
   formularios FormularioCustom[]
+  solicitacoesAgendamento SolicitacaoAgendamento[]
+}
+
+enum TipoSolicitacao {
+  MONITORIA
+  APOIO
+}
+
+enum StatusSolicitacao {
+  PENDENTE
+  AGUARDANDO_ESCOLHA
+  CONFIRMADO
+  CANCELADO
+}
+
+model SolicitacaoAgendamento {
+  id     String            @id @default(cuid())
+  tipo   TipoSolicitacao
+  status StatusSolicitacao @default(PENDENTE)
+
+  mensagem String?
+
+  opcao1 DateTime?
+  opcao2 DateTime?
+  opcao3 DateTime?
+  escolhaData DateTime?
+
+  createdAt    DateTime  @default(now())
+  respondidoEm DateTime?
+  confirmadoEm DateTime?
+
+  estudanteId String
+  estudante   Estudante @relation(fields: [estudanteId], references: [id])
+
+  nucleoId String
+  nucleo   Nucleo @relation(fields: [nucleoId], references: [id])
+
+  professorId String?
+  professor   User?   @relation("SolicitacaoProfessor", fields: [professorId], references: [id])
+
+  respondidoPorId String?
+  respondidoPor   User?   @relation("SolicitacaoRespondidoPor", fields: [respondidoPorId], references: [id])
+
+  @@index([nucleoId])
+  @@index([professorId])
+  @@index([estudanteId])
 }
 
 model Turma {
@@ -115,6 +165,7 @@ model Estudante {
   ultimoContato   DateTime?
   ultimoContatoObs String?
   observacoesInternas String?
+  bolsista        Boolean?
 
   // Dados coletados na inscrição (não sensíveis — CPF/RG/dados bancários ficam só na planilha)
   dataNascimento  DateTime?
@@ -140,6 +191,7 @@ model Estudante {
   frequencias Frequencia[]
   redacoes    Redacao[]
   simulados   SimuladoResposta[]
+  solicitacoesAgendamento SolicitacaoAgendamento[]
 }
 
 model Matricula {

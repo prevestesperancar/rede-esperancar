@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { getEstudantesDoNucleo, getNucleoInfo, getTurmasDoNucleo } from "@/lib/queries/gestao";
 import { ImportarPlanilhaForm } from "@/components/gestao/ImportarPlanilhaForm";
 import { FiltroStatusEstudantes } from "@/components/gestao/FiltroStatusEstudantes";
+import { FiltroBolsistaEstudantes } from "@/components/gestao/FiltroBolsistaEstudantes";
 
 const STATUS_LABEL: Record<string, string> = {
   EM_AVALIACAO: "Em avaliação",
@@ -24,16 +25,16 @@ const STATUS_TONE: Record<string, string> = {
 export default async function EstudantesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; bolsista?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.nucleoId) redirect("/login");
 
-  const { status } = await searchParams;
+  const { status, bolsista } = await searchParams;
   const somenteLeitura = session.user.role === "PROFESSOR";
 
   const [matriculas, nucleoInfo, turmas] = await Promise.all([
-    getEstudantesDoNucleo(session.user.nucleoId, status),
+    getEstudantesDoNucleo(session.user.nucleoId, status, bolsista),
     getNucleoInfo(session.user.nucleoId),
     somenteLeitura ? Promise.resolve([]) : getTurmasDoNucleo(session.user.nucleoId),
   ]);
@@ -49,6 +50,12 @@ export default async function EstudantesPage({
             </div>
             <h1 className="font-display text-2xl">Estudantes</h1>
           </div>
+          <a
+            href="/api/exportar-estudantes"
+            className="font-bold text-sm px-4 py-2.5 rounded-full border border-border-strong text-ink-soft hover:text-ink"
+          >
+            ⬇️ Exportar lista de presença
+          </a>
         </div>
 
         <div className="bg-surface border border-border rounded-[18px] p-5">
@@ -86,11 +93,12 @@ export default async function EstudantesPage({
           <h1 className="font-display text-2xl">Estudantes</h1>
         </div>
         <FiltroStatusEstudantes statusAtual={status} />
+        <FiltroBolsistaEstudantes bolsistaAtual={bolsista} />
         <a
           href="/api/exportar-estudantes"
           className="font-bold text-sm px-4 py-2.5 rounded-full border border-border-strong text-ink-soft hover:text-ink"
         >
-          ⬇️ Exportar CSV
+          ⬇️ Exportar lista de presença
         </a>
         {nucleoInfo?.googleSheetsUrl && (
           <a
@@ -139,6 +147,11 @@ export default async function EstudantesPage({
                 {m.turma.nome} · {m.turma.periodo}
               </div>
             </div>
+            {m.estudante.bolsista && (
+              <span className="text-[11px] font-bold uppercase px-2.5 py-1 rounded-full bg-yellow/20 text-yellow-ink flex-shrink-0">
+                🎓 Bolsista
+              </span>
+            )}
             <span
               className={`text-[11px] font-bold uppercase px-2.5 py-1 rounded-full flex-shrink-0 ${
                 STATUS_TONE[m.estudante.status]

@@ -101,6 +101,7 @@ export async function atualizarEstudante(
   const motivacao = formData.get("motivacao") as string;
   const ultimoContatoObs = formData.get("ultimoContatoObs") as string;
   const observacoesInternas = formData.get("observacoesInternas") as string;
+  const bolsista = formData.get("bolsista") as string;
 
   if (!estudanteId) return "Estudante não encontrado.";
   if (!nome) return "O nome não pode ficar em branco.";
@@ -149,6 +150,7 @@ export async function atualizarEstudante(
       ultimoContatoObs,
       ultimoContato: ultimoContatoObs ? new Date() : undefined,
       observacoesInternas,
+      bolsista: boolOrNull(bolsista),
     },
   });
 
@@ -416,6 +418,9 @@ export async function editarMonitoria(_prevState: string | undefined, formData: 
 
   const monitoria = await prisma.monitoria.findUnique({ where: { id: monitoriaId } });
   if (!monitoria || monitoria.nucleoId !== user.nucleoId) return "Monitoria não encontrada neste núcleo.";
+  if (user.role === "PROFESSOR" && monitoria.professorId !== user.id) {
+    return "Você só pode editar monitorias vinculadas a você.";
+  }
   if (!diaSemana || !horaInicio || !horaFim) return "Preencha dia e horário.";
 
   await prisma.monitoria.update({

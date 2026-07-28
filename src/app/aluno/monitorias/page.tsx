@@ -1,10 +1,17 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import {
   getEstudanteByUserId,
   getTurmaAtivaDoEstudante,
   getMonitoriasDaTurma,
 } from "@/lib/queries/aluno";
+import {
+  getProfessoresDoNucleoParaSolicitacao,
+  getSolicitacoesDoEstudante,
+} from "@/lib/queries/agendamento";
+import { SolicitarMonitoriaForm } from "@/components/aluno/SolicitarMonitoriaForm";
+import { MinhasSolicitacoesList } from "@/components/aluno/MinhasSolicitacoesList";
 
 export default async function AlunoMonitoriasPage() {
   const session = await auth();
@@ -15,6 +22,19 @@ export default async function AlunoMonitoriasPage() {
 
   const turma = await getTurmaAtivaDoEstudante(estudante.id);
   const monitorias = turma ? await getMonitoriasDaTurma(turma.id, turma.nucleoId) : [];
+
+  const [professores, solicitacoes, nucleo] = session.user.nucleoId
+    ? await Promise.all([
+        getProfessoresDoNucleoParaSolicitacao(session.user.nucleoId),
+        getSolicitacoesDoEstudante(estudante.id),
+        prisma.nucleo.findUnique({
+          where: { id: session.user.nucleoId },
+          select: { linkMonitoriaProfessor: true },
+        }),
+      ])
+    : [[], [], null];
+
+  const solicitacoesMonitoria = solicitacoes.filter((s) => s.tipo === "MONITORIA");
 
   return (
     <div>
@@ -51,6 +71,21 @@ export default async function AlunoMonitoriasPage() {
           </p>
         )}
       </div>
+
+      <div className="mt-7">
+        <div className="font-bold text-sm mb-3">Solicitar monitoria individual</div>
+        <SolicitarMonitoriaForm professores={professores.map((p) => ({ id: p.id, nome: p.nome }))} />
+      </div>
+
+      {solicitacoesMonitoria.length > 0 && (
+        <div className="mt-5">
+          <div className="font-bold text-sm mb-3">Minhas solicitações</div>
+          <MinhasSolicitacoesList
+            solicitacoes={solicitacoesMonitoria}
+            link={nucleo?.linkMonitoriaProfessor ?? null}
+          />
+        </div>
+      )}
     </div>
   );
 }

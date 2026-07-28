@@ -65,3 +65,19 @@ export async function getProximaProva(nucleoId: string) {
     orderBy: { data: "asc" },
   });
 }
+
+export async function getProximasProvasPorTipo(nucleoId: string) {
+  const provas = await prisma.prova.findMany({
+    where: { nucleoId, data: { gte: new Date() } },
+    orderBy: { data: "asc" },
+  });
+
+  const normalizar = (t: string) => t.toUpperCase();
+  const enem = provas.find((p) => normalizar(p.nome).includes("ENEM")) ?? null;
+  const uerj = provas.find((p) => normalizar(p.nome).includes("UERJ")) ?? null;
+  const outras = provas.filter(
+    (p) => !normalizar(p.nome).includes("ENEM") && !normalizar(p.nome).includes("UERJ")
+  );
+
+  return { enem, uerj, outras };
+}

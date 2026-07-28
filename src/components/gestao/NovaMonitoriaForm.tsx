@@ -16,9 +16,11 @@ const DIAS_SEMANA = [
 export function NovaMonitoriaForm({
   turmas,
   disciplinas,
+  isProfessor,
 }: {
   turmas: { id: string; nome: string }[];
   disciplinas: { id: string; nome: string }[];
+  isProfessor?: boolean;
 }) {
   const [error, action, pending] = useActionState(criarMonitoria, undefined);
   const [escopo, setEscopo] = useState("turma");
@@ -58,18 +60,29 @@ export function NovaMonitoriaForm({
         </select>
       )}
 
-      <select
-        name="disciplinaId"
-        className="rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink bg-surface"
-        defaultValue=""
-      >
-        <option value="">Matéria (opcional)</option>
-        {disciplinas.map((d) => (
-          <option key={d.id} value={d.id}>
-            {d.nome}
-          </option>
-        ))}
-      </select>
+      {isProfessor ? (
+        disciplinas.length > 0 && (
+          <>
+            <input type="hidden" name="disciplinaId" value={disciplinas[0].id} />
+            <p className="text-xs text-ink-faint">
+              Matéria: <span className="font-bold text-ink">{disciplinas[0].nome}</span>
+            </p>
+          </>
+        )
+      ) : (
+        <select
+          name="disciplinaId"
+          className="rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink bg-surface"
+          defaultValue=""
+        >
+          <option value="">Matéria (opcional)</option>
+          {disciplinas.map((d) => (
+            <option key={d.id} value={d.id}>
+              {d.nome}
+            </option>
+          ))}
+        </select>
+      )}
 
       <div className="grid sm:grid-cols-3 gap-3">
         <select

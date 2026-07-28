@@ -7,6 +7,7 @@ import { AlterarSenhaForm } from "@/components/common/AlterarSenhaForm";
 import { CapaNucleoForm } from "@/components/gestao/CapaNucleoForm";
 import { InstagramNucleoForm } from "@/components/gestao/InstagramNucleoForm";
 import { GoogleSheetsNucleoForm } from "@/components/gestao/GoogleSheetsNucleoForm";
+import { LinksAgendamentoForm } from "@/components/gestao/LinksAgendamentoForm";
 
 export default async function GestaoPerfilPage() {
   const session = await auth();
@@ -62,6 +63,20 @@ export default async function GestaoPerfilPage() {
               sistema, use "Importar alunos de um arquivo CSV" em Estudantes.
             </p>
             <GoogleSheetsNucleoForm googleSheetsUrl={nucleo.googleSheetsUrl} />
+          </div>
+
+          <div className="bg-surface border border-border rounded-[18px] p-5 mb-6">
+            <div className="font-extrabold text-sm mb-3">
+              Links de videochamada para agendamentos
+            </div>
+            <p className="text-xs text-ink-faint mb-3">
+              Usados quando um estudante confirma uma monitoria com professor ou uma conversa com
+              o apoio psicossocial deste núcleo.
+            </p>
+            <LinksAgendamentoForm
+              linkMonitoriaProfessor={nucleo.linkMonitoriaProfessor}
+              linkApoioPsicossocial={nucleo.linkApoioPsicossocial}
+            />
           </div>
         </>
       )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const STATUS_LABEL: Record<string, string> = {
   EM_AVALIACAO: "Em avaliação",
@@ -12,13 +12,16 @@ const STATUS_LABEL: Record<string, string> = {
 
 export function FiltroStatusEstudantes({ statusAtual }: { statusAtual?: string }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   return (
     <select
       defaultValue={statusAtual ?? ""}
       onChange={(e) => {
-        const valor = e.target.value;
-        router.push(valor ? `/gestao/estudantes?status=${valor}` : "/gestao/estudantes");
+        const params = new URLSearchParams(searchParams.toString());
+        if (e.target.value) params.set("status", e.target.value);
+        else params.delete("status");
+        router.push(`/gestao/estudantes?${params.toString()}`);
       }}
       className="rounded-full border border-border-strong px-3.5 py-2 text-xs font-bold outline-none focus:border-ink bg-surface"
     >

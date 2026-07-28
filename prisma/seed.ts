@@ -405,19 +405,6 @@ async function main() {
     ],
   });
 
-  if ((await prisma.monitoria.count({ where: { turmaId: turma1.id } })) === 0)
-  await prisma.monitoria.create({
-    data: {
-      turmaId: turma1.id,
-      nucleoId: nucleo.id,
-      diaSemana: "Quarta-feira",
-      horaInicio: "19:00",
-      horaFim: "20:30",
-      materiais: "Lista de exercícios de Matemática 1 — frações e porcentagem",
-      link: "https://meet.google.com/exemplo-monitoria",
-    },
-  });
-
   console.log("Seed concluído:", { nucleo: nucleo.nome, turma: turma1.nome });
 }
 

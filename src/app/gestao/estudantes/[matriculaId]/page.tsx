@@ -107,20 +107,16 @@ export default async function EstudanteDetalhePage({
           </div>
         </div>
         <div className="bg-surface border border-border rounded-2xl p-4">
-          <div className="font-mono text-[11px] font-bold uppercase text-ink-faint mb-1">Idade</div>
-          <div className="text-sm">{anos !== null ? `${anos} anos` : "Não informado"}</div>
+          <div className="font-mono text-[11px] font-bold uppercase text-ink-faint mb-1">
+            Observações internas
+          </div>
+          <div className="text-sm whitespace-pre-line">
+            {estudante.observacoesInternas || "Nenhuma"}
+          </div>
         </div>
         <div className="bg-surface border border-border rounded-2xl p-4">
-          <div className="font-mono text-[11px] font-bold uppercase text-ink-faint mb-1">Escola</div>
-          <div className="text-sm">{estudante.escola ?? "Não informado"}</div>
-          <div className="text-xs text-ink-faint mt-1">
-            {estudante.escolaPublica === null
-              ? ""
-              : estudante.escolaPublica
-              ? "Escola pública"
-              : "Escola particular"}
-            {estudante.cotista ? " · Cotista" : ""}
-          </div>
+          <div className="font-mono text-[11px] font-bold uppercase text-ink-faint mb-1">Idade</div>
+          <div className="text-sm">{anos !== null ? `${anos} anos` : "Não informado"}</div>
         </div>
         <div className="bg-surface border border-border rounded-2xl p-4">
           <div className="font-mono text-[11px] font-bold uppercase text-ink-faint mb-1">
@@ -178,6 +174,7 @@ export default async function EstudanteDetalhePage({
           escola={estudante.escola}
           escolaPublica={estudante.escolaPublica}
           cotista={estudante.cotista}
+          bolsista={estudante.bolsista}
           jaFezEnem={estudante.jaFezEnem}
           cursoDesejado={estudante.cursoDesejado}
           universidadeDesejada={estudante.universidadeDesejada}

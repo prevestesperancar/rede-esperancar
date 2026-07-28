@@ -188,14 +188,21 @@ export async function getTurmasDoNucleo(nucleoId: string) {
   });
 }
 
-export async function getEstudantesDoNucleo(nucleoId: string, statusFiltro?: string) {
+export async function getEstudantesDoNucleo(
+  nucleoId: string,
+  statusFiltro?: string,
+  bolsistaFiltro?: string
+) {
   return prisma.matricula.findMany({
     where: {
       status: "APROVADA",
       turma: { nucleoId },
-      estudante: statusFiltro
-        ? { status: statusFiltro as "EM_AVALIACAO" | "PRESENTE" | "FALTANTE" | "DESISTENTE" | "TRANSFERIDO" }
-        : { status: { notIn: ["DESISTENTE", "TRANSFERIDO"] } },
+      estudante: {
+        ...(statusFiltro
+          ? { status: statusFiltro as "EM_AVALIACAO" | "PRESENTE" | "FALTANTE" | "DESISTENTE" | "TRANSFERIDO" }
+          : { status: { notIn: ["DESISTENTE", "TRANSFERIDO"] } }),
+        ...(bolsistaFiltro ? { bolsista: bolsistaFiltro === "sim" } : {}),
+      },
     },
     include: { estudante: { include: { user: true } }, turma: true },
     orderBy: { createdAt: "asc" },

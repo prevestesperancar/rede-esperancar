@@ -75,9 +75,16 @@ export default async function AlunoPerfilPage() {
 
       <Link
         href="/aluno/carteirinha"
-        className="block bg-yellow text-yellow-ink font-extrabold text-sm text-center py-3.5 rounded-full mb-6"
+        className="block bg-yellow text-yellow-ink font-extrabold text-sm text-center py-3.5 rounded-full mb-3.5"
       >
         Ver minha carteirinha de estudante →
+      </Link>
+
+      <Link
+        href="/aluno/apoio"
+        className="block bg-teal text-white font-extrabold text-sm text-center py-3.5 rounded-full mb-6"
+      >
+        Falar com o apoio psicossocial →
       </Link>
 
       <div className="bg-surface border border-border rounded-2xl p-4 mb-6">

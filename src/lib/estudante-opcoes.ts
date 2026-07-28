@@ -37,13 +37,17 @@ function normalizar(texto: string) {
 export function classificarSituacaoEscolar(texto: string): string | undefined {
   const t = normalizar(texto);
   if (!t) return undefined;
-  if (t.includes("1") && (t.includes("ano") || t.includes("serie"))) return SITUACAO_ESCOLAR_OPCOES[0];
-  if (t.includes("2") && (t.includes("ano") || t.includes("serie"))) return SITUACAO_ESCOLAR_OPCOES[1];
-  if (t.includes("3") && (t.includes("ano") || t.includes("serie"))) return SITUACAO_ESCOLAR_OPCOES[2];
   if (t.includes("conclui") || t.includes("terminei") || t.includes("terminou") || t.includes("formad"))
     return SITUACAO_ESCOLAR_OPCOES[3];
   if (t.includes("universidade") || t.includes("faculdade") || t.includes("graduacao"))
     return SITUACAO_ESCOLAR_OPCOES[4];
+  // O dígito precisa estar colado em "ano"/"série" — não pode ser qualquer número no
+  // texto (ex: "17 anos" não deve virar "1º ano" só porque tem um "1" e um "ano").
+  const match = t.match(/([123])\s*[ºo]?\s*(ano|serie)/);
+  if (match) {
+    const ano = Number(match[1]);
+    return SITUACAO_ESCOLAR_OPCOES[ano - 1];
+  }
   return undefined;
 }
 
@@ -74,6 +78,31 @@ export function classificarRendaFamiliar(texto: string): string | undefined {
   if (numero <= 1000) return RENDA_FAMILIAR_OPCOES[2];
   if (numero <= 2000) return RENDA_FAMILIAR_OPCOES[3];
   return RENDA_FAMILIAR_OPCOES[4];
+}
+
+export function classificarSexoGenero(texto: string): string | undefined {
+  const t = normalizar(texto);
+  if (!t) return undefined;
+  const opcaoExata = SEXO_GENERO_OPCOES.find((o) => normalizar(o) === t);
+  if (opcaoExata) return opcaoExata;
+  if (t.includes("nao") || t.includes("prefiro")) return SEXO_GENERO_OPCOES[3];
+  if (t.includes("nao-binario") || t.includes("nao binario") || t === "nb") return SEXO_GENERO_OPCOES[2];
+  if (t.startsWith("fem") || t === "f") return SEXO_GENERO_OPCOES[0];
+  if (t.startsWith("masc") || t === "m") return SEXO_GENERO_OPCOES[1];
+  return undefined;
+}
+
+export function classificarRacaCor(texto: string): string | undefined {
+  const t = normalizar(texto);
+  if (!t) return undefined;
+  const opcaoExata = RACA_COR_OPCOES.find((o) => normalizar(o) === t);
+  if (opcaoExata) return opcaoExata;
+  if (t.startsWith("branc")) return RACA_COR_OPCOES[0];
+  if (t.startsWith("pret")) return RACA_COR_OPCOES[1];
+  if (t.startsWith("pard")) return RACA_COR_OPCOES[2];
+  if (t.startsWith("amarel")) return RACA_COR_OPCOES[3];
+  if (t.startsWith("indigena") || t.startsWith("indig")) return RACA_COR_OPCOES[4];
+  return undefined;
 }
 
 export function classificarSimNao(texto: string): boolean | undefined {

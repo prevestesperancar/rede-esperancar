@@ -29,11 +29,14 @@ export async function getTurmaAtivaDoEstudante(estudanteId: string) {
   if (!matricula) return null;
 
   // Avisos gerais do núcleo (turmaId nulo) também valem pra essa turma,
-  // não só os que foram criados especificamente pra ela.
+  // não só os que foram criados especificamente pra ela. Somem depois de 7 dias.
+  const seteDiasAtras = new Date();
+  seteDiasAtras.setDate(seteDiasAtras.getDate() - 7);
   const avisos = await prisma.aviso.findMany({
     where: {
       nucleoId: matricula.turma.nucleoId,
       OR: [{ turmaId: matricula.turmaId }, { turmaId: null }],
+      createdAt: { gte: seteDiasAtras },
     },
     orderBy: { createdAt: "desc" },
     take: 10,

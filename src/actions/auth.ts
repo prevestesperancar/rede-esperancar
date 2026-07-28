@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { auth, signIn, signOut } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { salvarArquivo } from "@/lib/upload";
+import { salvarArquivo, ArquivoInvalidoError } from "@/lib/upload";
 
 export async function login(_prevState: string | undefined, formData: FormData) {
   const email = formData.get("email") as string;
@@ -91,7 +91,15 @@ export async function editarPerfil(
     }
   }
 
-  const fotoUrl = foto && foto.size > 0 ? await salvarArquivo(foto, "perfis") : null;
+  let fotoUrl: string | null = null;
+  if (foto && foto.size > 0) {
+    try {
+      fotoUrl = await salvarArquivo(foto, "perfis");
+    } catch (error) {
+      if (error instanceof ArquivoInvalidoError) return error.message;
+      throw error;
+    }
+  }
 
   await prisma.user.update({
     where: { id: session.user.id },

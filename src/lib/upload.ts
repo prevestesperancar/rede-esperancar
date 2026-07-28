@@ -3,8 +3,18 @@ import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { put } from "@vercel/blob";
 
+export const TAMANHO_MAXIMO_ARQUIVO = 5 * 1024 * 1024; // 5MB
+
+export class ArquivoInvalidoError extends Error {}
+
 export async function salvarArquivo(file: File | null, pasta: string) {
   if (!file || file.size === 0) return null;
+
+  if (file.size > TAMANHO_MAXIMO_ARQUIVO) {
+    throw new ArquivoInvalidoError(
+      `O arquivo "${file.name}" tem ${(file.size / (1024 * 1024)).toFixed(1)}MB — o tamanho máximo aceito é 5MB. Reduza o tamanho da imagem e tente novamente.`
+    );
+  }
 
   const ext = path.extname(file.name) || "";
   const nomeArquivo = `${randomUUID()}${ext}`;

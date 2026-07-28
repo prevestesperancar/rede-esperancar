@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { getFormularioDetalhe } from "@/lib/queries/formularios";
 import type { Campo } from "@/actions/formularios";
+import { CopiarLinkButton } from "@/components/gestao/CopiarLinkButton";
 
 const PERMITIDOS = ["COORDENACAO", "ADMIN"];
 
@@ -20,7 +22,9 @@ export default async function FormularioDetalhePage({
   if (!formulario) notFound();
 
   const campos: Campo[] = JSON.parse(formulario.campos);
-  const linkPublico = `/formularios/${formulario.id}`;
+  const host = (await headers()).get("host");
+  const protocolo = host?.startsWith("localhost") ? "http" : "https";
+  const linkPublico = `${protocolo}://${host}/formularios/${formulario.id}`;
 
   return (
     <div>
@@ -35,14 +39,17 @@ export default async function FormularioDetalhePage({
           <div className="font-mono text-[11px] font-bold uppercase text-ink-faint mb-1">
             Link público pra compartilhar
           </div>
-          <code className="text-sm text-terracotta">{linkPublico}</code>
+          <code className="text-sm text-terracotta break-all">{linkPublico}</code>
         </div>
-        <a
-          href={`/gestao/formularios/${formulario.id}/export`}
-          className="font-bold text-sm px-4 py-2 rounded-full bg-yellow text-yellow-ink"
-        >
-          Baixar planilha (CSV)
-        </a>
+        <div className="flex gap-2 flex-wrap">
+          <CopiarLinkButton link={linkPublico} />
+          <a
+            href={`/gestao/formularios/${formulario.id}/export`}
+            className="font-bold text-sm px-4 py-2 rounded-full bg-yellow text-yellow-ink"
+          >
+            Baixar planilha (CSV)
+          </a>
+        </div>
       </div>
 
       <div className="bg-surface border border-border rounded-[18px] overflow-x-auto">

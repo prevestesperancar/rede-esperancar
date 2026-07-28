@@ -7,6 +7,7 @@ import {
   getProximasProvasPorTipo,
 } from "@/lib/queries/aluno";
 import { getSolicitacoesDoEstudante } from "@/lib/queries/agendamento";
+import Link from "next/link";
 import { GradeCard } from "@/components/aluno/GradeCard";
 import { MinhasSolicitacoesList } from "@/components/aluno/MinhasSolicitacoesList";
 
@@ -102,6 +103,13 @@ export default async function AlunoDashboardPage() {
           ))}
         </div>
       )}
+
+      <Link
+        href="/aluno/apoio"
+        className="flex items-center justify-center gap-2 bg-terracotta/10 text-terracotta font-extrabold text-sm py-3 rounded-full mb-5"
+      >
+        💬 Falar com o apoio psicossocial
+      </Link>
 
       {(solicitacoesMonitoria.length > 0 || solicitacoesApoio.length > 0) && (
         <div className="mb-5 flex flex-col gap-4">

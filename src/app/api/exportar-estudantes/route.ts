@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { PDFDocument, StandardFonts, rgb, type PDFImage } from "pdf-lib";
 import { auth } from "@/lib/auth";
-import { getEstudantesDoNucleo, getNucleoNome } from "@/lib/queries/gestao";
+import { getEstudantesAtivosParaPresenca, getNucleoNome } from "@/lib/queries/gestao";
 
 const PERMITIDOS = ["PROFESSOR", "COORDENACAO", "APOIO_PSICOSSOCIAL", "ADMIN"];
 
@@ -23,7 +23,7 @@ export async function GET() {
   }
 
   const [matriculas, nucleoNome] = await Promise.all([
-    getEstudantesDoNucleo(session.user.nucleoId),
+    getEstudantesAtivosParaPresenca(session.user.nucleoId),
     getNucleoNome(session.user.nucleoId),
   ]);
 

@@ -216,6 +216,10 @@ export default async function GestaoDashboardPage({
       getSolicitacoesAtrasadas(nucleoId),
     ]);
 
+  const avisosRecentes = avisos.filter(
+    (a) => Date.now() - a.createdAt.getTime() < 7 * 24 * 60 * 60 * 1000
+  );
+
   return (
     <div>
       <div className="flex items-start justify-between mb-7 gap-4 flex-wrap">
@@ -397,7 +401,7 @@ export default async function GestaoDashboardPage({
             Ver todos
           </Link>
         </div>
-        {avisos.slice(0, 2).map((a) => (
+        {avisosRecentes.slice(0, 2).map((a) => (
           <div key={a.id} className="flex gap-2.5 py-2.5 border-b border-border last:border-b-0">
             <div className="w-1.5 h-1.5 rounded-full bg-terracotta mt-1.5 flex-shrink-0" />
             <div className="text-sm">
@@ -405,7 +409,7 @@ export default async function GestaoDashboardPage({
             </div>
           </div>
         ))}
-        {avisos.length === 0 && (
+        {avisosRecentes.length === 0 && (
           <p className="text-sm text-ink-faint">Nenhum aviso ainda.</p>
         )}
       </div>

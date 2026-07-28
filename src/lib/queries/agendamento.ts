@@ -2,7 +2,10 @@ import { prisma } from "@/lib/prisma";
 
 export async function getSolicitacoesDoEstudante(estudanteId: string) {
   return prisma.solicitacaoAgendamento.findMany({
-    where: { estudanteId },
+    where: {
+      estudanteId,
+      OR: [{ status: { not: "CONFIRMADO" } }, { escolhaData: { gte: new Date() } }],
+    },
     include: { professor: true },
     orderBy: { createdAt: "desc" },
   });
@@ -32,7 +35,7 @@ export async function getSolicitacoesPendentesDoProfessor(professorId: string) {
 
 export async function getSolicitacoesConfirmadasDoProfessor(professorId: string) {
   return prisma.solicitacaoAgendamento.findMany({
-    where: { professorId, status: "CONFIRMADO" },
+    where: { professorId, status: "CONFIRMADO", escolhaData: { gte: new Date() } },
     include: { estudante: { include: { user: true } } },
     orderBy: { escolhaData: "asc" },
   });
@@ -48,7 +51,7 @@ export async function getSolicitacoesApoioPendentes(nucleoId: string) {
 
 export async function getSolicitacoesApoioConfirmadas(nucleoId: string) {
   return prisma.solicitacaoAgendamento.findMany({
-    where: { nucleoId, tipo: "APOIO", status: "CONFIRMADO" },
+    where: { nucleoId, tipo: "APOIO", status: "CONFIRMADO", escolhaData: { gte: new Date() } },
     include: { estudante: { include: { user: true } } },
     orderBy: { escolhaData: "asc" },
   });

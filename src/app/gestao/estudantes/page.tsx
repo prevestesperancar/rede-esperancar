@@ -14,6 +14,13 @@ const STATUS_LABEL: Record<string, string> = {
   TRANSFERIDO: "Transferido",
 };
 
+function whatsappLink(telefone: string | null) {
+  if (!telefone) return null;
+  const numero = telefone.replace(/\D/g, "");
+  if (!numero) return null;
+  return `https://wa.me/${numero.startsWith("55") ? numero : `55${numero}`}`;
+}
+
 const STATUS_TONE: Record<string, string> = {
   EM_AVALIACAO: "bg-terracotta/10 text-terracotta",
   PRESENTE: "bg-teal/10 text-teal",
@@ -65,8 +72,18 @@ export default async function EstudantesPage({
               className="grid sm:grid-cols-3 gap-2 py-3 border-b border-border last:border-b-0"
             >
               <div className="font-bold text-sm">{m.estudante.user.nome}</div>
-              <div className="text-sm text-ink-soft">
-                {m.estudante.user.telefone ?? m.estudante.user.email}
+              <div className="text-sm text-ink-soft flex flex-col gap-0.5">
+                <span>{m.estudante.user.email}</span>
+                {whatsappLink(m.estudante.user.telefone) && (
+                  <a
+                    href={whatsappLink(m.estudante.user.telefone)!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-teal font-semibold text-xs"
+                  >
+                    WhatsApp →
+                  </a>
+                )}
               </div>
               <div className="text-sm text-ink-faint">
                 {m.estudante.cursoDesejado ?? "Curso não informado"}

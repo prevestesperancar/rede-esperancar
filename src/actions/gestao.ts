@@ -4,13 +4,15 @@ import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { salvarArquivo } from "@/lib/upload";
+import { salvarArquivo, ArquivoInvalidoError } from "@/lib/upload";
 import { parseCsv, parseDataBr } from "@/lib/csv";
 import {
   classificarSituacaoEscolar,
   classificarProvas,
   classificarRendaFamiliar,
   classificarSimNao,
+  classificarSexoGenero,
+  classificarRacaCor,
 } from "@/lib/estudante-opcoes";
 
 const GESTAO_ROLES = ["PROFESSOR", "COORDENACAO", "ADMIN"];
@@ -271,7 +273,13 @@ export async function criarMaterial(_prevState: string | undefined, formData: Fo
 
   if (!titulo || !arquivo || arquivo.size === 0) return "Preencha título e selecione o arquivo.";
 
-  const arquivoUrl = await salvarArquivo(arquivo, "materiais");
+  let arquivoUrl: string | null;
+  try {
+    arquivoUrl = await salvarArquivo(arquivo, "materiais");
+  } catch (error) {
+    if (error instanceof ArquivoInvalidoError) return error.message;
+    throw error;
+  }
   if (!arquivoUrl) return "Não foi possível enviar o arquivo.";
 
   await prisma.material.create({
@@ -491,7 +499,13 @@ export async function criarDepoimento(_prevState: string | undefined, formData: 
 
   if (!nome || !quote) return "Preencha nome e depoimento.";
 
-  const fotoUrl = await salvarArquivo(foto, "depoimentos");
+  let fotoUrl: string | null;
+  try {
+    fotoUrl = await salvarArquivo(foto, "depoimentos");
+  } catch (error) {
+    if (error instanceof ArquivoInvalidoError) return error.message;
+    throw error;
+  }
 
   await prisma.depoimento.create({
     data: { nome, curso, universidade, fotoUrl, quote, nucleoId: user.nucleoId },
@@ -529,7 +543,13 @@ export async function criarProfessor(_prevState: string | undefined, formData: F
   const existente = await prisma.user.findUnique({ where: { email } });
   if (existente) return "Já existe um usuário com este e-mail.";
 
-  const fotoUrl = await salvarArquivo(foto, "professores");
+  let fotoUrl: string | null;
+  try {
+    fotoUrl = await salvarArquivo(foto, "professores");
+  } catch (error) {
+    if (error instanceof ArquivoInvalidoError) return error.message;
+    throw error;
+  }
   const passwordHash = await bcrypt.hash(senha, 10);
 
   await prisma.user.create({
@@ -581,6 +601,8 @@ export async function criarTurma(_prevState: string | undefined, formData: FormD
 
   if (!nome || !periodo || !capacidade) return "Preencha nome, período e capacidade.";
 
+  const nucleo = await prisma.nucleo.findUnique({ where: { id: user.nucleoId! }, select: { slug: true } });
+
   await prisma.turma.create({
     data: {
       nome,
@@ -593,6 +615,11 @@ export async function criarTurma(_prevState: string | undefined, formData: FormD
 
   revalidatePath("/gestao/turmas");
   revalidatePath("/");
+  revalidatePath("/nucleos");
+  if (nucleo) {
+    revalidatePath(`/nucleos/${nucleo.slug}`);
+    revalidatePath(`/nucleos/${nucleo.slug}/inscricao`);
+  }
   return undefined;
 }
 
@@ -626,7 +653,10 @@ export async function editarTurma(_prevState: string | undefined, formData: Form
   const periodo = formData.get("periodo") as string;
   const capacidade = formData.get("capacidade") as string;
 
-  const turma = await prisma.turma.findUnique({ where: { id: turmaId } });
+  const turma = await prisma.turma.findUnique({
+    where: { id: turmaId },
+    include: { nucleo: { select: { slug: true } } },
+  });
   if (!turma || turma.nucleoId !== user.nucleoId) return "Turma não encontrada.";
   if (!nome || !periodo || !capacidade) return "Preencha nome, período e capacidade.";
 
@@ -638,13 +668,18 @@ export async function editarTurma(_prevState: string | undefined, formData: Form
   revalidatePath("/gestao/turmas");
   revalidatePath("/");
   revalidatePath("/nucleos");
+  revalidatePath(`/nucleos/${turma.nucleo.slug}`);
+  revalidatePath(`/nucleos/${turma.nucleo.slug}/inscricao`);
   return "Turma atualizada!";
 }
 
 export async function alternarTurmaAtiva(turmaId: string) {
   const user = await requireCoordenacao();
 
-  const turma = await prisma.turma.findUnique({ where: { id: turmaId } });
+  const turma = await prisma.turma.findUnique({
+    where: { id: turmaId },
+    include: { nucleo: { select: { slug: true } } },
+  });
   if (!turma || turma.nucleoId !== user.nucleoId) throw new Error("Turma não encontrada.");
 
   await prisma.turma.update({
@@ -655,6 +690,8 @@ export async function alternarTurmaAtiva(turmaId: string) {
   revalidatePath("/gestao/turmas");
   revalidatePath("/");
   revalidatePath("/nucleos");
+  revalidatePath(`/nucleos/${turma.nucleo.slug}`);
+  revalidatePath(`/nucleos/${turma.nucleo.slug}/inscricao`);
 }
 
 export async function atualizarProfessor(_prevState: string | undefined, formData: FormData) {
@@ -678,7 +715,13 @@ export async function atualizarProfessor(_prevState: string | undefined, formDat
     if (emailExistente) return "Já existe um usuário com esse e-mail.";
   }
 
-  const fotoUrl = await salvarArquivo(foto, "professores");
+  let fotoUrl: string | null;
+  try {
+    fotoUrl = await salvarArquivo(foto, "professores");
+  } catch (error) {
+    if (error instanceof ArquivoInvalidoError) return error.message;
+    throw error;
+  }
 
   await prisma.user.update({
     where: { id: professorId },
@@ -735,7 +778,13 @@ export async function atualizarFotoNucleo(_prevState: string | undefined, formDa
   const foto = formData.get("foto") as File | null;
   if (!foto || foto.size === 0) return "Selecione uma foto.";
 
-  const fotoUrl = await salvarArquivo(foto, "nucleos");
+  let fotoUrl: string | null;
+  try {
+    fotoUrl = await salvarArquivo(foto, "nucleos");
+  } catch (error) {
+    if (error instanceof ArquivoInvalidoError) return error.message;
+    throw error;
+  }
 
   await prisma.nucleo.update({
     where: { id: user.nucleoId },
@@ -1083,8 +1132,8 @@ export async function importarEstudantesPlanilha(
     const escolaPublica = idxEscolaPublica !== -1 ? classificarSimNao(linha[idxEscolaPublica] ?? "") : undefined;
     const municipio = idxCidade !== -1 ? (linha[idxCidade] ?? "").trim() : "";
     const bairro = idxBairro !== -1 ? (linha[idxBairro] ?? "").trim() : "";
-    const sexoGenero = idxSexo !== -1 ? (linha[idxSexo] ?? "").trim() : "";
-    const racaCor = idxRacaCor !== -1 ? (linha[idxRacaCor] ?? "").trim() : "";
+    const sexoGenero = idxSexo !== -1 ? classificarSexoGenero(linha[idxSexo] ?? "") ?? "" : "";
+    const racaCor = idxRacaCor !== -1 ? classificarRacaCor(linha[idxRacaCor] ?? "") ?? "" : "";
     const cursoDesejado = idxCursoDesejado !== -1 ? (linha[idxCursoDesejado] ?? "").trim() : "";
     const provasQueVaiFazer = idxProvas !== -1 ? classificarProvas(linha[idxProvas] ?? "") : undefined;
     const jaFezEnem = idxJaFezEnem !== -1 ? classificarSimNao(linha[idxJaFezEnem] ?? "") : undefined;

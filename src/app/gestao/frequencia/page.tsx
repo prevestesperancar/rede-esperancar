@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getFrequenciaDetalhadaDoNucleo, getNucleoNome } from "@/lib/queries/gestao";
 import { FiltroTurmaFrequencia } from "@/components/gestao/FiltroTurmaFrequencia";
+import { FiltroNivelFrequencia } from "@/components/gestao/FiltroNivelFrequencia";
 
 const PERMITIDOS = ["COORDENACAO", "APOIO_PSICOSSOCIAL", "ADMIN"];
 
@@ -12,16 +13,25 @@ function corPercentual(p: number | null) {
   return "text-terracotta";
 }
 
+function correspondeAoNivel(percentual: number | null, nivel?: string) {
+  if (!nivel) return true;
+  if (percentual === null) return false;
+  if (nivel === "baixa") return percentual < 50;
+  if (nivel === "media") return percentual >= 50 && percentual < 75;
+  if (nivel === "ok") return percentual >= 75;
+  return true;
+}
+
 export default async function FrequenciaDetalhadaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ turma?: string }>;
+  searchParams: Promise<{ turma?: string; nivel?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.nucleoId) redirect("/login");
   if (!PERMITIDOS.includes(session.user.role)) redirect("/gestao");
 
-  const { turma: turmaFiltro } = await searchParams;
+  const { turma: turmaFiltro, nivel: nivelFiltro } = await searchParams;
 
   const [todosEstudantes, nucleoNome] = await Promise.all([
     getFrequenciaDetalhadaDoNucleo(session.user.nucleoId),
@@ -29,9 +39,9 @@ export default async function FrequenciaDetalhadaPage({
   ]);
 
   const turmasDisponiveis = [...new Set(todosEstudantes.map((e) => e.turmaNome))].sort();
-  const estudantes = turmaFiltro
-    ? todosEstudantes.filter((e) => e.turmaNome === turmaFiltro)
-    : todosEstudantes;
+  const estudantes = todosEstudantes
+    .filter((e) => !turmaFiltro || e.turmaNome === turmaFiltro)
+    .filter((e) => correspondeAoNivel(e.percentual, nivelFiltro));
 
   const baixaFrequencia = estudantes.filter((e) => e.percentual !== null && e.percentual < 50);
 
@@ -45,6 +55,7 @@ export default async function FrequenciaDetalhadaPage({
           <h1 className="font-display text-2xl">Frequência detalhada</h1>
         </div>
         <FiltroTurmaFrequencia turmas={turmasDisponiveis} turmaAtual={turmaFiltro} />
+        <FiltroNivelFrequencia nivelAtual={nivelFiltro} />
         <a
           href="/api/exportar-frequencia"
           className="font-bold text-sm px-4 py-2.5 rounded-full border border-border-strong text-ink-soft hover:text-ink"

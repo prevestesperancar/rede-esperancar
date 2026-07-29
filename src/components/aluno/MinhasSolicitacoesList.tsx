@@ -11,7 +11,8 @@ type Solicitacao = {
   opcao2: Date | null;
   opcao3: Date | null;
   escolhaData: Date | null;
-  professor?: { nome: string } | null;
+  professor?: { nome: string; materia?: string | null } | null;
+  respondidoPor?: { nome: string; materia?: string | null } | null;
 };
 
 function formatarData(d: Date) {
@@ -34,9 +35,17 @@ export function MinhasSolicitacoesList({
 
   return (
     <div className="flex flex-col gap-3">
-      {solicitacoes.map((s) => (
+      {solicitacoes.map((s) => {
+        const pessoa = s.professor ?? s.respondidoPor;
+        const funcao = s.professor ? s.professor.materia || "Professor(a)" : "Apoio psicossocial";
+        return (
         <div key={s.id} className="bg-surface border border-border rounded-2xl p-4">
-          {s.professor && <div className="font-bold text-sm mb-1">{s.professor.nome}</div>}
+          {pessoa && (
+            <div className="mb-1">
+              <div className="font-bold text-sm">{pessoa.nome}</div>
+              <div className="text-[11px] text-ink-faint font-semibold">{funcao}</div>
+            </div>
+          )}
           {s.mensagem && <p className="text-xs text-ink-faint mb-2">{s.mensagem}</p>}
 
           {s.status === "PENDENTE" && (
@@ -93,7 +102,8 @@ export function MinhasSolicitacoesList({
             </div>
           )}
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

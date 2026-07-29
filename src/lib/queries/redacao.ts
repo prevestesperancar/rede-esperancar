@@ -2,7 +2,11 @@ import { prisma } from "@/lib/prisma";
 
 export async function getTemasAtivos(prova?: string) {
   return prisma.temaRedacao.findMany({
-    where: { ativo: true, ...(prova ? { prova } : {}) },
+    where: {
+      ativo: true,
+      OR: [{ prazoEnvio: null }, { prazoEnvio: { gte: new Date() } }],
+      ...(prova ? { prova } : {}),
+    },
     orderBy: { createdAt: "desc" },
   });
 }

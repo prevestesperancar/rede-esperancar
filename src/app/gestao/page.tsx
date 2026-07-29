@@ -25,12 +25,16 @@ import { apagarProva } from "@/actions/gestao";
 import {
   getSolicitacoesApoioPendentes,
   getSolicitacoesApoioConfirmadas,
+  getSolicitacoesApoioAguardandoEscolha,
   getSolicitacoesAtrasadas,
   getSolicitacoesPendentesDoProfessor,
   getSolicitacoesConfirmadasDoProfessor,
+  getSolicitacoesAguardandoEscolhaDoProfessor,
+  getContagemAtendimentosSemana,
 } from "@/lib/queries/agendamento";
 import { SolicitacoesPendentesCard } from "@/components/gestao/SolicitacoesPendentesCard";
 import { SolicitacoesConfirmadasCard } from "@/components/gestao/SolicitacoesConfirmadasCard";
+import { SolicitacoesAguardandoEscolhaCard } from "@/components/gestao/SolicitacoesAguardandoEscolhaCard";
 import { SolicitacoesAtrasadasCard } from "@/components/gestao/SolicitacoesAtrasadasCard";
 import { prisma } from "@/lib/prisma";
 
@@ -46,17 +50,13 @@ export default async function GestaoDashboardPage({
   const dataSelecionada = data ?? new Date().toISOString().slice(0, 10);
 
   if (session.user.role === "APOIO_PSICOSSOCIAL") {
-    const [nucleoNome, stats, perfil, frequencias, aniversariantes, apoioPendentes, apoioConfirmadas, nucleo] =
-      await Promise.all([
-        getNucleoNome(nucleoId),
-        getGestaoStats(nucleoId),
-        getPerfilEstudantesAtivos(nucleoId),
-        getFrequenciaResumoDoNucleo(nucleoId, dataSelecionada),
-        getAniversariantesProximos(nucleoId),
-        getSolicitacoesApoioPendentes(nucleoId),
-        getSolicitacoesApoioConfirmadas(nucleoId),
-        prisma.nucleo.findUnique({ where: { id: nucleoId }, select: { linkApoioPsicossocial: true } }),
-      ]);
+    const [nucleoNome, stats, perfil, frequencias, aniversariantes] = await Promise.all([
+      getNucleoNome(nucleoId),
+      getGestaoStats(nucleoId),
+      getPerfilEstudantesAtivos(nucleoId),
+      getFrequenciaResumoDoNucleo(nucleoId, dataSelecionada),
+      getAniversariantesProximos(nucleoId),
+    ]);
 
     return (
       <div>
@@ -81,16 +81,6 @@ export default async function GestaoDashboardPage({
         </div>
 
         <AniversariantesCard aniversariantes={aniversariantes} />
-
-        <SolicitacoesPendentesCard
-          titulo="Solicitações de conversa"
-          solicitacoes={apoioPendentes}
-        />
-        <SolicitacoesConfirmadasCard
-          titulo="Conversas confirmadas"
-          solicitacoes={apoioConfirmadas}
-          link={nucleo?.linkApoioPsicossocial ?? null}
-        />
 
         <PerfilEstudantesChart
           total={perfil.total}
@@ -130,12 +120,21 @@ export default async function GestaoDashboardPage({
   }
 
   if (session.user.role === "PROFESSOR") {
-    const [nucleoNome, grade, monitorias, turmaIds, monitoriaPendentes, monitoriaConfirmadas] = await Promise.all([
+    const [
+      nucleoNome,
+      grade,
+      monitorias,
+      turmaIds,
+      monitoriaPendentes,
+      monitoriaAguardando,
+      monitoriaConfirmadas,
+    ] = await Promise.all([
       getNucleoNome(nucleoId),
       getGradeDoProfessor(session.user.id),
       getMonitoriasDoProfessor(session.user.id),
       getTurmasDoProfessor(session.user.id),
       getSolicitacoesPendentesDoProfessor(session.user.id),
+      getSolicitacoesAguardandoEscolhaDoProfessor(session.user.id),
       getSolicitacoesConfirmadasDoProfessor(session.user.id),
     ]);
     const frequencias = await getFrequenciaResumoDoNucleo(nucleoId, dataSelecionada, turmaIds);
@@ -154,6 +153,10 @@ export default async function GestaoDashboardPage({
         <SolicitacoesPendentesCard
           titulo="Solicitações de monitoria"
           solicitacoes={monitoriaPendentes}
+        />
+        <SolicitacoesAguardandoEscolhaCard
+          titulo="Aguardando o estudante escolher um horário"
+          solicitacoes={monitoriaAguardando}
         />
         <SolicitacoesConfirmadasCard
           titulo="Monitorias confirmadas"
@@ -202,19 +205,31 @@ export default async function GestaoDashboardPage({
     );
   }
 
-  const [stats, pendentes, turmas, avisos, provas, frequencias, nucleoNome, perfil, aniversariantes, atrasadas] =
-    await Promise.all([
-      getGestaoStats(nucleoId),
-      getInscricoesPendentes(nucleoId),
-      getTurmasDoNucleo(nucleoId),
-      getAvisosDoNucleo(nucleoId),
-      getProvasDoNucleo(nucleoId),
-      getFrequenciaResumoDoNucleo(nucleoId, dataSelecionada),
-      getNucleoNome(nucleoId),
-      getPerfilEstudantesAtivos(nucleoId),
-      getAniversariantesProximos(nucleoId),
-      getSolicitacoesAtrasadas(nucleoId),
-    ]);
+  const [
+    stats,
+    pendentes,
+    turmas,
+    avisos,
+    provas,
+    frequencias,
+    nucleoNome,
+    perfil,
+    aniversariantes,
+    atrasadas,
+    atendimentosSemana,
+  ] = await Promise.all([
+    getGestaoStats(nucleoId),
+    getInscricoesPendentes(nucleoId),
+    getTurmasDoNucleo(nucleoId),
+    getAvisosDoNucleo(nucleoId),
+    getProvasDoNucleo(nucleoId),
+    getFrequenciaResumoDoNucleo(nucleoId, dataSelecionada),
+    getNucleoNome(nucleoId),
+    getPerfilEstudantesAtivos(nucleoId),
+    getAniversariantesProximos(nucleoId),
+    getSolicitacoesAtrasadas(nucleoId),
+    getContagemAtendimentosSemana(nucleoId),
+  ]);
 
   const avisosRecentes = avisos.filter(
     (a) => Date.now() - a.createdAt.getTime() < 7 * 24 * 60 * 60 * 1000
@@ -266,6 +281,20 @@ export default async function GestaoDashboardPage({
           </div>
           <div className="text-xs font-semibold text-ink-soft mt-0.5">
             Inscrições pendentes
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-surface border border-border rounded-[18px] p-5 mb-4">
+        <h3 className="font-extrabold text-[15px] mb-3">Atendimentos individuais (últimos 7 dias)</h3>
+        <div className="grid grid-cols-2 gap-3.5">
+          <div>
+            <div className="font-mono font-bold text-2xl text-terracotta">{atendimentosSemana.monitorias}</div>
+            <div className="text-xs font-semibold text-ink-soft mt-0.5">Monitorias individuais</div>
+          </div>
+          <div>
+            <div className="font-mono font-bold text-2xl text-teal">{atendimentosSemana.apoios}</div>
+            <div className="text-xs font-semibold text-ink-soft mt-0.5">Atendimentos psicossociais</div>
           </div>
         </div>
       </div>

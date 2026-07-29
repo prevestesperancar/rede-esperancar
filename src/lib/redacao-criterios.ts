@@ -7,9 +7,11 @@ export const CRITERIOS_REDACAO: Record<string, { label: string; max: number }[]>
     { label: "Competência 5 — Proposta de intervenção", max: 200 },
   ],
   UERJ: [
-    { label: "Grupo I — Correção gramatical", max: 10 },
-    { label: "Grupo II — Argumentação e comunicação", max: 10 },
-    { label: "Grupo III — Adequação ao gênero e à modalidade", max: 10 },
+    { label: "1 — Desenvolvimento e abordagem do tema", max: 4 },
+    { label: "2 — Estratégias argumentativas e progressão", max: 4 },
+    { label: "3 — Coesão e coerência textual", max: 4 },
+    { label: "4 — Registro linguístico formal", max: 4 },
+    { label: "5 — Adequação ao tipo textual e número de linhas", max: 4 },
   ],
 };
 

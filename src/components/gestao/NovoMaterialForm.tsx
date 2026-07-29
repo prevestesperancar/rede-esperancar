@@ -60,13 +60,23 @@ export function NovoMaterialForm({ disciplinas }: { disciplinas: { id: string; n
       </div>
       <div>
         <label className="block text-xs font-bold text-ink-faint uppercase tracking-wide mb-1">
-          Arquivo (PDF, imagem, link de vídeo em anexo...)
+          Arquivo (PDF, imagem...)
         </label>
         <input
           name="arquivo"
           type="file"
-          required
           className="w-full rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink file:mr-3 file:rounded-full file:border-0 file:bg-yellow file:text-yellow-ink file:font-bold file:text-xs file:px-3 file:py-1.5"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-bold text-ink-faint uppercase tracking-wide mb-1">
+          Ou link de vídeo (YouTube, Drive...)
+        </label>
+        <input
+          name="linkVideo"
+          type="url"
+          placeholder="https://youtube.com/..."
+          className="w-full rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink"
         />
       </div>
       <label className="flex items-center gap-2 text-sm font-semibold">

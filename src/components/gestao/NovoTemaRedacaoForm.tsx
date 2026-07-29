@@ -35,6 +35,16 @@ export function NovoTemaRedacaoForm() {
         rows={4}
         className="rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink resize-none"
       />
+      <div>
+        <label className="block text-xs font-bold text-ink-faint uppercase tracking-wide mb-1">
+          Prazo máximo de envio (opcional)
+        </label>
+        <input
+          name="prazoEnvio"
+          type="date"
+          className="rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink"
+        />
+      </div>
       {error && <p className="text-sm text-terracotta font-semibold">{error}</p>}
       <button
         type="submit"

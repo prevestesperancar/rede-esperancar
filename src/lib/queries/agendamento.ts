@@ -6,7 +6,7 @@ export async function getSolicitacoesDoEstudante(estudanteId: string) {
       estudanteId,
       OR: [{ status: { not: "CONFIRMADO" } }, { escolhaData: { gte: new Date() } }],
     },
-    include: { professor: true },
+    include: { professor: true, respondidoPor: true },
     orderBy: { createdAt: "desc" },
   });
 }
@@ -33,6 +33,14 @@ export async function getSolicitacoesPendentesDoProfessor(professorId: string) {
   });
 }
 
+export async function getSolicitacoesAguardandoEscolhaDoProfessor(professorId: string) {
+  return prisma.solicitacaoAgendamento.findMany({
+    where: { professorId, status: "AGUARDANDO_ESCOLHA" },
+    include: { estudante: { include: { user: true } } },
+    orderBy: { respondidoEm: "asc" },
+  });
+}
+
 export async function getSolicitacoesConfirmadasDoProfessor(professorId: string) {
   return prisma.solicitacaoAgendamento.findMany({
     where: { professorId, status: "CONFIRMADO", escolhaData: { gte: new Date() } },
@@ -49,12 +57,53 @@ export async function getSolicitacoesApoioPendentes(nucleoId: string) {
   });
 }
 
+export async function getSolicitacoesApoioAguardandoEscolha(nucleoId: string) {
+  return prisma.solicitacaoAgendamento.findMany({
+    where: { nucleoId, tipo: "APOIO", status: "AGUARDANDO_ESCOLHA" },
+    include: { estudante: { include: { user: true } } },
+    orderBy: { respondidoEm: "asc" },
+  });
+}
+
 export async function getSolicitacoesApoioConfirmadas(nucleoId: string) {
   return prisma.solicitacaoAgendamento.findMany({
     where: { nucleoId, tipo: "APOIO", status: "CONFIRMADO", escolhaData: { gte: new Date() } },
     include: { estudante: { include: { user: true } } },
     orderBy: { escolhaData: "asc" },
   });
+}
+
+export async function getContagemApoioPendentes(nucleoId: string) {
+  return prisma.solicitacaoAgendamento.count({
+    where: { nucleoId, tipo: "APOIO", status: { in: ["PENDENTE", "AGUARDANDO_ESCOLHA"] } },
+  });
+}
+
+export async function getContagemAtendimentosSemana(nucleoId: string) {
+  const seteDiasAtras = new Date();
+  seteDiasAtras.setDate(seteDiasAtras.getDate() - 7);
+  const agora = new Date();
+
+  const [monitorias, apoios] = await Promise.all([
+    prisma.solicitacaoAgendamento.count({
+      where: {
+        nucleoId,
+        tipo: "MONITORIA",
+        status: "CONFIRMADO",
+        escolhaData: { gte: seteDiasAtras, lte: agora },
+      },
+    }),
+    prisma.solicitacaoAgendamento.count({
+      where: {
+        nucleoId,
+        tipo: "APOIO",
+        status: "CONFIRMADO",
+        escolhaData: { gte: seteDiasAtras, lte: agora },
+      },
+    }),
+  ]);
+
+  return { monitorias, apoios };
 }
 
 export async function getSolicitacoesAtrasadas(nucleoId: string) {

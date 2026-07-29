@@ -27,6 +27,8 @@ export default async function EditarNucleoPage({
         endereco={nucleo.endereco}
         descricao={nucleo.descricao}
         ativo={nucleo.ativo}
+        latitude={nucleo.latitude}
+        longitude={nucleo.longitude}
       />
     </div>
   );

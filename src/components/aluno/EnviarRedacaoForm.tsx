@@ -3,7 +3,13 @@
 import { useActionState } from "react";
 import { enviarRedacao } from "@/actions/redacao";
 
-type Tema = { id: string; prova: string; titulo: string; textoMotivador: string | null };
+type Tema = {
+  id: string;
+  prova: string;
+  titulo: string;
+  textoMotivador: string | null;
+  prazoEnvio: Date | null;
+};
 
 export function EnviarRedacaoForm({ temas }: { temas: Tema[] }) {
   const [message, action, pending] = useActionState(enviarRedacao, undefined);
@@ -27,6 +33,7 @@ export function EnviarRedacaoForm({ temas }: { temas: Tema[] }) {
         {temas.map((t) => (
           <option key={t.id} value={t.id}>
             {t.prova} — {t.titulo}
+            {t.prazoEnvio ? ` (até ${t.prazoEnvio.toLocaleDateString("pt-BR")})` : ""}
           </option>
         ))}
       </select>

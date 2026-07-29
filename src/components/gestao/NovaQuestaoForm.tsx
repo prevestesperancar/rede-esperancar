@@ -38,6 +38,10 @@ export function NovaQuestaoForm({ disciplinas }: { disciplinas: { id: string; no
         </div>
       </div>
       <div>
+        <label className={labelClass}>Subtema (interno — só a equipe vê, o aluno não)</label>
+        <input name="subtema" placeholder="ex: Funções do 2º grau" className={inputClass} />
+      </div>
+      <div>
         <label className={labelClass}>Enunciado</label>
         <textarea name="enunciado" required rows={4} className={inputClass} />
       </div>

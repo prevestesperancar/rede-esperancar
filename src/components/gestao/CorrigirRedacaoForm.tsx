@@ -29,10 +29,16 @@ export function CorrigirRedacaoForm({
   prova: string;
 }) {
   const [message, action, pending] = useActionState(corrigirRedacao, undefined);
+  const containerRef = useRef<HTMLDivElement>(null);
   const textoRef = useRef<HTMLDivElement>(null);
   const [marcacoes, setMarcacoes] = useState<Marcacao[]>([]);
   const [comentarioSelecao, setComentarioSelecao] = useState("");
-  const [selecaoAtual, setSelecaoAtual] = useState<{ inicio: number; fim: number } | null>(null);
+  const [selecaoAtual, setSelecaoAtual] = useState<{
+    inicio: number;
+    fim: number;
+    top: number;
+    left: number;
+  } | null>(null);
   const criterios = criteriosDaProva(prova);
   const [notas, setNotas] = useState<number[]>(criterios.map(() => 0));
 
@@ -40,18 +46,34 @@ export function CorrigirRedacaoForm({
 
   function capturarSelecao() {
     const selecao = window.getSelection();
-    if (!selecao || selecao.isCollapsed || !textoRef.current) return;
+    if (!selecao || selecao.isCollapsed || !textoRef.current || !containerRef.current) return;
     const range = selecao.getRangeAt(0);
     const inicio = offsetNoTexto(textoRef.current, range.startContainer, range.startOffset);
     const fim = offsetNoTexto(textoRef.current, range.endContainer, range.endOffset);
-    if (fim > inicio) setSelecaoAtual({ inicio, fim });
+    if (fim <= inicio) return;
+
+    const rangeRect = range.getBoundingClientRect();
+    const containerRect = containerRef.current.getBoundingClientRect();
+    setSelecaoAtual({
+      inicio,
+      fim,
+      top: rangeRect.bottom - containerRect.top + 8,
+      left: Math.min(
+        Math.max(rangeRect.left - containerRect.left, 0),
+        containerRect.width - 260
+      ),
+    });
   }
 
   function adicionarMarcacao() {
     if (!selecaoAtual || !comentarioSelecao.trim()) return;
-    setMarcacoes((prev) => [...prev, { ...selecaoAtual, comentario: comentarioSelecao.trim() }]);
+    setMarcacoes((prev) => [
+      ...prev,
+      { inicio: selecaoAtual.inicio, fim: selecaoAtual.fim, comentario: comentarioSelecao.trim() },
+    ]);
     setSelecaoAtual(null);
     setComentarioSelecao("");
+    window.getSelection()?.removeAllRanges();
   }
 
   const segmentos = useMemo(() => {
@@ -82,40 +104,59 @@ export function CorrigirRedacaoForm({
         <div className="text-xs font-bold uppercase text-ink-faint mb-2">
           Selecione um trecho do texto pra comentar
         </div>
-        <div
-          ref={textoRef}
-          onMouseUp={capturarSelecao}
-          className="bg-surface border border-border rounded-2xl p-4 text-sm leading-relaxed whitespace-pre-line select-text"
-        >
-          {segmentos.map((s, i) =>
-            s.marcada ? (
-              <mark key={i} title={s.comentario} className="bg-yellow/40 rounded px-0.5">
-                {s.texto}
-              </mark>
-            ) : (
-              <span key={i}>{s.texto}</span>
-            )
+        <div ref={containerRef} className="relative">
+          <div
+            ref={textoRef}
+            onMouseUp={capturarSelecao}
+            className="bg-surface border border-border rounded-2xl p-4 text-sm leading-relaxed whitespace-pre-line select-text"
+          >
+            {segmentos.map((s, i) =>
+              s.marcada ? (
+                <mark key={i} title={s.comentario} className="bg-yellow/40 rounded px-0.5">
+                  {s.texto}
+                </mark>
+              ) : (
+                <span key={i}>{s.texto}</span>
+              )
+            )}
+          </div>
+
+          {selecaoAtual && (
+            <div
+              className="absolute z-10 w-64 flex gap-1.5 items-start bg-ink text-paper rounded-xl p-2.5 shadow-lg"
+              style={{ top: selecaoAtual.top, left: selecaoAtual.left }}
+            >
+              <div className="absolute -top-1.5 left-4 w-3 h-3 bg-ink rotate-45" />
+              <textarea
+                autoFocus
+                value={comentarioSelecao}
+                onChange={(e) => setComentarioSelecao(e.target.value)}
+                placeholder="Comente esse trecho…"
+                rows={2}
+                className="flex-1 rounded-lg bg-white/10 placeholder:text-paper/50 px-2.5 py-1.5 text-xs outline-none resize-none"
+              />
+              <div className="flex flex-col gap-1 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={adicionarMarcacao}
+                  className="font-bold text-[11px] px-2.5 py-1 rounded-full bg-yellow text-yellow-ink"
+                >
+                  Marcar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelecaoAtual(null);
+                    setComentarioSelecao("");
+                  }}
+                  className="font-bold text-[11px] px-2.5 py-1 rounded-full text-paper/70"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
           )}
         </div>
-
-        {selecaoAtual && (
-          <div className="mt-2 flex gap-2 items-start bg-paper border border-border-strong rounded-xl p-3">
-            <textarea
-              value={comentarioSelecao}
-              onChange={(e) => setComentarioSelecao(e.target.value)}
-              placeholder="Comentário sobre o trecho selecionado"
-              rows={2}
-              className="flex-1 rounded-lg border border-border-strong px-3 py-2 text-sm outline-none focus:border-ink resize-none"
-            />
-            <button
-              type="button"
-              onClick={adicionarMarcacao}
-              className="font-bold text-xs px-3.5 py-2 rounded-full bg-ink text-paper flex-shrink-0"
-            >
-              Marcar
-            </button>
-          </div>
-        )}
 
         {marcacoes.length > 0 && (
           <ul className="mt-2 flex flex-col gap-1">

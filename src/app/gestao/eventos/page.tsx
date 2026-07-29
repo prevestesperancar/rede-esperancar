@@ -74,12 +74,34 @@ export default async function GestaoEventosPage() {
         <NovaFotoEventoForm />
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {galeria.map((g) => (
-            <div key={g.id} className="relative rounded-2xl overflow-hidden bg-surface border border-border group">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={g.imagemUrl} alt={g.legenda ?? "Foto de evento"} className="w-full h-32 object-cover" />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-end justify-end p-1.5 opacity-0 group-hover:opacity-100">
-                <ApagarItemButton id={g.id} action={apagarGaleriaEvento} confirmMessage="Apagar esta foto?" />
+            <div key={g.id} className="relative rounded-2xl overflow-hidden bg-surface border border-border">
+              {g.imagemUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={g.imagemUrl} alt={g.legenda ?? "Foto de evento"} className="w-full h-32 object-cover" />
+              ) : (
+                <a
+                  href={g.instagramUrl ?? "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full h-32 flex items-center justify-center text-3xl bg-paper"
+                >
+                  📷
+                </a>
+              )}
+              <div className="absolute top-1.5 right-1.5 bg-surface rounded-full shadow">
+                <ApagarItemButton id={g.id} action={apagarGaleriaEvento} confirmMessage="Apagar esta foto?" label="✕" />
               </div>
+              {g.instagramUrl && (
+                <a
+                  href={g.instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute top-1.5 left-1.5 bg-surface rounded-full w-6 h-6 flex items-center justify-center text-xs shadow"
+                  title="Ver post no Instagram"
+                >
+                  📸
+                </a>
+              )}
               {g.legenda && (
                 <div className="absolute bottom-0 inset-x-0 bg-black/50 text-white text-[11px] px-2 py-1 truncate">
                   {g.legenda}

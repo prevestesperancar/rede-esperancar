@@ -44,6 +44,7 @@ export async function getNucleoBySlug(slug: string) {
 export async function getMateriaisPublicos(limit?: number) {
   return prisma.material.findMany({
     where: { publico: true },
+    include: { disciplina: true },
     orderBy: { createdAt: "desc" },
     ...(limit ? { take: limit } : {}),
   });

@@ -86,13 +86,25 @@ export async function editarNucleoAdmin(
   const endereco = formData.get("endereco") as string;
   const descricao = formData.get("descricao") as string;
   const ativo = formData.get("ativo") === "on";
+  const latitudeStr = formData.get("latitude") as string;
+  const longitudeStr = formData.get("longitude") as string;
 
   if (!nome || !cidade || !estado || !bairro)
     return "Preencha nome, bairro, cidade e estado.";
 
   await prisma.nucleo.update({
     where: { id: nucleoId },
-    data: { nome, cidade, estado, bairro, endereco, descricao, ativo },
+    data: {
+      nome,
+      cidade,
+      estado,
+      bairro,
+      endereco,
+      descricao,
+      ativo,
+      latitude: latitudeStr ? Number(latitudeStr) : null,
+      longitude: longitudeStr ? Number(longitudeStr) : null,
+    },
   });
 
   revalidatePath("/admin");

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Sidebar } from "@/components/gestao/Sidebar";
 import { getNotificacoesDoUsuario, getContagemNaoLidas } from "@/lib/queries/notificacoes";
+import { getContagemApoioPendentes } from "@/lib/queries/agendamento";
 
 export default async function GestaoLayout({
   children,
@@ -25,9 +26,12 @@ export default async function GestaoLayout({
 
   if (session.user.role !== "ADMIN" && !nucleo) redirect("/");
 
-  const [notificacoes, naoLidas] = await Promise.all([
+  const [notificacoes, naoLidas, solicitacoesPendentesCount] = await Promise.all([
     getNotificacoesDoUsuario(session.user.id),
     getContagemNaoLidas(session.user.id),
+    session.user.role === "APOIO_PSICOSSOCIAL" && session.user.nucleoId
+      ? getContagemApoioPendentes(session.user.nucleoId)
+      : Promise.resolve(0),
   ]);
 
   return (
@@ -36,6 +40,7 @@ export default async function GestaoLayout({
         userName={session.user.name ?? ""}
         nucleoNome={nucleo?.nome ?? "Admin"}
         pendentesCount={pendentesCount}
+        solicitacoesPendentesCount={solicitacoesPendentesCount}
         role={session.user.role}
         fotoUrl={usuario?.fotoUrl ?? null}
         notificacoes={notificacoes}

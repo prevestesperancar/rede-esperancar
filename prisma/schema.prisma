@@ -76,11 +76,12 @@ model Notificacao {
 }
 
 model GaleriaEvento {
-  id        String   @id @default(cuid())
-  imagemUrl String
-  legenda   String?
-  data      DateTime @default(now())
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  imagemUrl    String?
+  instagramUrl String?
+  legenda      String?
+  data         DateTime @default(now())
+  createdAt    DateTime @default(now())
 
   nucleoId String?
   nucleo   Nucleo? @relation(fields: [nucleoId], references: [id])
@@ -421,6 +422,7 @@ model QuestaoBanco {
   opcaoD          String
   opcaoE          String?
   respostaCorreta String // "A" | "B" | "C" | "D" | "E"
+  subtema         String? // visível só pra prof/coordenação, não pro aluno
   createdAt       DateTime @default(now())
 
   @@index([prova, materia])
@@ -496,12 +498,13 @@ model ConteudoSite {
 
 // Fase 2 — ainda não usado nas telas
 model TemaRedacao {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
   prova          String // "ENEM" | "UERJ"
   titulo         String
   textoMotivador String?
-  ativo          Boolean  @default(true)
-  createdAt      DateTime @default(now())
+  prazoEnvio     DateTime?
+  ativo          Boolean   @default(true)
+  createdAt      DateTime  @default(now())
 
   criadoPorId String?
   criadoPor   User?   @relation("TemasCriados", fields: [criadoPorId], references: [id])
@@ -524,6 +527,8 @@ model Redacao {
   comentarioGeral  String?
   // Marcações no próprio texto, em JSON: [{inicio:10,fim:25,comentario:"..."}]
   marcacoes        String?
+  // Diagnóstico automático (IA) com base nos critérios da prova — visível só pra prof/coordenação
+  diagnosticoIA    String?
 
   corrigidoPorId String?
   corrigidoPor   User?     @relation("RedacoesCorrigidas", fields: [corrigidoPorId], references: [id])

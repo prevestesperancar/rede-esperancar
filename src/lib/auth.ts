@@ -4,6 +4,10 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // Necessário no Vercel: sem isso, o NextAuth pode rejeitar o cookie de
+  // sessão se o domínio real não bater exatamente com AUTH_URL, o que
+  // aparenta um "logout" aleatório ao navegar pelo portal.
+  trustHost: true,
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   providers: [

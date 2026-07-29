@@ -35,16 +35,19 @@ export default async function GestaoRedacoesPage() {
               <div>
                 <span className="font-mono text-[10px] font-bold uppercase text-terracotta">{t.prova}</span>
                 <div className="font-bold text-sm">{t.titulo}</div>
-                <div className="text-xs text-ink-faint">{t._count.redacoes} redação(ões) recebida(s)</div>
+                <div className="text-xs text-ink-faint">
+                  {t._count.redacoes} redação(ões) recebida(s)
+                  {t.prazoEnvio && ` · prazo: ${t.prazoEnvio.toLocaleDateString("pt-BR")}`}
+                </div>
               </div>
               <form action={async () => { "use server"; await alternarTemaAtivo(t.id); }}>
                 <button
                   type="submit"
-                  className={`text-[11px] font-bold uppercase px-2.5 py-1 rounded-full ${
-                    t.ativo ? "bg-teal/10 text-teal" : "bg-ink-faint/10 text-ink-faint"
+                  className={`text-[11px] font-bold uppercase px-3 py-1.5 rounded-full flex-shrink-0 ${
+                    t.ativo ? "bg-terracotta/10 text-terracotta" : "bg-teal/10 text-teal"
                   }`}
                 >
-                  {t.ativo ? "Ativo" : "Inativo"}
+                  {t.ativo ? "Desativar" : "Reativar"}
                 </button>
               </form>
             </div>

@@ -45,7 +45,11 @@ export function NotificationBell({
       {aberto && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setAberto(false)} />
-          <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-surface border border-border rounded-2xl shadow-lg z-20 p-2">
+          <div
+            className={`absolute mt-2 w-[min(20rem,90vw)] max-h-96 overflow-y-auto bg-surface border border-border rounded-2xl shadow-lg z-20 p-2 ${
+              dark ? "left-0" : "right-0"
+            }`}
+          >
             <div className="flex items-center justify-between px-2 py-1.5">
               <span className="font-extrabold text-sm text-ink">Notificações</span>
               {naoLidas > 0 && (

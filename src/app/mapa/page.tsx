@@ -1,11 +1,21 @@
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { Star } from "@/components/ui/Star";
 import { getNucleos } from "@/lib/queries/site";
 
+const MapaUnidades = dynamic(() => import("@/components/site/MapaUnidades").then((m) => m.MapaUnidades), {
+  ssr: false,
+});
+
 export default async function MapaPage() {
   const nucleos = await getNucleos();
+
+  const comCoordenadas = nucleos.filter(
+    (n): n is typeof n & { latitude: number; longitude: number } => n.latitude !== null && n.longitude !== null
+  );
+  const semCoordenadas = nucleos.filter((n) => n.latitude === null || n.longitude === null);
 
   return (
     <div>
@@ -19,38 +29,31 @@ export default async function MapaPage() {
           Encontre o pré-vestibular mais perto de você.
         </h1>
 
-        {nucleos.length === 0 ? (
-          <p className="text-sm text-ink-faint">Nenhum núcleo cadastrado ainda.</p>
+        {comCoordenadas.length > 0 ? (
+          <div className="rounded-[18px] overflow-hidden border border-border mb-8" style={{ height: 480 }}>
+            <MapaUnidades nucleos={comCoordenadas} />
+          </div>
         ) : (
-          <div className="grid sm:grid-cols-2 gap-5">
-            {nucleos.map((n) => {
-              const query =
-                n.latitude && n.longitude
-                  ? `${n.latitude},${n.longitude}`
-                  : encodeURIComponent(`${n.endereco ?? n.bairro}, ${n.cidade}, ${n.estado}`);
-              return (
-                <div key={n.id} className="bg-surface border border-border rounded-[18px] overflow-hidden">
-                  <iframe
-                    title={`Mapa — ${n.nome}`}
-                    src={`https://www.google.com/maps?q=${query}&output=embed`}
-                    className="w-full h-48 border-0"
-                    loading="lazy"
-                  />
-                  <div className="p-4">
-                    <div className="font-extrabold text-base">{n.nome}</div>
-                    <div className="text-sm text-ink-soft">
-                      {n.bairro} · {n.cidade}, {n.estado}
-                    </div>
-                    <Link
-                      href={`/nucleos/${n.slug}`}
-                      className="inline-block mt-2 text-xs font-bold text-terracotta"
-                    >
-                      Ver este pré-vestibular →
-                    </Link>
+          <p className="text-sm text-ink-faint mb-8">Nenhuma unidade com localização cadastrada ainda.</p>
+        )}
+
+        {semCoordenadas.length > 0 && (
+          <div>
+            <h2 className="font-extrabold text-base mb-3">Outras unidades</h2>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {semCoordenadas.map((n) => (
+                <Link
+                  key={n.id}
+                  href={`/nucleos/${n.slug}`}
+                  className="bg-surface border border-border rounded-2xl p-4"
+                >
+                  <div className="font-extrabold text-sm">{n.nome}</div>
+                  <div className="text-sm text-ink-soft">
+                    {n.bairro} · {n.cidade}, {n.estado}
                   </div>
-                </div>
-              );
-            })}
+                </Link>
+              ))}
+            </div>
           </div>
         )}
       </section>

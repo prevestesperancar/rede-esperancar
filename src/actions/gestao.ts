@@ -269,21 +269,27 @@ export async function criarMaterial(_prevState: string | undefined, formData: Fo
   const titulo = formData.get("titulo") as string;
   const descricao = formData.get("descricao") as string;
   const arquivo = formData.get("arquivo") as File | null;
+  const linkVideo = formData.get("linkVideo") as string;
   const publico = formData.get("publico") === "on";
   const disciplinaId = formData.get("disciplinaId") as string;
   const aula = formData.get("aula") as string;
   const tipo = (formData.get("tipo") as string) || "OUTRO";
 
-  if (!titulo || !arquivo || arquivo.size === 0) return "Preencha título e selecione o arquivo.";
-
-  let arquivoUrl: string | null;
-  try {
-    arquivoUrl = await salvarArquivo(arquivo, "materiais");
-  } catch (error) {
-    if (error instanceof ArquivoInvalidoError) return error.message;
-    throw error;
+  if (!titulo || ((!arquivo || arquivo.size === 0) && !linkVideo)) {
+    return "Preencha o título e selecione um arquivo ou cole o link do vídeo.";
   }
-  if (!arquivoUrl) return "Não foi possível enviar o arquivo.";
+
+  let arquivoUrl: string | null = null;
+  if (arquivo && arquivo.size > 0) {
+    try {
+      arquivoUrl = await salvarArquivo(arquivo, "materiais", "documento");
+    } catch (error) {
+      if (error instanceof ArquivoInvalidoError) return error.message;
+      throw error;
+    }
+  }
+  arquivoUrl = arquivoUrl ?? linkVideo;
+  if (!arquivoUrl) return "Não foi possível enviar o material.";
 
   await prisma.material.create({
     data: {
@@ -545,21 +551,26 @@ export async function criarGaleriaEvento(_prevState: string | undefined, formDat
   const legenda = formData.get("legenda") as string;
   const dataStr = formData.get("data") as string;
   const imagem = formData.get("imagem") as File | null;
+  const instagramUrl = formData.get("instagramUrl") as string;
 
-  if (!imagem || imagem.size === 0) return "Selecione uma foto do evento.";
-
-  let imagemUrl: string | null;
-  try {
-    imagemUrl = await salvarArquivo(imagem, "galeria-eventos");
-  } catch (error) {
-    if (error instanceof ArquivoInvalidoError) return error.message;
-    throw error;
+  if ((!imagem || imagem.size === 0) && !instagramUrl) {
+    return "Envie uma foto ou cole o link do post do Instagram.";
   }
-  if (!imagemUrl) return "Não foi possível enviar a foto.";
+
+  let imagemUrl: string | null = null;
+  if (imagem && imagem.size > 0) {
+    try {
+      imagemUrl = await salvarArquivo(imagem, "galeria-eventos");
+    } catch (error) {
+      if (error instanceof ArquivoInvalidoError) return error.message;
+      throw error;
+    }
+  }
 
   await prisma.galeriaEvento.create({
     data: {
       imagemUrl,
+      instagramUrl: instagramUrl || null,
       legenda: legenda || null,
       data: dataStr ? new Date(dataStr) : new Date(),
       nucleoId: user.nucleoId,
@@ -1081,6 +1092,7 @@ export async function criarQuestaoBanco(_prevState: string | undefined, formData
   const opcaoD = formData.get("opcaoD") as string;
   const opcaoE = formData.get("opcaoE") as string;
   const respostaCorreta = formData.get("respostaCorreta") as string;
+  const subtema = formData.get("subtema") as string;
 
   if (!prova || !materia || !enunciado || !opcaoA || !opcaoB || !opcaoC || !opcaoD || !respostaCorreta) {
     return "Preencha prova, matéria, enunciado, as alternativas e a resposta correta.";
@@ -1098,6 +1110,7 @@ export async function criarQuestaoBanco(_prevState: string | undefined, formData
       opcaoD,
       opcaoE: opcaoE || null,
       respostaCorreta,
+      subtema: subtema || null,
     },
   });
 

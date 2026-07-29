@@ -3,16 +3,24 @@ import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { put } from "@vercel/blob";
 
-export const TAMANHO_MAXIMO_ARQUIVO = 5 * 1024 * 1024; // 5MB
+export const TAMANHO_MAXIMO_FOTO = 8 * 1024 * 1024; // 8MB — dá margem pra fotos HEIC de celular
+export const TAMANHO_MAXIMO_DOCUMENTO = 15 * 1024 * 1024; // 15MB — slides/PDFs de aula
 
 export class ArquivoInvalidoError extends Error {}
 
-export async function salvarArquivo(file: File | null, pasta: string) {
+export async function salvarArquivo(
+  file: File | null,
+  pasta: string,
+  tipo: "foto" | "documento" = "foto"
+) {
   if (!file || file.size === 0) return null;
 
-  if (file.size > TAMANHO_MAXIMO_ARQUIVO) {
+  const tamanhoMaximo = tipo === "documento" ? TAMANHO_MAXIMO_DOCUMENTO : TAMANHO_MAXIMO_FOTO;
+  if (file.size > tamanhoMaximo) {
     throw new ArquivoInvalidoError(
-      `O arquivo "${file.name}" tem ${(file.size / (1024 * 1024)).toFixed(1)}MB — o tamanho máximo aceito é 5MB. Reduza o tamanho da imagem e tente novamente.`
+      `O arquivo "${file.name}" tem ${(file.size / (1024 * 1024)).toFixed(1)}MB — o tamanho máximo aceito é ${
+        tamanhoMaximo / (1024 * 1024)
+      }MB. ${tipo === "documento" ? "Comprima o PDF" : "Reduza o tamanho da imagem"} e tente novamente.`
     );
   }
 

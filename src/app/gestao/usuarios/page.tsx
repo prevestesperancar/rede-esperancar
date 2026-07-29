@@ -13,15 +13,30 @@ const ROLE_LABEL: Record<string, string> = {
   COORDENACAO: "Coordenação",
 };
 
-export default async function GestaoUsuariosPage() {
+export default async function GestaoUsuariosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ busca?: string; role?: string }>;
+}) {
   const session = await auth();
   if (!session?.user?.nucleoId) redirect("/login");
   if (session.user.role !== "COORDENACAO") redirect("/gestao");
 
-  const [usuarios, nucleoNome] = await Promise.all([
+  const { busca, role } = await searchParams;
+
+  const [todosUsuarios, nucleoNome] = await Promise.all([
     getUsuariosDoNucleo(session.user.nucleoId),
     getNucleoNome(session.user.nucleoId),
   ]);
+
+  const usuarios = todosUsuarios.filter((u) => {
+    if (role && u.role !== role) return false;
+    if (busca) {
+      const alvo = `${u.nome} ${u.email}`.toLowerCase();
+      if (!alvo.includes(busca.toLowerCase())) return false;
+    }
+    return true;
+  });
 
   return (
     <div>
@@ -31,6 +46,32 @@ export default async function GestaoUsuariosPage() {
       <h1 className="font-display text-2xl mb-6">Usuários do núcleo</h1>
 
       <NovoUsuarioNucleoForm />
+
+      <form className="flex flex-wrap gap-2.5 mb-5">
+        <input
+          name="busca"
+          defaultValue={busca}
+          placeholder="Buscar por nome ou e-mail..."
+          className="flex-1 min-w-[200px] rounded-full border border-border-strong px-4 py-2.5 text-sm outline-none focus:border-ink"
+        />
+        <select
+          name="role"
+          defaultValue={role ?? ""}
+          className="rounded-full border border-border-strong px-4 py-2.5 text-sm outline-none focus:border-ink bg-surface"
+        >
+          <option value="">Todos os papéis</option>
+          {Object.entries(ROLE_LABEL).map(([valor, label]) => (
+            <option key={valor} value={valor}>
+              {label}
+            </option>
+          ))}
+        </select>
+        <button type="submit" className="font-extrabold text-sm px-5 py-2.5 rounded-full bg-yellow text-yellow-ink">
+          Filtrar
+        </button>
+      </form>
+
+      <div className="text-xs text-ink-faint font-mono mb-3">{usuarios.length} usuário(s)</div>
 
       <div className="flex flex-col gap-3">
         {usuarios.map((u) => (

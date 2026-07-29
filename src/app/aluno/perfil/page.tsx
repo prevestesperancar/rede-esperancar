@@ -80,13 +80,6 @@ export default async function AlunoPerfilPage() {
         Ver minha carteirinha de estudante →
       </Link>
 
-      <Link
-        href="/aluno/apoio"
-        className="block bg-teal text-white font-extrabold text-sm text-center py-3.5 rounded-full mb-6"
-      >
-        Falar com o apoio psicossocial →
-      </Link>
-
       <div className="bg-surface border border-border rounded-2xl p-4 mb-6">
         <div className="font-mono text-[11px] font-bold uppercase tracking-wide text-ink-faint mb-2.5">
           Alterar senha

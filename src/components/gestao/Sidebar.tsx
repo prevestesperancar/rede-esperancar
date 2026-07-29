@@ -38,6 +38,7 @@ const ITEMS_PROFESSOR = [
 
 const ITEMS_APOIO = [
   { href: "/gestao", label: "Dashboard", icon: "🏠" },
+  { href: "/gestao/solicitacoes", label: "Solicitações", icon: "💬" },
   { href: "/gestao/estudantes", label: "Estudantes", icon: "🧑‍🎓" },
   { href: "/gestao/frequencia", label: "Frequência detalhada", icon: "📊" },
   { href: "/gestao/simulados", label: "Desempenho em simulados", icon: "📝" },
@@ -56,6 +57,7 @@ export function Sidebar({
   userName,
   nucleoNome,
   pendentesCount,
+  solicitacoesPendentesCount = 0,
   role,
   fotoUrl,
   notificacoes = [],
@@ -64,6 +66,7 @@ export function Sidebar({
   userName: string;
   nucleoNome: string;
   pendentesCount: number;
+  solicitacoesPendentesCount?: number;
   role: string;
   fotoUrl?: string | null;
   notificacoes?: {
@@ -103,7 +106,7 @@ export function Sidebar({
         <NotificationBell notificacoes={notificacoes} naoLidas={naoLidas} dark />
       </div>
 
-      <nav className="flex flex-col gap-1 flex-1">
+      <nav className="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto">
         {items.map((item) => {
           const active =
             item.href === "/gestao"
@@ -122,13 +125,14 @@ export function Sidebar({
               <span>
                 {item.icon} {item.label}
               </span>
-              {item.href === "/gestao/inscricoes" && pendentesCount > 0 && (
+              {((item.href === "/gestao/inscricoes" && pendentesCount > 0) ||
+                (item.href === "/gestao/solicitacoes" && solicitacoesPendentesCount > 0)) && (
                 <span
                   className={`font-mono text-[11px] font-bold px-1.5 py-0.5 rounded-full ${
                     active ? "bg-yellow-ink text-yellow" : "bg-star text-white"
                   }`}
                 >
-                  {pendentesCount}
+                  {item.href === "/gestao/inscricoes" ? pendentesCount : solicitacoesPendentesCount}
                 </span>
               )}
             </Link>
@@ -138,7 +142,7 @@ export function Sidebar({
 
       <Link
         href="/gestao/perfil"
-        className={`flex items-center gap-2.5 pt-4 border-t border-white/10 rounded-[10px] -mx-1 px-1 ${
+        className={`flex items-center gap-2.5 pt-4 pb-1 border-t border-white/10 rounded-[10px] -mx-1 px-1 flex-shrink-0 ${
           pathname === "/gestao/perfil" ? "text-yellow" : "hover:opacity-80"
         }`}
       >

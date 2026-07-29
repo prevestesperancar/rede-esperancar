@@ -32,6 +32,9 @@ export function NovaFotoEventoForm() {
           placeholder="https://www.instagram.com/p/..."
           className="w-full rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink"
         />
+        <p className="text-[11px] text-ink-faint mt-1">
+          Se colar um link, o post do Instagram (foto e legenda) aparece direto no site — não precisa escrever nada.
+        </p>
       </div>
       <div className="grid sm:grid-cols-2 gap-3">
         <input
@@ -41,7 +44,7 @@ export function NovaFotoEventoForm() {
         />
         <input
           name="legenda"
-          placeholder="Legenda (escreva se colar um link do Instagram)"
+          placeholder="Legenda (só usada se não tiver link do Instagram)"
           className="rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink"
         />
       </div>

@@ -556,9 +556,6 @@ export async function criarGaleriaEvento(_prevState: string | undefined, formDat
   if ((!imagem || imagem.size === 0) && !instagramUrl) {
     return "Envie uma foto ou cole o link do post do Instagram.";
   }
-  if (instagramUrl && !legenda) {
-    return "O Instagram não deixa mais buscar a legenda automaticamente — escreva a legenda também.";
-  }
 
   if (instagramUrl && !/^https?:\/\//i.test(instagramUrl)) {
     instagramUrl = `https://${instagramUrl}`;

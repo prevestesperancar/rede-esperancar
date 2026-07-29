@@ -14,19 +14,31 @@ async function requireEstudante() {
   return { session, estudante };
 }
 
+const PAPEIS_QUE_PODEM_REMARCAR = ["PROFESSOR", "APOIO_PSICOSSOCIAL", "ADMIN", "ESTUDANTE"];
+
 export async function remarcarSolicitacao(solicitacaoId: string): Promise<string | undefined> {
   const session = await auth();
-  if (!session?.user || !["PROFESSOR", "APOIO_PSICOSSOCIAL", "ADMIN"].includes(session.user.role)) {
+  if (!session?.user || !PAPEIS_QUE_PODEM_REMARCAR.includes(session.user.role)) {
     return "Não autorizado.";
   }
 
   const solicitacao = await prisma.solicitacaoAgendamento.findUnique({
     where: { id: solicitacaoId },
-    include: { estudante: true },
+    include: { estudante: true, professor: true, respondidoPor: true },
   });
   if (!solicitacao) return "Solicitação não encontrada.";
 
-  if (solicitacao.tipo === "MONITORIA" && solicitacao.professorId !== session.user.id && session.user.role !== "ADMIN") {
+  const solicitanteEhEstudante = session.user.role === "ESTUDANTE";
+
+  if (solicitanteEhEstudante && solicitacao.estudante.userId !== session.user.id) {
+    return "Essa solicitação não é sua.";
+  }
+  if (
+    !solicitanteEhEstudante &&
+    solicitacao.tipo === "MONITORIA" &&
+    solicitacao.professorId !== session.user.id &&
+    session.user.role !== "ADMIN"
+  ) {
     return "Essa solicitação não é sua.";
   }
 
@@ -44,21 +56,39 @@ export async function remarcarSolicitacao(solicitacaoId: string): Promise<string
     },
   });
 
-  await prisma.notificacao.create({
-    data: {
-      userId: solicitacao.estudante.userId,
-      tipo: "AGENDAMENTO",
-      mensagem:
-        solicitacao.tipo === "MONITORIA"
-          ? "Sua monitoria precisa ser remarcada — aguarde novos horários."
-          : "Sua conversa com o apoio precisa ser remarcada — aguarde novos horários.",
-      link: solicitacao.tipo === "MONITORIA" ? "/aluno/monitorias" : "/aluno/apoio",
-    },
-  });
+  if (solicitanteEhEstudante) {
+    const responsavel = solicitacao.professor ?? solicitacao.respondidoPor;
+    if (responsavel) {
+      await prisma.notificacao.create({
+        data: {
+          userId: responsavel.id,
+          tipo: "AGENDAMENTO",
+          mensagem:
+            solicitacao.tipo === "MONITORIA"
+              ? "O estudante pediu para remarcar a monitoria — aguarde novos horários."
+              : "O estudante pediu para remarcar a conversa com o apoio — aguarde novos horários.",
+          link: solicitacao.tipo === "MONITORIA" ? "/gestao/solicitacoes" : "/gestao/solicitacoes",
+        },
+      });
+    }
+  } else {
+    await prisma.notificacao.create({
+      data: {
+        userId: solicitacao.estudante.userId,
+        tipo: "AGENDAMENTO",
+        mensagem:
+          solicitacao.tipo === "MONITORIA"
+            ? "Sua monitoria precisa ser remarcada — aguarde novos horários."
+            : "Sua conversa com o apoio precisa ser remarcada — aguarde novos horários.",
+        link: solicitacao.tipo === "MONITORIA" ? "/aluno/monitorias" : "/aluno/apoio",
+      },
+    });
+  }
 
   revalidatePath("/aluno");
   revalidatePath("/aluno/monitorias");
   revalidatePath("/aluno/apoio");
+  revalidatePath("/aluno/reunioes");
   revalidatePath("/gestao/monitorias");
   revalidatePath("/gestao/solicitacoes");
   revalidatePath("/gestao");

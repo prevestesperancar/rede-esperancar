@@ -8,10 +8,28 @@ import { criteriosDaProva } from "@/lib/redacao-criterios";
 
 const GESTAO_ROLES = ["PROFESSOR", "COORDENACAO", "ADMIN"];
 
+function ehProfessorDeRedacao(materia: string | null) {
+  if (!materia) return false;
+  const normalizada = materia
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "");
+  return normalizada.includes("redac");
+}
+
 async function requireGestao() {
   const session = await auth();
   if (!session?.user || !GESTAO_ROLES.includes(session.user.role)) {
     throw new Error("Não autorizado.");
+  }
+  if (session.user.role === "PROFESSOR") {
+    const usuario = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { materia: true },
+    });
+    if (!ehProfessorDeRedacao(usuario?.materia ?? null)) {
+      throw new Error("Não autorizado.");
+    }
   }
   return session.user;
 }

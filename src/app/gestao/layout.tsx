@@ -20,9 +20,9 @@ export default async function GestaoLayout({
         prisma.matricula.count({
           where: { status: "PENDENTE", turma: { nucleoId: session.user.nucleoId } },
         }),
-        prisma.user.findUnique({ where: { id: session.user.id }, select: { fotoUrl: true } }),
+        prisma.user.findUnique({ where: { id: session.user.id }, select: { fotoUrl: true, materia: true } }),
       ])
-    : [null, 0, await prisma.user.findUnique({ where: { id: session.user.id }, select: { fotoUrl: true } })];
+    : [null, 0, await prisma.user.findUnique({ where: { id: session.user.id }, select: { fotoUrl: true, materia: true } })];
 
   if (session.user.role !== "ADMIN" && !nucleo) redirect("/");
 
@@ -44,6 +44,7 @@ export default async function GestaoLayout({
         pendentesCount={pendentesCount}
         solicitacoesPendentesCount={solicitacoesPendentesCount}
         role={session.user.role}
+        materia={usuario?.materia ?? null}
         fotoUrl={usuario?.fotoUrl ?? null}
         notificacoes={notificacoes}
         naoLidas={naoLidas}

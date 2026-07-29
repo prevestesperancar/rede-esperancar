@@ -54,12 +54,22 @@ const ROLE_LABEL: Record<string, string> = {
   ADMIN: "Admin",
 };
 
+function ehProfessorDeRedacao(materia?: string | null) {
+  if (!materia) return false;
+  const normalizada = materia
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "");
+  return normalizada.includes("redac");
+}
+
 export function Sidebar({
   userName,
   nucleoNome,
   pendentesCount,
   solicitacoesPendentesCount = 0,
   role,
+  materia,
   fotoUrl,
   notificacoes = [],
   naoLidas = 0,
@@ -69,6 +79,7 @@ export function Sidebar({
   pendentesCount: number;
   solicitacoesPendentesCount?: number;
   role: string;
+  materia?: string | null;
   fotoUrl?: string | null;
   notificacoes?: {
     id: string;
@@ -84,7 +95,9 @@ export function Sidebar({
 
   const items =
     role === "PROFESSOR"
-      ? ITEMS_PROFESSOR
+      ? ehProfessorDeRedacao(materia)
+        ? ITEMS_PROFESSOR
+        : ITEMS_PROFESSOR.filter((item) => item.href !== "/gestao/redacoes")
       : role === "APOIO_PSICOSSOCIAL"
       ? ITEMS_APOIO
       : role === "ADMIN"

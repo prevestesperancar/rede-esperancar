@@ -3,6 +3,7 @@ import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { Tag } from "@/components/ui/Tag";
 import { getNucleos } from "@/lib/queries/site";
+import { MapaUnidadesClient } from "@/components/site/MapaUnidadesClient";
 
 export default async function NucleosPage({
   searchParams,
@@ -11,6 +12,11 @@ export default async function NucleosPage({
 }) {
   const { q } = await searchParams;
   const nucleos = await getNucleos(q);
+  const todosNucleos = await getNucleos();
+  const comCoordenadas = todosNucleos.filter(
+    (n): n is typeof n & { latitude: number; longitude: number } =>
+      n.latitude !== null && n.longitude !== null
+  );
 
   return (
     <div>
@@ -70,6 +76,15 @@ export default async function NucleosPage({
             </p>
           )}
         </div>
+
+        {comCoordenadas.length > 0 && (
+          <div className="mt-14">
+            <h2 className="font-display text-xl mb-4">Mapa das unidades</h2>
+            <div className="rounded-[18px] overflow-hidden border border-border" style={{ height: 420 }}>
+              <MapaUnidadesClient nucleos={comCoordenadas} />
+            </div>
+          </div>
+        )}
       </section>
       <Footer />
     </div>

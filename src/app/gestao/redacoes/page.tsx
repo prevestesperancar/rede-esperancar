@@ -1,16 +1,34 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { getTodosTemas, getRedacoesPendentes, getRedacoesCorrigidas } from "@/lib/queries/redacao";
 import { NovoTemaRedacaoForm } from "@/components/gestao/NovoTemaRedacaoForm";
 import { AlternarTemaAtivoButton } from "@/components/gestao/AlternarTemaAtivoButton";
 
 const GESTAO_ROLES = ["PROFESSOR", "COORDENACAO", "ADMIN"];
 
+function ehProfessorDeRedacao(materia: string | null) {
+  if (!materia) return false;
+  const normalizada = materia
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "");
+  return normalizada.includes("redac");
+}
+
 export default async function GestaoRedacoesPage() {
   const session = await auth();
   if (!session?.user?.nucleoId) redirect("/login");
   if (!GESTAO_ROLES.includes(session.user.role)) redirect("/gestao");
+
+  if (session.user.role === "PROFESSOR") {
+    const usuario = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { materia: true },
+    });
+    if (!ehProfessorDeRedacao(usuario?.materia ?? null)) redirect("/gestao");
+  }
 
   const [temas, pendentes, corrigidas] = await Promise.all([
     getTodosTemas(),

@@ -127,6 +127,7 @@ export default async function AlunoDashboardPage() {
               <MinhasSolicitacoesList
                 solicitacoes={solicitacoesMonitoria}
                 link={nucleoLinks?.linkMonitoriaProfessor ?? null}
+                permitirRemarcar
               />
             </div>
           )}
@@ -136,6 +137,7 @@ export default async function AlunoDashboardPage() {
               <MinhasSolicitacoesList
                 solicitacoes={solicitacoesApoio}
                 link={nucleoLinks?.linkApoioPsicossocial ?? null}
+                permitirRemarcar
               />
             </div>
           )}

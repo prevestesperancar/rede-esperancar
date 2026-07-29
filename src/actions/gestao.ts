@@ -552,10 +552,14 @@ export async function criarGaleriaEvento(_prevState: string | undefined, formDat
   const legenda = formData.get("legenda") as string;
   const dataStr = formData.get("data") as string;
   const imagem = formData.get("imagem") as File | null;
-  const instagramUrl = formData.get("instagramUrl") as string;
+  let instagramUrl = (formData.get("instagramUrl") as string).trim();
 
   if ((!imagem || imagem.size === 0) && !instagramUrl) {
     return "Envie uma foto ou cole o link do post do Instagram.";
+  }
+
+  if (instagramUrl && !/^https?:\/\//i.test(instagramUrl)) {
+    instagramUrl = `https://${instagramUrl}`;
   }
 
   let imagemUrl: string | null = null;

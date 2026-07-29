@@ -1,10 +1,9 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { getEstudanteByUserId } from "@/lib/queries/aluno";
-import { getApoioDoNucleo, getSolicitacoesDoEstudante } from "@/lib/queries/agendamento";
+import { getApoioDoNucleo } from "@/lib/queries/agendamento";
 import { SolicitarApoioForm } from "@/components/aluno/SolicitarApoioForm";
-import { MinhasSolicitacoesList } from "@/components/aluno/MinhasSolicitacoesList";
 
 export default async function AlunoApoioPage() {
   const session = await auth();
@@ -13,18 +12,7 @@ export default async function AlunoApoioPage() {
   const estudante = await getEstudanteByUserId(session.user.id);
   if (!estudante) redirect("/login");
 
-  const [apoios, solicitacoes, nucleo] = session.user.nucleoId
-    ? await Promise.all([
-        getApoioDoNucleo(session.user.nucleoId),
-        getSolicitacoesDoEstudante(estudante.id),
-        prisma.nucleo.findUnique({
-          where: { id: session.user.nucleoId },
-          select: { linkApoioPsicossocial: true },
-        }),
-      ])
-    : [[], [], null];
-
-  const solicitacoesApoio = solicitacoes.filter((s) => s.tipo === "APOIO");
+  const apoios = session.user.nucleoId ? await getApoioDoNucleo(session.user.nucleoId) : [];
 
   return (
     <div>
@@ -48,15 +36,12 @@ export default async function AlunoApoioPage() {
 
       <SolicitarApoioForm />
 
-      {solicitacoesApoio.length > 0 && (
-        <div className="mt-5">
-          <div className="font-bold text-sm mb-3">Minhas solicitações</div>
-          <MinhasSolicitacoesList
-            solicitacoes={solicitacoesApoio}
-            link={nucleo?.linkApoioPsicossocial ?? null}
-          />
-        </div>
-      )}
+      <Link
+        href="/aluno/reunioes"
+        className="block mt-5 text-sm font-bold text-terracotta"
+      >
+        Ver minhas solicitações e reuniões marcadas →
+      </Link>
     </div>
   );
 }

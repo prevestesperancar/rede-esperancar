@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 import { criarGaleriaEvento } from "@/actions/gestao";
+import { CampoArquivo } from "@/components/common/CampoArquivo";
+import { TAMANHO_MAXIMO_FOTO } from "@/lib/upload-limits";
 
 export function NovaFotoEventoForm() {
   const [error, action, pending] = useActionState(criarGaleriaEvento, undefined);
@@ -13,10 +15,10 @@ export function NovaFotoEventoForm() {
         <label className="block text-xs font-bold text-ink-faint uppercase tracking-wide mb-1">
           Foto (opcional se colar o link do Instagram)
         </label>
-        <input
+        <CampoArquivo
           name="imagem"
-          type="file"
           accept="image/*"
+          tamanhoMaximo={TAMANHO_MAXIMO_FOTO}
           className="w-full rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink file:mr-3 file:rounded-full file:border-0 file:bg-yellow file:text-yellow-ink file:font-bold file:text-xs file:px-3 file:py-1.5"
         />
       </div>

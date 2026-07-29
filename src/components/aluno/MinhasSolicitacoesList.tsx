@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { escolherHorarioSolicitacao } from "@/actions/agendamento";
+import { escolherHorarioSolicitacao, remarcarSolicitacao } from "@/actions/agendamento";
 
 type Solicitacao = {
   id: string;
@@ -22,12 +22,15 @@ function formatarData(d: Date) {
 export function MinhasSolicitacoesList({
   solicitacoes,
   link,
+  permitirRemarcar = false,
 }: {
   solicitacoes: Solicitacao[];
   link: string | null;
+  permitirRemarcar?: boolean;
 }) {
   const [pending, startTransition] = useTransition();
   const [erros, setErros] = useState<Record<string, string>>({});
+  const [remarcando, setRemarcando] = useState<string | null>(null);
 
   if (solicitacoes.length === 0) {
     return <p className="text-sm text-ink-faint">Nenhuma solicitação ainda.</p>;
@@ -98,6 +101,31 @@ export function MinhasSolicitacoesList({
                 >
                   Link da videochamada →
                 </a>
+              )}
+              {permitirRemarcar && (
+                <div className="mt-2">
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => {
+                      if (!confirm("Pedir para remarcar esse horário?")) return;
+                      startTransition(async () => {
+                        const erro = await remarcarSolicitacao(s.id);
+                        if (erro) {
+                          setErros((prev) => ({ ...prev, [s.id]: erro }));
+                        } else {
+                          setRemarcando(s.id);
+                        }
+                      });
+                    }}
+                    className="text-xs font-bold text-terracotta disabled:opacity-60"
+                  >
+                    {remarcando === s.id ? "Pedido enviado ✓" : "Pedir para remarcar"}
+                  </button>
+                  {erros[s.id] && (
+                    <p className="text-xs font-semibold text-terracotta mt-1">{erros[s.id]}</p>
+                  )}
+                </div>
               )}
             </div>
           )}

@@ -1,10 +1,17 @@
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { Star } from "@/components/ui/Star";
-import { getGaleriaEventosPublica } from "@/lib/queries/site";
+import { getGaleriaEventosPublica, getEventosPublicos } from "@/lib/queries/site";
+
+function formatDate(data: Date) {
+  return data.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+}
 
 export default async function EventosPage() {
-  const fotos = await getGaleriaEventosPublica();
+  const [fotos, proximosEventos] = await Promise.all([
+    getGaleriaEventosPublica(),
+    getEventosPublicos(),
+  ]);
 
   return (
     <div>
@@ -69,6 +76,26 @@ export default async function EventosPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {proximosEventos.length > 0 && (
+          <div className="mt-14">
+            <h2 className="font-display text-xl mb-4">Próximos eventos</h2>
+            <div className="flex flex-col rounded-[18px] overflow-hidden border border-border">
+              {proximosEventos.map((e) => (
+                <div
+                  key={e.id}
+                  className="flex items-center gap-5 px-5 py-4 bg-surface border-b border-border last:border-b-0"
+                >
+                  <div className="font-mono font-bold text-[13px] text-terracotta w-[70px] flex-shrink-0">
+                    {formatDate(e.data)}
+                  </div>
+                  <div className="font-bold text-[15px] flex-1">{e.titulo}</div>
+                  <div className="text-[13px] text-ink-faint hidden sm:block">{e.local}</div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </section>

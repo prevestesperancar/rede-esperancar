@@ -2,6 +2,8 @@
 
 import { useActionState, useTransition } from "react";
 import { editarPerfil, removerFotoPropria } from "@/actions/auth";
+import { CampoArquivo } from "@/components/common/CampoArquivo";
+import { TAMANHO_MAXIMO_FOTO } from "@/lib/upload-limits";
 
 export function EditarPerfilForm({
   nome,
@@ -33,10 +35,10 @@ export function EditarPerfilForm({
               className="w-16 h-16 rounded-full object-cover mb-2"
             />
           )}
-          <input
+          <CampoArquivo
             name="foto"
-            type="file"
             accept="image/*"
+            tamanhoMaximo={TAMANHO_MAXIMO_FOTO}
             className="w-full rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink file:mr-3 file:rounded-full file:border-0 file:bg-yellow file:text-yellow-ink file:font-bold file:text-xs file:px-3 file:py-1.5"
           />
           {fotoUrl && (

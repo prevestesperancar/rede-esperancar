@@ -2,9 +2,9 @@ import { writeFile, mkdir } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { put } from "@vercel/blob";
+import { TAMANHO_MAXIMO_FOTO, TAMANHO_MAXIMO_DOCUMENTO } from "@/lib/upload-limits";
 
-export const TAMANHO_MAXIMO_FOTO = 8 * 1024 * 1024; // 8MB — dá margem pra fotos HEIC de celular
-export const TAMANHO_MAXIMO_DOCUMENTO = 15 * 1024 * 1024; // 15MB — slides/PDFs de aula
+export { TAMANHO_MAXIMO_FOTO, TAMANHO_MAXIMO_DOCUMENTO };
 
 export class ArquivoInvalidoError extends Error {}
 

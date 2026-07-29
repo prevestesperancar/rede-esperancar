@@ -1273,6 +1273,7 @@ export async function importarEstudantesPlanilha(
       estudante = await prisma.estudante.create({
         data: {
           userId: usuario.id,
+          status: "PRESENTE",
           dataNascimento: dataNascimento ?? undefined,
           situacaoEscolar,
           escola: escola || undefined,

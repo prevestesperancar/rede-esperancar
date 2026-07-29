@@ -33,39 +33,54 @@ export default async function EventosPage() {
         {fotos.length === 0 ? (
           <p className="text-sm text-ink-faint">Nenhuma foto de evento publicada ainda.</p>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3.5 items-start">
-            {fotos.map((f) =>
-              f.instagramUrl ? (
-                <div key={f.id} className="rounded-2xl overflow-hidden bg-surface border border-border p-2">
-                  <InstagramEmbed url={f.instagramUrl} />
-                  <div className="px-2 pb-1 pt-2 text-xs text-ink-faint font-mono">
-                    {f.nucleo?.nome ?? "Rede Esperançar"} · {f.data.toLocaleDateString("pt-BR")}
-                  </div>
-                </div>
-              ) : (
-                <div key={f.id} className="rounded-2xl overflow-hidden bg-surface border border-border">
-                  {f.imagemUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={f.imagemUrl}
-                      alt={f.legenda ?? "Foto de evento da Rede Esperançar"}
-                      className="w-full aspect-square object-cover"
-                    />
-                  ) : (
-                    <div className="w-full aspect-square flex items-center justify-center text-4xl bg-paper">
-                      📸
+          <>
+            {(() => {
+              const posts = fotos.filter((f) => f.instagramUrl);
+              const semLink = fotos.filter((f) => !f.instagramUrl);
+              return (
+                <>
+                  {posts.length > 0 && (
+                    <div className="grid sm:grid-cols-2 gap-5 mb-8 justify-start">
+                      {posts.map((f) => (
+                        <div key={f.id} className="max-w-[400px] w-full mx-auto">
+                          <InstagramEmbed url={f.instagramUrl!} />
+                          <div className="text-xs text-ink-faint font-mono mt-2 text-center">
+                            {f.nucleo?.nome ?? "Rede Esperançar"} · {f.data.toLocaleDateString("pt-BR")}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
-                  <div className="p-3">
-                    {f.legenda && <div className="text-sm font-semibold">{f.legenda}</div>}
-                    <div className="text-xs text-ink-faint font-mono mt-0.5">
-                      {f.nucleo?.nome ?? "Rede Esperançar"} · {f.data.toLocaleDateString("pt-BR")}
+                  {semLink.length > 0 && (
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                      {semLink.map((f) => (
+                        <div key={f.id} className="rounded-2xl overflow-hidden bg-surface border border-border">
+                          {f.imagemUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={f.imagemUrl}
+                              alt={f.legenda ?? "Foto de evento da Rede Esperançar"}
+                              className="w-full aspect-square object-cover"
+                            />
+                          ) : (
+                            <div className="w-full aspect-square flex items-center justify-center text-4xl bg-paper">
+                              📸
+                            </div>
+                          )}
+                          <div className="p-3">
+                            {f.legenda && <div className="text-sm font-semibold">{f.legenda}</div>}
+                            <div className="text-xs text-ink-faint font-mono mt-0.5">
+                              {f.nucleo?.nome ?? "Rede Esperançar"} · {f.data.toLocaleDateString("pt-BR")}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                </div>
-              )
-            )}
-          </div>
+                  )}
+                </>
+              );
+            })()}
+          </>
         )}
 
         {proximosEventos.length > 0 && (

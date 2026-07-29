@@ -5,6 +5,7 @@ import { getEstudantesDoNucleo, getNucleoInfo, getTurmasDoNucleo } from "@/lib/q
 import { ImportarPlanilhaForm } from "@/components/gestao/ImportarPlanilhaForm";
 import { FiltroStatusEstudantes } from "@/components/gestao/FiltroStatusEstudantes";
 import { FiltroBolsistaEstudantes } from "@/components/gestao/FiltroBolsistaEstudantes";
+import { ExportarPresencaButton } from "@/components/gestao/ExportarPresencaButton";
 
 const STATUS_LABEL: Record<string, string> = {
   EM_AVALIACAO: "Em avaliação",
@@ -43,7 +44,7 @@ export default async function EstudantesPage({
   const [matriculas, nucleoInfo, turmas] = await Promise.all([
     getEstudantesDoNucleo(session.user.nucleoId, status, bolsista),
     getNucleoInfo(session.user.nucleoId),
-    somenteLeitura ? Promise.resolve([]) : getTurmasDoNucleo(session.user.nucleoId),
+    getTurmasDoNucleo(session.user.nucleoId),
   ]);
   const nucleoNome = nucleoInfo?.nome ?? "";
 
@@ -57,12 +58,7 @@ export default async function EstudantesPage({
             </div>
             <h1 className="font-display text-2xl">Estudantes</h1>
           </div>
-          <a
-            href="/api/exportar-estudantes"
-            className="font-bold text-sm px-4 py-2.5 rounded-full border border-border-strong text-ink-soft hover:text-ink"
-          >
-            ⬇️ Exportar lista de presença
-          </a>
+          <ExportarPresencaButton turmas={turmas.map((t) => ({ id: t.id, nome: t.nome }))} />
         </div>
 
         <div className="bg-surface border border-border rounded-[18px] p-5">
@@ -111,12 +107,7 @@ export default async function EstudantesPage({
         </div>
         <FiltroStatusEstudantes statusAtual={status} />
         <FiltroBolsistaEstudantes bolsistaAtual={bolsista} />
-        <a
-          href="/api/exportar-estudantes"
-          className="font-bold text-sm px-4 py-2.5 rounded-full border border-border-strong text-ink-soft hover:text-ink"
-        >
-          ⬇️ Exportar lista de presença
-        </a>
+        <ExportarPresencaButton turmas={turmas.map((t) => ({ id: t.id, nome: t.nome }))} />
         {nucleoInfo?.googleSheetsUrl && (
           <a
             href={nucleoInfo.googleSheetsUrl}

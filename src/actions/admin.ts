@@ -52,7 +52,8 @@ export async function criarNucleo(
 
   const coordenadas = await geocodificarEndereco(
     `${endereco || bairro}, ${bairro}, ${cidade}, ${estado}, Brasil`,
-    `${bairro}, ${cidade}, ${estado}, Brasil`
+    `${bairro}, ${cidade}, ${estado}, Brasil`,
+    `${cidade}, ${estado}, Brasil`
   );
 
   const nucleo = await prisma.nucleo.create({
@@ -115,7 +116,11 @@ export async function editarNucleoAdmin(
   let latitude = nucleoAtual?.latitude ?? null;
   let longitude = nucleoAtual?.longitude ?? null;
   if (enderecoMudou || semCoordenadas) {
-    const coordenadas = await geocodificarEndereco(enderecoCompleto, `${bairro}, ${cidade}, ${estado}, Brasil`);
+    const coordenadas = await geocodificarEndereco(
+      enderecoCompleto,
+      `${bairro}, ${cidade}, ${estado}, Brasil`,
+      `${cidade}, ${estado}, Brasil`
+    );
     latitude = coordenadas?.lat ?? null;
     longitude = coordenadas?.lon ?? null;
   }

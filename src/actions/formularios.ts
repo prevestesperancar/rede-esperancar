@@ -18,10 +18,12 @@ async function requireCoordenacao() {
 export type Campo = {
   id: string;
   label: string;
-  tipo: "texto" | "textarea" | "select" | "checkbox";
+  tipo: "texto" | "textarea" | "select" | "radio" | "checkboxes" | "checkbox" | "data" | "hora";
   opcoes?: string[];
   obrigatorio: boolean;
 };
+
+const TIPOS_MULTIPLOS = ["checkboxes"];
 
 export async function criarFormulario(_prevState: string | undefined, formData: FormData) {
   const user = await requireCoordenacao();
@@ -92,6 +94,14 @@ export async function responderFormulario(
   const respostas: Record<string, string> = {};
 
   for (const campo of campos) {
+    if (TIPOS_MULTIPLOS.includes(campo.tipo)) {
+      const valores = formData.getAll(campo.id) as string[];
+      if (campo.obrigatorio && valores.length === 0) {
+        return `Preencha o campo "${campo.label}".`;
+      }
+      respostas[campo.id] = valores.join(", ");
+      continue;
+    }
     const valor = formData.get(campo.id) as string | null;
     if (campo.obrigatorio && !valor) {
       return `Preencha o campo "${campo.label}".`;

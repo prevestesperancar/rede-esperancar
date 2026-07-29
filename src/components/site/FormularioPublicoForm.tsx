@@ -46,6 +46,26 @@ export function FormularioPublicoForm({
               ))}
             </select>
           )}
+          {campo.tipo === "radio" && (
+            <div className="flex flex-col gap-2">
+              {campo.opcoes?.map((o) => (
+                <label key={o} className="flex items-center gap-2 text-sm">
+                  <input type="radio" name={campo.id} value={o} required={campo.obrigatorio} />
+                  {o}
+                </label>
+              ))}
+            </div>
+          )}
+          {campo.tipo === "checkboxes" && (
+            <div className="flex flex-col gap-2">
+              {campo.opcoes?.map((o) => (
+                <label key={o} className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" name={campo.id} value={o} />
+                  {o}
+                </label>
+              ))}
+            </div>
+          )}
           {campo.tipo === "checkbox" && (
             <select name={campo.id} required={campo.obrigatorio} defaultValue="" className={inputClass}>
               <option value="" disabled>
@@ -54,6 +74,12 @@ export function FormularioPublicoForm({
               <option value="Sim">Sim</option>
               <option value="Não">Não</option>
             </select>
+          )}
+          {campo.tipo === "data" && (
+            <input type="date" name={campo.id} required={campo.obrigatorio} className={inputClass} />
+          )}
+          {campo.tipo === "hora" && (
+            <input type="time" name={campo.id} required={campo.obrigatorio} className={inputClass} />
           )}
         </div>
       ))}

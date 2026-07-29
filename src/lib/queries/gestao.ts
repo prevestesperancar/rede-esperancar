@@ -242,11 +242,11 @@ export async function getEstudantesDoNucleo(
   });
 }
 
-export async function getEstudantesAtivosParaPresenca(nucleoId: string) {
+export async function getEstudantesAtivosParaPresenca(nucleoId: string, turmaId?: string) {
   return prisma.matricula.findMany({
     where: {
       status: "APROVADA",
-      turma: { nucleoId },
+      turma: { nucleoId, ...(turmaId ? { id: turmaId } : {}) },
       estudante: { status: "PRESENTE" },
     },
     include: { estudante: { include: { user: true } }, turma: true },

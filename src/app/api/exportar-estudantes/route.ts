@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { PDFDocument, StandardFonts, rgb, type PDFImage } from "pdf-lib";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { getEstudantesAtivosParaPresenca, getNucleoNome } from "@/lib/queries/gestao";
 
 const PERMITIDOS = ["PROFESSOR", "COORDENACAO", "APOIO_PSICOSSOCIAL", "ADMIN"];
@@ -16,16 +17,31 @@ function sabadosDoMes(ano: number, mes: number) {
   return dias;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await auth();
   if (!session?.user?.nucleoId || !PERMITIDOS.includes(session.user.role)) {
     return new Response("Não autorizado.", { status: 403 });
   }
 
+  const turmaId = new URL(request.url).searchParams.get("turmaId") ?? undefined;
+  if (!turmaId) {
+    return new Response("Escolha uma turma para exportar a lista de chamada.", { status: 400 });
+  }
+
+  const turma = await prisma.turma.findFirst({
+    where: { id: turmaId, nucleoId: session.user.nucleoId },
+  });
+  if (!turma) {
+    return new Response("Turma não encontrada.", { status: 404 });
+  }
+
   const [matriculas, nucleoNome] = await Promise.all([
-    getEstudantesAtivosParaPresenca(session.user.nucleoId),
+    getEstudantesAtivosParaPresenca(session.user.nucleoId, turmaId),
     getNucleoNome(session.user.nucleoId),
   ]);
+
+  const turmaNome = turma.nome;
+  const turmaPeriodo = turma.periodo;
 
   const hoje = new Date();
   const sabados = sabadosDoMes(hoje.getFullYear(), hoje.getMonth());
@@ -46,9 +62,8 @@ export async function GET() {
   const pageWidth = 595.28; // A4 retrato — cabe mais nomes por página
   const pageHeight = 841.89;
   const margem = 30;
-  const colNome = 175;
-  const colTurma = 60;
-  const colSabado = (pageWidth - margem * 2 - colNome - colTurma) / Math.max(sabados.length, 1);
+  const colNome = 235;
+  const colSabado = (pageWidth - margem * 2 - colNome) / Math.max(sabados.length, 1);
   const alturaLinha = 20;
   const alturaCabecalho = 90;
   const linhasPorPagina = Math.floor((pageHeight - margem * 2 - alturaCabecalho) / alturaLinha);
@@ -70,7 +85,7 @@ export async function GET() {
       font: fontBold,
       color: rgb(0.1, 0.1, 0.1),
     });
-    page.drawText(`${nucleoNome} · ${nomeMes}`, {
+    page.drawText(`${nucleoNome} · ${turmaNome} · ${turmaPeriodo} · ${nomeMes}`, {
       x: margem + (logoImage ? 40 : 0),
       y: topoY - 30,
       size: 10,
@@ -86,9 +101,8 @@ export async function GET() {
       color: rgb(0.75, 0.75, 0.75),
     });
     page.drawText("Nome", { x: margem, y: headerY, size: 9, font: fontBold });
-    page.drawText("Turma", { x: margem + colNome, y: headerY, size: 9, font: fontBold });
     sabados.forEach((dia, i) => {
-      const x = margem + colNome + colTurma + i * colSabado;
+      const x = margem + colNome + i * colSabado;
       page.drawText(`${String(dia).padStart(2, "0")}/${String(hoje.getMonth() + 1).padStart(2, "0")}`, {
         x: x + colSabado / 2 - 12,
         y: headerY,
@@ -114,16 +128,9 @@ export async function GET() {
     linhaAtual++;
 
     pagina.drawText(m.estudante.user.nome, { x: margem, y: y + 6, size: 9, font: fontRegular });
-    pagina.drawText(`${m.turma.nome} · ${m.turma.periodo}`, {
-      x: margem + colNome,
-      y: y + 6,
-      size: 8,
-      font: fontRegular,
-      color: rgb(0.35, 0.35, 0.35),
-    });
 
     sabados.forEach((_, i) => {
-      const x = margem + colNome + colTurma + i * colSabado;
+      const x = margem + colNome + i * colSabado;
       const boxSize = 14;
       const boxX = x + colSabado / 2 - boxSize / 2;
       pagina.drawRectangle({

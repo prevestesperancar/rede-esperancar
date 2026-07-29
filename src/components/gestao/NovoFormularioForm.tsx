@@ -7,17 +7,23 @@ import { criarFormulario } from "@/actions/formularios";
 type CampoRascunho = {
   id: string;
   label: string;
-  tipo: "texto" | "textarea" | "select" | "checkbox";
+  tipo: "texto" | "textarea" | "select" | "radio" | "checkboxes" | "checkbox" | "data" | "hora";
   opcoesTexto: string;
   obrigatorio: boolean;
 };
 
 const TIPOS = [
-  { value: "texto", label: "Texto curto" },
-  { value: "textarea", label: "Texto longo" },
-  { value: "select", label: "Múltipla escolha" },
+  { value: "texto", label: "Resposta curta" },
+  { value: "textarea", label: "Parágrafo" },
+  { value: "radio", label: "Múltipla escolha (uma opção)" },
+  { value: "checkboxes", label: "Caixas de seleção (várias opções)" },
+  { value: "select", label: "Lista suspensa" },
   { value: "checkbox", label: "Sim/Não" },
+  { value: "data", label: "Data" },
+  { value: "hora", label: "Hora" },
 ];
+
+const TIPOS_COM_OPCOES = ["select", "radio", "checkboxes"];
 
 export function NovoFormularioForm() {
   const [error, action, pending] = useActionState(criarFormulario, undefined);
@@ -44,7 +50,7 @@ export function NovoFormularioForm() {
         label: c.label,
         tipo: c.tipo,
         obrigatorio: c.obrigatorio,
-        ...(c.tipo === "select"
+        ...(TIPOS_COM_OPCOES.includes(c.tipo)
           ? { opcoes: c.opcoesTexto.split(",").map((o) => o.trim()).filter(Boolean) }
           : {}),
       }))
@@ -99,7 +105,7 @@ export function NovoFormularioForm() {
                 </button>
               )}
             </div>
-            {campo.tipo === "select" && (
+            {TIPOS_COM_OPCOES.includes(campo.tipo) && (
               <input
                 value={campo.opcoesTexto}
                 onChange={(e) => updateCampo(campo.id, { opcoesTexto: e.target.value })}

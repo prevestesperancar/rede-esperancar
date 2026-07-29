@@ -60,7 +60,7 @@ export default async function FrequenciaDetalhadaPage({
           href="/api/exportar-frequencia"
           className="font-bold text-sm px-4 py-2.5 rounded-full border border-border-strong text-ink-soft hover:text-ink"
         >
-          ⬇️ Exportar CSV
+          ⬇️ Exportar Excel
         </a>
       </div>
 

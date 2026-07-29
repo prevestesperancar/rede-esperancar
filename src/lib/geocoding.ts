@@ -19,21 +19,25 @@ async function buscarNoNominatim(endereco: string): Promise<{ lat: number; lon: 
   }
 }
 
-// Tenta o endereço completo primeiro; se não encontrar, tenta uma versão mais
-// simples (só bairro/cidade/estado) — endereços com número de rua às vezes
-// não batem no Nominatim mesmo existindo.
+// Tenta o endereço completo primeiro; se não encontrar, tenta versões cada vez
+// mais simples (bairro/cidade/estado, depois só cidade/estado) — endereços com
+// número de rua ou bairro digitado diferente do OpenStreetMap às vezes não
+// batem, mas a cidade quase sempre bate, então sempre sobra pelo menos um pino
+// aproximado no mapa em vez de nenhum.
 export async function geocodificarEndereco(
   endereco: string,
-  enderecoAlternativo?: string
+  ...enderecosAlternativos: (string | undefined)[]
 ): Promise<{ lat: number; lon: number } | null> {
   if (!endereco.trim()) return null;
 
   const resultado = await buscarNoNominatim(endereco);
   if (resultado) return resultado;
 
-  if (enderecoAlternativo) {
+  for (const alternativo of enderecosAlternativos) {
+    if (!alternativo) continue;
     await new Promise((r) => setTimeout(r, 1100)); // respeita o limite de 1 req/s do Nominatim
-    return buscarNoNominatim(enderecoAlternativo);
+    const resultadoAlternativo = await buscarNoNominatim(alternativo);
+    if (resultadoAlternativo) return resultadoAlternativo;
   }
   return null;
 }

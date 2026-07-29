@@ -43,13 +43,13 @@ export async function GET() {
     logoImage = null;
   }
 
-  const pageWidth = 841.89; // A4 paisagem
-  const pageHeight = 595.28;
-  const margem = 36;
-  const colNome = 200;
-  const colTurma = 90;
+  const pageWidth = 595.28; // A4 retrato — cabe mais nomes por página
+  const pageHeight = 841.89;
+  const margem = 30;
+  const colNome = 175;
+  const colTurma = 60;
   const colSabado = (pageWidth - margem * 2 - colNome - colTurma) / Math.max(sabados.length, 1);
-  const alturaLinha = 22;
+  const alturaLinha = 20;
   const alturaCabecalho = 90;
   const linhasPorPagina = Math.floor((pageHeight - margem * 2 - alturaCabecalho) / alturaLinha);
 

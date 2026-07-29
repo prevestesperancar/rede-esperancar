@@ -1,13 +1,9 @@
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { Star } from "@/components/ui/Star";
 import { getNucleos } from "@/lib/queries/site";
-
-const MapaUnidades = dynamic(() => import("@/components/site/MapaUnidades").then((m) => m.MapaUnidades), {
-  ssr: false,
-});
+import { MapaUnidadesClient } from "@/components/site/MapaUnidadesClient";
 
 export default async function MapaPage() {
   const nucleos = await getNucleos();
@@ -31,7 +27,7 @@ export default async function MapaPage() {
 
         {comCoordenadas.length > 0 ? (
           <div className="rounded-[18px] overflow-hidden border border-border mb-8" style={{ height: 480 }}>
-            <MapaUnidades nucleos={comCoordenadas} />
+            <MapaUnidadesClient nucleos={comCoordenadas} />
           </div>
         ) : (
           <p className="text-sm text-ink-faint mb-8">Nenhuma unidade com localização cadastrada ainda.</p>

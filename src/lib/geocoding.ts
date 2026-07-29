@@ -1,6 +1,4 @@
-export async function geocodificarEndereco(endereco: string): Promise<{ lat: number; lon: number } | null> {
-  if (!endereco.trim()) return null;
-
+async function buscarNoNominatim(endereco: string): Promise<{ lat: number; lon: number } | null> {
   try {
     const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(endereco)}`;
     const resposta = await fetch(url, {
@@ -19,4 +17,23 @@ export async function geocodificarEndereco(endereco: string): Promise<{ lat: num
   } catch {
     return null;
   }
+}
+
+// Tenta o endereço completo primeiro; se não encontrar, tenta uma versão mais
+// simples (só bairro/cidade/estado) — endereços com número de rua às vezes
+// não batem no Nominatim mesmo existindo.
+export async function geocodificarEndereco(
+  endereco: string,
+  enderecoAlternativo?: string
+): Promise<{ lat: number; lon: number } | null> {
+  if (!endereco.trim()) return null;
+
+  const resultado = await buscarNoNominatim(endereco);
+  if (resultado) return resultado;
+
+  if (enderecoAlternativo) {
+    await new Promise((r) => setTimeout(r, 1100)); // respeita o limite de 1 req/s do Nominatim
+    return buscarNoNominatim(enderecoAlternativo);
+  }
+  return null;
 }

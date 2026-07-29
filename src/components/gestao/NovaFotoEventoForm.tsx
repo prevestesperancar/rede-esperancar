@@ -41,7 +41,7 @@ export function NovaFotoEventoForm() {
         />
         <input
           name="legenda"
-          placeholder="Legenda (opcional)"
+          placeholder="Legenda (escreva se colar um link do Instagram)"
           className="rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink"
         />
       </div>

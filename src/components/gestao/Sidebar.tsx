@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NotificationBell } from "@/components/common/NotificationBell";
+import { ehProfessorDeRedacao } from "@/lib/redacao-professor";
 
 const ITEMS_COORDENACAO = [
   { href: "/gestao", label: "Dashboard", icon: "🏠" },
@@ -53,15 +54,6 @@ const ROLE_LABEL: Record<string, string> = {
   APOIO_PSICOSSOCIAL: "Apoio psicossocial",
   ADMIN: "Admin",
 };
-
-function ehProfessorDeRedacao(materia?: string | null) {
-  if (!materia) return false;
-  const normalizada = materia
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "");
-  return normalizada.includes("redac");
-}
 
 export function Sidebar({
   userName,

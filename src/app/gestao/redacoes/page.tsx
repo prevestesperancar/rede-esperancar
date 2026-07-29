@@ -5,17 +5,10 @@ import { prisma } from "@/lib/prisma";
 import { getTodosTemas, getRedacoesPendentes, getRedacoesCorrigidas } from "@/lib/queries/redacao";
 import { NovoTemaRedacaoForm } from "@/components/gestao/NovoTemaRedacaoForm";
 import { AlternarTemaAtivoButton } from "@/components/gestao/AlternarTemaAtivoButton";
+import { ApagarTemaButton } from "@/components/gestao/ApagarTemaButton";
+import { ehProfessorDeRedacao } from "@/lib/redacao-professor";
 
 const GESTAO_ROLES = ["PROFESSOR", "COORDENACAO", "ADMIN"];
-
-function ehProfessorDeRedacao(materia: string | null) {
-  if (!materia) return false;
-  const normalizada = materia
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "");
-  return normalizada.includes("redac");
-}
 
 export default async function GestaoRedacoesPage() {
   const session = await auth();
@@ -58,7 +51,10 @@ export default async function GestaoRedacoesPage() {
                   {t.prazoEnvio && ` · prazo: ${t.prazoEnvio.toLocaleDateString("pt-BR")}`}
                 </div>
               </div>
-              <AlternarTemaAtivoButton temaId={t.id} ativo={t.ativo} />
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <AlternarTemaAtivoButton temaId={t.id} ativo={t.ativo} />
+                <ApagarTemaButton temaId={t.id} />
+              </div>
             </div>
           ))}
           {temas.length === 0 && <p className="text-sm text-ink-faint">Nenhum tema criado ainda.</p>}

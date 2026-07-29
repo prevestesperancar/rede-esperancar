@@ -5,7 +5,6 @@ import bcrypt from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { salvarArquivo, ArquivoInvalidoError } from "@/lib/upload";
-import { buscarLegendaInstagram } from "@/lib/instagram";
 import { parseCsv, parseDataBr } from "@/lib/csv";
 import {
   classificarSituacaoEscolar,
@@ -557,6 +556,9 @@ export async function criarGaleriaEvento(_prevState: string | undefined, formDat
   if ((!imagem || imagem.size === 0) && !instagramUrl) {
     return "Envie uma foto ou cole o link do post do Instagram.";
   }
+  if (instagramUrl && !legenda) {
+    return "O Instagram não deixa mais buscar a legenda automaticamente — escreva a legenda também.";
+  }
 
   if (instagramUrl && !/^https?:\/\//i.test(instagramUrl)) {
     instagramUrl = `https://${instagramUrl}`;
@@ -572,16 +574,11 @@ export async function criarGaleriaEvento(_prevState: string | undefined, formDat
     }
   }
 
-  let legendaFinal = legenda || null;
-  if (!legendaFinal && instagramUrl) {
-    legendaFinal = await buscarLegendaInstagram(instagramUrl);
-  }
-
   await prisma.galeriaEvento.create({
     data: {
       imagemUrl,
       instagramUrl: instagramUrl || null,
-      legenda: legendaFinal,
+      legenda: legenda || null,
       data: dataStr ? new Date(dataStr) : new Date(),
       nucleoId: user.nucleoId,
     },

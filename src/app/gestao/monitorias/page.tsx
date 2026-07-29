@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import {
   getMonitoriasDoNucleo,
+  getMonitoriasDoProfessor,
   getTurmasDoNucleo,
   getNucleoNome,
   getDisciplinasDoNucleo,
@@ -19,7 +20,9 @@ export default async function GestaoMonitoriasPage() {
   const isProfessor = session.user.role === "PROFESSOR";
 
   const [monitorias, turmas, nucleoNome, disciplinas] = await Promise.all([
-    getMonitoriasDoNucleo(session.user.nucleoId),
+    isProfessor
+      ? getMonitoriasDoProfessor(session.user.id)
+      : getMonitoriasDoNucleo(session.user.nucleoId),
     getTurmasDoNucleo(session.user.nucleoId),
     getNucleoNome(session.user.nucleoId),
     isProfessor

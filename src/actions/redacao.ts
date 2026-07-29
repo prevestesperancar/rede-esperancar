@@ -5,17 +5,9 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { criteriosDaProva } from "@/lib/redacao-criterios";
+import { ehProfessorDeRedacao } from "@/lib/redacao-professor";
 
 const GESTAO_ROLES = ["PROFESSOR", "COORDENACAO", "ADMIN"];
-
-function ehProfessorDeRedacao(materia: string | null) {
-  if (!materia) return false;
-  const normalizada = materia
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "");
-  return normalizada.includes("redac");
-}
 
 async function requireGestao() {
   const session = await auth();
@@ -39,7 +31,10 @@ async function requireEstudante() {
   if (!session?.user || session.user.role !== "ESTUDANTE") {
     throw new Error("Não autorizado.");
   }
-  const estudante = await prisma.estudante.findUnique({ where: { userId: session.user.id } });
+  const estudante = await prisma.estudante.findUnique({
+    where: { userId: session.user.id },
+    include: { user: true },
+  });
   if (!estudante) throw new Error("Estudante não encontrado.");
   return estudante;
 }
@@ -78,6 +73,23 @@ export async function alternarTemaAtivo(temaId: string) {
   revalidatePath("/aluno/redacao");
 }
 
+export async function apagarTemaRedacao(temaId: string): Promise<string | undefined> {
+  await requireGestao();
+  const tema = await prisma.temaRedacao.findUnique({
+    where: { id: temaId },
+    include: { _count: { select: { redacoes: true } } },
+  });
+  if (!tema) return "Tema não encontrado.";
+  if (tema._count.redacoes > 0) {
+    return "Esse tema já tem redações enviadas — desative-o em vez de apagar, pra não perder o histórico.";
+  }
+
+  await prisma.temaRedacao.delete({ where: { id: temaId } });
+  revalidatePath("/gestao/redacoes");
+  revalidatePath("/aluno/redacao");
+  return undefined;
+}
+
 export async function enviarRedacao(_prevState: string | undefined, formData: FormData) {
   const estudante = await requireEstudante();
 
@@ -97,6 +109,24 @@ export async function enviarRedacao(_prevState: string | undefined, formData: Fo
   await prisma.redacao.create({
     data: { estudanteId: estudante.id, temaId, textoEnviado },
   });
+
+  if (estudante.user.nucleoId) {
+    const professoresDeRedacao = await prisma.user.findMany({
+      where: { nucleoId: estudante.user.nucleoId, role: "PROFESSOR" },
+      select: { id: true, materia: true },
+    });
+    const destinatarios = professoresDeRedacao.filter((p) => ehProfessorDeRedacao(p.materia));
+    if (destinatarios.length > 0) {
+      await prisma.notificacao.createMany({
+        data: destinatarios.map((p) => ({
+          userId: p.id,
+          tipo: "REDACAO",
+          mensagem: `${estudante.user.nome} enviou uma redação para correção — ${tema.titulo}.`,
+          link: "/gestao/redacoes",
+        })),
+      });
+    }
+  }
 
   revalidatePath("/aluno/redacao");
   revalidatePath("/gestao/redacoes");

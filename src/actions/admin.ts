@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { geocodificarEndereco } from "@/lib/geocoding";
 
 async function requireAdmin() {
   const session = await auth();
@@ -49,8 +50,20 @@ export async function criarNucleo(
 
   const passwordHash = await bcrypt.hash(coordSenha, 10);
 
+  const coordenadas = await geocodificarEndereco(`${endereco || bairro}, ${bairro}, ${cidade}, ${estado}, Brasil`);
+
   const nucleo = await prisma.nucleo.create({
-    data: { nome, slug, cidade, estado, bairro, endereco, descricao },
+    data: {
+      nome,
+      slug,
+      cidade,
+      estado,
+      bairro,
+      endereco,
+      descricao,
+      latitude: coordenadas?.lat ?? null,
+      longitude: coordenadas?.lon ?? null,
+    },
   });
 
   const coordenador = await prisma.user.create({
@@ -86,25 +99,27 @@ export async function editarNucleoAdmin(
   const endereco = formData.get("endereco") as string;
   const descricao = formData.get("descricao") as string;
   const ativo = formData.get("ativo") === "on";
-  const latitudeStr = formData.get("latitude") as string;
-  const longitudeStr = formData.get("longitude") as string;
 
   if (!nome || !cidade || !estado || !bairro)
     return "Preencha nome, bairro, cidade e estado.";
 
+  const nucleoAtual = await prisma.nucleo.findUnique({ where: { id: nucleoId } });
+  const enderecoCompleto = `${endereco || bairro}, ${bairro}, ${cidade}, ${estado}, Brasil`;
+  const enderecoMudou =
+    endereco !== nucleoAtual?.endereco || bairro !== nucleoAtual?.bairro || cidade !== nucleoAtual?.cidade;
+  const semCoordenadas = !nucleoAtual?.latitude || !nucleoAtual?.longitude;
+
+  let latitude = nucleoAtual?.latitude ?? null;
+  let longitude = nucleoAtual?.longitude ?? null;
+  if (enderecoMudou || semCoordenadas) {
+    const coordenadas = await geocodificarEndereco(enderecoCompleto);
+    latitude = coordenadas?.lat ?? null;
+    longitude = coordenadas?.lon ?? null;
+  }
+
   await prisma.nucleo.update({
     where: { id: nucleoId },
-    data: {
-      nome,
-      cidade,
-      estado,
-      bairro,
-      endereco,
-      descricao,
-      ativo,
-      latitude: latitudeStr ? Number(latitudeStr) : null,
-      longitude: longitudeStr ? Number(longitudeStr) : null,
-    },
+    data: { nome, cidade, estado, bairro, endereco, descricao, ativo, latitude, longitude },
   });
 
   revalidatePath("/admin");

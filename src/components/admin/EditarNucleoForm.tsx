@@ -66,30 +66,10 @@ export function EditarNucleoForm({
           className={`${inputClass} resize-none`}
         />
       </div>
-      <div>
-        <label className={labelClass}>Coordenadas do pin no mapa (opcional)</label>
-        <div className="grid sm:grid-cols-2 gap-3">
-          <input
-            name="latitude"
-            type="number"
-            step="any"
-            defaultValue={latitude ?? ""}
-            placeholder="Latitude, ex: -22.9068"
-            className={inputClass}
-          />
-          <input
-            name="longitude"
-            type="number"
-            step="any"
-            defaultValue={longitude ?? ""}
-            placeholder="Longitude, ex: -43.1729"
-            className={inputClass}
-          />
-        </div>
-        <p className="text-xs text-ink-faint mt-1">
-          Pegue no Google Maps: clique com o botão direito no local exato → as coordenadas aparecem no topo do menu.
-        </p>
-      </div>
+      <p className="text-xs text-ink-faint">
+        📍 A localização no mapa é encontrada automaticamente a partir do endereço, bairro e cidade acima.
+        {latitude && longitude ? " Já está localizado." : " Ainda não foi possível localizar — confira se o endereço está completo."}
+      </p>
       <label className="flex items-center gap-2 text-sm font-semibold">
         <input type="checkbox" name="ativo" defaultChecked={ativo} className="w-4 h-4" />
         Núcleo ativo (aparece no site)

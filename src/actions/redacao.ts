@@ -101,10 +101,12 @@ export async function gerarDiagnosticoIA(redacaoId: string): Promise<string> {
   const criterios = criteriosDaProva(redacao.tema.prova);
   const listaCriterios = criterios.map((c) => `- ${c.label} (0 a ${c.max} pontos)`).join("\n");
 
-  const client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  const model = client.getGenerativeModel({ model: "gemini-2.0-flash" });
-  const resultado = await model.generateContent(
-    `Você é um assistente que ajuda uma professora de redação a corrigir textos de estudantes de um pré-vestibular social para o ${redacao.tema.prova}.
+  let texto: string;
+  try {
+    const client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = client.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const resultado = await model.generateContent(
+      `Você é um assistente que ajuda uma professora de redação a corrigir textos de estudantes de um pré-vestibular social para o ${redacao.tema.prova}.
 
 Tema proposto: "${redacao.tema.titulo}"
 ${redacao.tema.textoMotivador ? `Texto motivador: ${redacao.tema.textoMotivador}\n` : ""}
@@ -117,9 +119,12 @@ ${redacao.textoEnviado}
 """
 
 Faça um diagnóstico BREVE (máximo 200 palavras) para ajudar a professora a corrigir mais rápido — não é a nota final, é só um rascunho de apoio. Aponte: pontos fortes, principais problemas por critério, e 1-2 sugestões de melhoria. Seja direto, em português, sem enrolação.`
-  );
-
-  const texto = resultado.response.text().trim();
+    );
+    texto = resultado.response.text().trim();
+  } catch (error) {
+    console.error("Erro ao gerar diagnóstico IA:", error);
+    return "Não foi possível gerar o diagnóstico agora (erro na API de IA). Tente novamente em alguns segundos.";
+  }
 
   await prisma.redacao.update({ where: { id: redacaoId }, data: { diagnosticoIA: texto || null } });
   revalidatePath(`/gestao/redacoes/${redacaoId}`);

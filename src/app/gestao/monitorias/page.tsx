@@ -11,13 +11,6 @@ import { apagarMonitoria } from "@/actions/gestao";
 import { NovaMonitoriaForm } from "@/components/gestao/NovaMonitoriaForm";
 import { EditarMonitoriaForm } from "@/components/gestao/EditarMonitoriaForm";
 import { ApagarItemButton } from "@/components/gestao/ApagarItemButton";
-import {
-  getSolicitacoesPendentesDoProfessor,
-  getSolicitacoesConfirmadasDoProfessor,
-} from "@/lib/queries/agendamento";
-import { SolicitacoesPendentesCard } from "@/components/gestao/SolicitacoesPendentesCard";
-import { SolicitacoesConfirmadasCard } from "@/components/gestao/SolicitacoesConfirmadasCard";
-import { prisma } from "@/lib/prisma";
 
 export default async function GestaoMonitoriasPage() {
   const session = await auth();
@@ -25,21 +18,14 @@ export default async function GestaoMonitoriasPage() {
 
   const isProfessor = session.user.role === "PROFESSOR";
 
-  const [monitorias, turmas, nucleoNome, disciplinas, solicitacoesPendentes, solicitacoesConfirmadas, nucleo] =
-    await Promise.all([
-      getMonitoriasDoNucleo(session.user.nucleoId),
-      getTurmasDoNucleo(session.user.nucleoId),
-      getNucleoNome(session.user.nucleoId),
-      isProfessor
-        ? getDisciplinasDoProfessor(session.user.id)
-        : getDisciplinasDoNucleo(session.user.nucleoId),
-      isProfessor ? getSolicitacoesPendentesDoProfessor(session.user.id) : Promise.resolve([]),
-      isProfessor ? getSolicitacoesConfirmadasDoProfessor(session.user.id) : Promise.resolve([]),
-      prisma.nucleo.findUnique({
-        where: { id: session.user.nucleoId },
-        select: { linkMonitoriaProfessor: true },
-      }),
-    ]);
+  const [monitorias, turmas, nucleoNome, disciplinas] = await Promise.all([
+    getMonitoriasDoNucleo(session.user.nucleoId),
+    getTurmasDoNucleo(session.user.nucleoId),
+    getNucleoNome(session.user.nucleoId),
+    isProfessor
+      ? getDisciplinasDoProfessor(session.user.id)
+      : getDisciplinasDoNucleo(session.user.nucleoId),
+  ]);
 
   return (
     <div>
@@ -48,23 +34,9 @@ export default async function GestaoMonitoriasPage() {
           <div className="font-mono text-xs font-bold text-terracotta uppercase tracking-wide mb-1.5">
             {nucleoNome}
           </div>
-          <h1 className="font-display text-2xl">Monitorias</h1>
+          <h1 className="font-display text-2xl">Minha grade de monitorias</h1>
         </div>
       </div>
-
-      {isProfessor && (
-        <>
-          <SolicitacoesPendentesCard
-            titulo="Solicitações de monitoria"
-            solicitacoes={solicitacoesPendentes}
-          />
-          <SolicitacoesConfirmadasCard
-            titulo="Monitorias individuais confirmadas"
-            solicitacoes={solicitacoesConfirmadas}
-            link={nucleo?.linkMonitoriaProfessor ?? null}
-          />
-        </>
-      )}
 
       <NovaMonitoriaForm
         turmas={turmas.map((t) => ({ id: t.id, nome: t.nome }))}

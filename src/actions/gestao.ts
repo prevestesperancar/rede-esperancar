@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { salvarArquivo, ArquivoInvalidoError } from "@/lib/upload";
+import { buscarLegendaInstagram } from "@/lib/instagram";
 import { parseCsv, parseDataBr } from "@/lib/csv";
 import {
   classificarSituacaoEscolar,
@@ -546,7 +547,7 @@ export async function apagarDepoimento(depoimentoId: string) {
 }
 
 export async function criarGaleriaEvento(_prevState: string | undefined, formData: FormData) {
-  const user = await requireCoordenacao();
+  const user = await requireGestao();
 
   const legenda = formData.get("legenda") as string;
   const dataStr = formData.get("data") as string;
@@ -567,11 +568,16 @@ export async function criarGaleriaEvento(_prevState: string | undefined, formDat
     }
   }
 
+  let legendaFinal = legenda || null;
+  if (!legendaFinal && instagramUrl) {
+    legendaFinal = await buscarLegendaInstagram(instagramUrl);
+  }
+
   await prisma.galeriaEvento.create({
     data: {
       imagemUrl,
       instagramUrl: instagramUrl || null,
-      legenda: legenda || null,
+      legenda: legendaFinal,
       data: dataStr ? new Date(dataStr) : new Date(),
       nucleoId: user.nucleoId,
     },
@@ -583,7 +589,7 @@ export async function criarGaleriaEvento(_prevState: string | undefined, formDat
 }
 
 export async function apagarGaleriaEvento(itemId: string) {
-  const user = await requireCoordenacao();
+  const user = await requireGestao();
   const item = await prisma.galeriaEvento.findUnique({ where: { id: itemId } });
   if (!item || item.nucleoId !== user.nucleoId) {
     throw new Error("Foto não encontrada neste núcleo.");

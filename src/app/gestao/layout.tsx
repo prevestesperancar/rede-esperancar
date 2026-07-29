@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Sidebar } from "@/components/gestao/Sidebar";
 import { getNotificacoesDoUsuario, getContagemNaoLidas } from "@/lib/queries/notificacoes";
-import { getContagemApoioPendentes } from "@/lib/queries/agendamento";
+import { getContagemApoioPendentes, getContagemMonitoriaPendentes } from "@/lib/queries/agendamento";
 
 export default async function GestaoLayout({
   children,
@@ -31,6 +31,8 @@ export default async function GestaoLayout({
     getContagemNaoLidas(session.user.id),
     session.user.role === "APOIO_PSICOSSOCIAL" && session.user.nucleoId
       ? getContagemApoioPendentes(session.user.nucleoId)
+      : session.user.role === "PROFESSOR"
+      ? getContagemMonitoriaPendentes(session.user.id)
       : Promise.resolve(0),
   ]);
 

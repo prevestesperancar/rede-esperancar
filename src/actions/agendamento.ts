@@ -14,6 +14,57 @@ async function requireEstudante() {
   return { session, estudante };
 }
 
+export async function remarcarSolicitacao(solicitacaoId: string): Promise<string | undefined> {
+  const session = await auth();
+  if (!session?.user || !["PROFESSOR", "APOIO_PSICOSSOCIAL", "ADMIN"].includes(session.user.role)) {
+    return "Não autorizado.";
+  }
+
+  const solicitacao = await prisma.solicitacaoAgendamento.findUnique({
+    where: { id: solicitacaoId },
+    include: { estudante: true },
+  });
+  if (!solicitacao) return "Solicitação não encontrada.";
+
+  if (solicitacao.tipo === "MONITORIA" && solicitacao.professorId !== session.user.id && session.user.role !== "ADMIN") {
+    return "Essa solicitação não é sua.";
+  }
+
+  await prisma.solicitacaoAgendamento.update({
+    where: { id: solicitacaoId },
+    data: {
+      status: "PENDENTE",
+      opcao1: null,
+      opcao2: null,
+      opcao3: null,
+      escolhaData: null,
+      confirmadoEm: null,
+      respondidoEm: null,
+      respondidoPorId: null,
+    },
+  });
+
+  await prisma.notificacao.create({
+    data: {
+      userId: solicitacao.estudante.userId,
+      tipo: "AGENDAMENTO",
+      mensagem:
+        solicitacao.tipo === "MONITORIA"
+          ? "Sua monitoria precisa ser remarcada — aguarde novos horários."
+          : "Sua conversa com o apoio precisa ser remarcada — aguarde novos horários.",
+      link: solicitacao.tipo === "MONITORIA" ? "/aluno/monitorias" : "/aluno/apoio",
+    },
+  });
+
+  revalidatePath("/aluno");
+  revalidatePath("/aluno/monitorias");
+  revalidatePath("/aluno/apoio");
+  revalidatePath("/gestao/monitorias");
+  revalidatePath("/gestao/solicitacoes");
+  revalidatePath("/gestao");
+  return undefined;
+}
+
 export async function solicitarMonitoria(
   _prevState: string | undefined,
   formData: FormData

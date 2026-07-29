@@ -1,3 +1,5 @@
+import { RemarcarButton } from "@/components/gestao/RemarcarButton";
+
 type Solicitacao = {
   id: string;
   escolhaData: Date | null;
@@ -34,11 +36,14 @@ export function SolicitacoesConfirmadasCard({
                 </div>
               )}
             </div>
-            {link && (
-              <a href={link} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-teal">
-                Link →
-              </a>
-            )}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {link && (
+                <a href={link} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-teal">
+                  Link →
+                </a>
+              )}
+              <RemarcarButton solicitacaoId={s.id} />
+            </div>
           </div>
         ))}
       </div>

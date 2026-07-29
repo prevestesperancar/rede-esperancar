@@ -2,8 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getTodosTemas, getRedacoesPendentes, getRedacoesCorrigidas } from "@/lib/queries/redacao";
-import { alternarTemaAtivo } from "@/actions/redacao";
 import { NovoTemaRedacaoForm } from "@/components/gestao/NovoTemaRedacaoForm";
+import { AlternarTemaAtivoButton } from "@/components/gestao/AlternarTemaAtivoButton";
 
 const GESTAO_ROLES = ["PROFESSOR", "COORDENACAO", "ADMIN"];
 
@@ -40,16 +40,7 @@ export default async function GestaoRedacoesPage() {
                   {t.prazoEnvio && ` · prazo: ${t.prazoEnvio.toLocaleDateString("pt-BR")}`}
                 </div>
               </div>
-              <form action={async () => { "use server"; await alternarTemaAtivo(t.id); }}>
-                <button
-                  type="submit"
-                  className={`text-[11px] font-bold uppercase px-3 py-1.5 rounded-full flex-shrink-0 ${
-                    t.ativo ? "bg-terracotta/10 text-terracotta" : "bg-teal/10 text-teal"
-                  }`}
-                >
-                  {t.ativo ? "Desativar" : "Reativar"}
-                </button>
-              </form>
+              <AlternarTemaAtivoButton temaId={t.id} ativo={t.ativo} />
             </div>
           ))}
           {temas.length === 0 && <p className="text-sm text-ink-faint">Nenhum tema criado ainda.</p>}

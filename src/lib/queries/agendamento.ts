@@ -73,6 +73,12 @@ export async function getSolicitacoesApoioConfirmadas(nucleoId: string) {
   });
 }
 
+export async function getContagemMonitoriaPendentes(professorId: string) {
+  return prisma.solicitacaoAgendamento.count({
+    where: { professorId, status: { in: ["PENDENTE", "AGUARDANDO_ESCOLHA"] } },
+  });
+}
+
 export async function getContagemApoioPendentes(nucleoId: string) {
   return prisma.solicitacaoAgendamento.count({
     where: { nucleoId, tipo: "APOIO", status: { in: ["PENDENTE", "AGUARDANDO_ESCOLHA"] } },

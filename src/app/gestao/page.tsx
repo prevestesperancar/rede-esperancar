@@ -22,21 +22,8 @@ import { FrequenciaDashboard } from "@/components/gestao/FrequenciaDashboard";
 import { PerfilEstudantesChart } from "@/components/gestao/PerfilEstudantesChart";
 import { AniversariantesCard } from "@/components/gestao/AniversariantesCard";
 import { apagarProva } from "@/actions/gestao";
-import {
-  getSolicitacoesApoioPendentes,
-  getSolicitacoesApoioConfirmadas,
-  getSolicitacoesApoioAguardandoEscolha,
-  getSolicitacoesAtrasadas,
-  getSolicitacoesPendentesDoProfessor,
-  getSolicitacoesConfirmadasDoProfessor,
-  getSolicitacoesAguardandoEscolhaDoProfessor,
-  getContagemAtendimentosSemana,
-} from "@/lib/queries/agendamento";
-import { SolicitacoesPendentesCard } from "@/components/gestao/SolicitacoesPendentesCard";
-import { SolicitacoesConfirmadasCard } from "@/components/gestao/SolicitacoesConfirmadasCard";
-import { SolicitacoesAguardandoEscolhaCard } from "@/components/gestao/SolicitacoesAguardandoEscolhaCard";
+import { getSolicitacoesAtrasadas, getContagemAtendimentosSemana } from "@/lib/queries/agendamento";
 import { SolicitacoesAtrasadasCard } from "@/components/gestao/SolicitacoesAtrasadasCard";
-import { prisma } from "@/lib/prisma";
 
 export default async function GestaoDashboardPage({
   searchParams,
@@ -120,28 +107,13 @@ export default async function GestaoDashboardPage({
   }
 
   if (session.user.role === "PROFESSOR") {
-    const [
-      nucleoNome,
-      grade,
-      monitorias,
-      turmaIds,
-      monitoriaPendentes,
-      monitoriaAguardando,
-      monitoriaConfirmadas,
-    ] = await Promise.all([
+    const [nucleoNome, grade, monitorias, turmaIds] = await Promise.all([
       getNucleoNome(nucleoId),
       getGradeDoProfessor(session.user.id),
       getMonitoriasDoProfessor(session.user.id),
       getTurmasDoProfessor(session.user.id),
-      getSolicitacoesPendentesDoProfessor(session.user.id),
-      getSolicitacoesAguardandoEscolhaDoProfessor(session.user.id),
-      getSolicitacoesConfirmadasDoProfessor(session.user.id),
     ]);
     const frequencias = await getFrequenciaResumoDoNucleo(nucleoId, dataSelecionada, turmaIds);
-    const nucleoLink = await prisma.nucleo.findUnique({
-      where: { id: nucleoId },
-      select: { linkMonitoriaProfessor: true },
-    });
 
     return (
       <div>
@@ -149,20 +121,6 @@ export default async function GestaoDashboardPage({
           {nucleoNome}
         </div>
         <h1 className="font-display text-2xl mb-6">Meu painel</h1>
-
-        <SolicitacoesPendentesCard
-          titulo="Solicitações de monitoria"
-          solicitacoes={monitoriaPendentes}
-        />
-        <SolicitacoesAguardandoEscolhaCard
-          titulo="Aguardando o estudante escolher um horário"
-          solicitacoes={monitoriaAguardando}
-        />
-        <SolicitacoesConfirmadasCard
-          titulo="Monitorias confirmadas"
-          solicitacoes={monitoriaConfirmadas}
-          link={nucleoLink?.linkMonitoriaProfessor ?? null}
-        />
 
         <div className="bg-surface border border-border rounded-[18px] p-5 mb-4">
           <h3 className="font-extrabold text-[15px] mb-3.5">Meu horário de aula</h3>

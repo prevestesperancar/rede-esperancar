@@ -33,16 +33,17 @@ enum StatusEstudante {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  role         Role
-  nome         String
-  telefone     String?
-  fotoUrl      String?
-  materia      String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  email              String   @unique
+  passwordHash       String
+  role               Role
+  nome               String
+  telefone           String?
+  fotoUrl            String?
+  materia            String?
+  precisaTrocarSenha Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   // null quando role = ADMIN (visão global, não escopada a um núcleo)
   nucleoId String?

@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { geocodificarEndereco } from "@/lib/geocoding";
+import { validarSenhaForte } from "@/lib/senha";
 
 async function requireAdmin() {
   const session = await auth();
@@ -38,9 +39,8 @@ export async function criarNucleo(
   if (!coordNome || !coordEmail || !coordSenha) {
     return "Preencha os dados do coordenador responsável.";
   }
-  if (coordSenha.length < 6) {
-    return "A senha do coordenador precisa ter pelo menos 6 caracteres.";
-  }
+  const erroSenhaCoord = validarSenhaForte(coordSenha);
+  if (erroSenhaCoord) return erroSenhaCoord;
 
   const slugExistente = await prisma.nucleo.findUnique({ where: { slug } });
   if (slugExistente) return "Já existe um núcleo com esse slug.";
@@ -186,7 +186,8 @@ export async function criarUsuarioAdmin(_prevState: string | undefined, formData
   const nucleoId = formData.get("nucleoId") as string;
 
   if (!nome || !email || !senha) return "Preencha nome, e-mail e senha.";
-  if (senha.length < 6) return "A senha precisa ter pelo menos 6 caracteres.";
+  const erroSenha = validarSenhaForte(senha);
+  if (erroSenha) return erroSenha;
   if (!ROLES_EDITAVEIS.includes(role)) return "Papel inválido.";
   if (role !== "ADMIN" && !nucleoId) return "Escolha o núcleo desse usuário.";
 
@@ -253,7 +254,9 @@ export async function redefinirSenhaUsuario(
   const userId = formData.get("userId") as string;
   const novaSenha = formData.get("novaSenha") as string;
 
-  if (!novaSenha || novaSenha.length < 6) return "A senha precisa ter pelo menos 6 caracteres.";
+  if (!novaSenha) return "Preencha a nova senha.";
+  const erroSenha = validarSenhaForte(novaSenha);
+  if (erroSenha) return erroSenha;
 
   const passwordHash = await bcrypt.hash(novaSenha, 10);
   await prisma.user.update({ where: { id: userId }, data: { passwordHash } });

@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { salvarArquivo, ArquivoInvalidoError } from "@/lib/upload";
 import { parseCsv, parseDataBr } from "@/lib/csv";
+import { validarSenhaForte } from "@/lib/senha";
 import {
   classificarSituacaoEscolar,
   classificarProvas,
@@ -608,7 +609,8 @@ export async function criarProfessor(_prevState: string | undefined, formData: F
   const foto = formData.get("foto") as File | null;
 
   if (!nome || !email || !senha) return "Preencha nome, e-mail e senha.";
-  if (senha.length < 6) return "A senha precisa ter pelo menos 6 caracteres.";
+  const erroSenha = validarSenhaForte(senha);
+  if (erroSenha) return erroSenha;
 
   const existente = await prisma.user.findUnique({ where: { email } });
   if (existente) return "Já existe um usuário com este e-mail.";
@@ -1007,7 +1009,8 @@ export async function criarUsuarioNucleo(_prevState: string | undefined, formDat
   const role = formData.get("role") as string;
 
   if (!nome || !email || !senha) return "Preencha nome, e-mail e senha.";
-  if (senha.length < 6) return "A senha precisa ter pelo menos 6 caracteres.";
+  const erroSenha = validarSenhaForte(senha);
+  if (erroSenha) return erroSenha;
   if (!PAPEIS_NUCLEO_EDITAVEIS.includes(role)) return "Papel inválido.";
 
   const existente = await prisma.user.findUnique({ where: { email } });
@@ -1071,7 +1074,9 @@ export async function redefinirSenhaUsuarioNucleo(
   const userId = formData.get("userId") as string;
   const novaSenha = formData.get("novaSenha") as string;
 
-  if (!novaSenha || novaSenha.length < 6) return "A senha precisa ter pelo menos 6 caracteres.";
+  if (!novaSenha) return "Preencha a nova senha.";
+  const erroSenha = validarSenhaForte(novaSenha);
+  if (erroSenha) return erroSenha;
 
   const usuario = await prisma.user.findUnique({ where: { id: userId } });
   if (!usuario || usuario.nucleoId !== gestor.nucleoId) return "Usuário não encontrado neste núcleo.";
@@ -1232,6 +1237,7 @@ export async function importarEstudantesPlanilha(
           passwordHash: senhaPadrao,
           role: "ESTUDANTE",
           nucleoId: user.nucleoId,
+          precisaTrocarSenha: true,
         },
       });
       criados++;

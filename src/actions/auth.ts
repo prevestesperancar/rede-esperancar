@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import { auth, signIn, signOut } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { salvarArquivo, ArquivoInvalidoError } from "@/lib/upload";
+import { validarSenhaForte } from "@/lib/senha";
 
 export async function login(_prevState: string | undefined, formData: FormData) {
   const email = formData.get("email") as string;
@@ -52,7 +53,8 @@ export async function alterarSenha(
   const senhaNova = formData.get("senhaNova") as string;
 
   if (!senhaAtual || !senhaNova) return "Preencha os dois campos.";
-  if (senhaNova.length < 6) return "A nova senha precisa ter pelo menos 6 caracteres.";
+  const erroSenha = validarSenhaForte(senhaNova);
+  if (erroSenha) return erroSenha;
 
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
   if (!user) return "Usuário não encontrado.";
@@ -67,6 +69,28 @@ export async function alterarSenha(
   });
 
   return "Senha alterada com sucesso!";
+}
+
+export async function trocarSenhaObrigatoria(
+  _prevState: string | undefined,
+  formData: FormData
+) {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+
+  const senhaNova = formData.get("senhaNova") as string;
+  if (!senhaNova) return "Preencha a nova senha.";
+  const erroSenha = validarSenhaForte(senhaNova);
+  if (erroSenha) return erroSenha;
+
+  const passwordHash = await bcrypt.hash(senhaNova, 10);
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { passwordHash, precisaTrocarSenha: false },
+  });
+
+  // Sessão JWT não se atualiza sozinha — pede login de novo com a senha nova.
+  await signOut({ redirectTo: "/login" });
 }
 
 export async function editarPerfil(

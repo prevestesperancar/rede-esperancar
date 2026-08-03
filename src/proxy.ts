@@ -18,6 +18,12 @@ export default async function proxy(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // Quem foi importado por CSV entra com a senha padrão — obriga a trocar
+  // antes de acessar qualquer outra parte do portal.
+  if (session?.user?.precisaTrocarSenha && (isAlunoRoute || isGestaoRoute || isAdminRoute)) {
+    return NextResponse.redirect(new URL("/trocar-senha-obrigatoria", req.nextUrl));
+  }
+
   if (isAlunoRoute && session?.user.role !== "ESTUDANTE") {
     return NextResponse.redirect(new URL("/", req.nextUrl));
   }

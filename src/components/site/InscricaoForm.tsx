@@ -265,7 +265,7 @@ export function InscricaoForm({
 
       <div>
         <label className={labelClass}>Crie uma senha</label>
-        <input name="senha" type="password" required className={inputClass} placeholder="Pelo menos 6 caracteres" />
+        <input name="senha" type="password" required className={inputClass} placeholder="Pelo menos 8 caracteres, com letra e número" />
         <Erro msgs={errors?.senha} />
         <p className="text-xs text-ink-faint mt-1">
           Você usa essa senha pra entrar no portal depois que a coordenação

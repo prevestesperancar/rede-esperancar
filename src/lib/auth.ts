@@ -33,6 +33,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.nome,
           role: user.role,
           nucleoId: user.nucleoId,
+          precisaTrocarSenha: user.precisaTrocarSenha,
         };
       },
     }),
@@ -42,6 +43,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.role = user.role;
         token.nucleoId = user.nucleoId;
+        token.precisaTrocarSenha = user.precisaTrocarSenha;
       }
       return token;
     },
@@ -50,6 +52,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.sub as string;
         session.user.role = token.role as string;
         session.user.nucleoId = token.nucleoId as string | null;
+        session.user.precisaTrocarSenha = token.precisaTrocarSenha as boolean;
       }
       return session;
     },

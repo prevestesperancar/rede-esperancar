@@ -38,7 +38,7 @@ export function NovoUsuarioForm({ nucleos }: { nucleos: { id: string; nome: stri
       <input
         name="senha"
         type="password"
-        placeholder="Senha de acesso (mín. 6 caracteres)"
+        placeholder="Senha de acesso (mín. 8, com letra e número)"
         required
         className="rounded-xl border border-border-strong px-3.5 py-2.5 text-sm outline-none focus:border-ink"
       />

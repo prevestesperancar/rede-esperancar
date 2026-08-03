@@ -85,7 +85,7 @@ export function EditarAcessoForm({
           <input
             name="novaSenha"
             type="password"
-            placeholder="Nova senha (mín. 6 caracteres)"
+            placeholder="Nova senha (mín. 8, com letra e número)"
             className="rounded-lg border border-border-strong px-2.5 py-1.5 text-xs outline-none focus:border-ink"
           />
           <button

@@ -12,7 +12,11 @@ const InscricaoSchema = z.object({
   rg: z.string().trim().min(4, "Digite um RG válido."),
   email: z.email("Digite um e-mail válido.").trim(),
   telefone: z.string().trim().min(8, "Digite um telefone válido."),
-  senha: z.string().min(6, "A senha precisa ter pelo menos 6 caracteres."),
+  senha: z
+    .string()
+    .min(8, "A senha precisa ter pelo menos 8 caracteres.")
+    .regex(/[a-zA-Z]/, "A senha precisa ter pelo menos uma letra.")
+    .regex(/[0-9]/, "A senha precisa ter pelo menos um número."),
   turmaId: z.string().min(1, "Escolha uma turma."),
   dataNascimento: z.string().min(1, "Informe sua data de nascimento."),
   sexoGenero: z.string().trim().min(1, "Escolha uma opção."),

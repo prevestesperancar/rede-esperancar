@@ -22,6 +22,7 @@ export default async function AlunoDashboardPage() {
 
   const estudante = await getEstudanteByUserId(session.user.id);
   if (!estudante) redirect("/login");
+  if (!estudante.objetivoEstudo) redirect("/aluno/objetivo");
 
   const turma = await getTurmaAtivaDoEstudante(estudante.id);
   const provas = session.user.nucleoId

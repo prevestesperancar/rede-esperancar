@@ -237,6 +237,7 @@ model Estudante {
   perfilIntensidade String? // "SEM_PRESSAO" | "EQUILIBRISTA" | "MONSTRAO"
   linguaEstrangeira String? // "Inglês" | "Espanhol"
   questoesPorDia    Int?
+  objetivoEstudo    String? // "PASSAR_ENEM_ANO" | "TREINO_ENEM" | "MANDAR_BEM_ESCOLA" | "AINDA_NAO_SEI"
 
   matriculas              Matricula[]
   frequencias             Frequencia[]

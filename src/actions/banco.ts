@@ -15,6 +15,28 @@ async function requireEstudante() {
   return estudante;
 }
 
+const OBJETIVOS_VALIDOS = ["PASSAR_ENEM_ANO", "TREINO_ENEM", "MANDAR_BEM_ESCOLA", "AINDA_NAO_SEI"];
+
+export async function salvarObjetivoEstudo(_prevState: string | undefined, formData: FormData) {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+
+  const nome = formData.get("nome") as string;
+  const objetivoEstudo = formData.get("objetivoEstudo") as string;
+
+  if (!nome) return "Preencha seu nome.";
+  if (!OBJETIVOS_VALIDOS.includes(objetivoEstudo)) return "Escolha um objetivo.";
+
+  const estudante = await requireEstudante();
+  await Promise.all([
+    prisma.estudante.update({ where: { id: estudante.id }, data: { objetivoEstudo } }),
+    prisma.user.update({ where: { id: session.user.id }, data: { nome } }),
+  ]);
+
+  revalidatePath("/aluno");
+  redirect("/aluno");
+}
+
 export async function salvarPerfilBanco(_prevState: string | undefined, formData: FormData) {
   const estudante = await requireEstudante();
 

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -43,33 +44,53 @@ export default async function AlunoCronogramaPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl mb-1">Cronograma de estudos</h1>
+      <h1 className="font-display text-2xl mb-1">Plano de estudos</h1>
       <p className="text-sm font-semibold text-ink-soft mb-6">
         Gerado a partir da grade da sua turma — um dia da semana pra revisar cada matéria antes da aula de sábado.
       </p>
 
-      <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-[repeat(6,minmax(160px,1fr))] gap-3 overflow-x-auto pb-2">
         {cronograma.map(({ dia, disciplina }) => {
           const chave = disciplina ? `${semana}-${dia}-${disciplina.id}` : null;
           const concluido = chave ? concluidosSet.has(chave) : false;
           return (
-            <div
-              key={dia}
-              className="bg-surface border border-border rounded-2xl p-4 flex items-center justify-between gap-3"
-            >
-              <div>
-                <div className="font-mono text-xs font-bold text-terracotta uppercase">{dia}</div>
-                <div className="font-extrabold text-sm mt-0.5">
-                  {disciplina ? `Revisar ${disciplina.nome}` : "Sem matéria na grade ainda"}
+            <div key={dia} className="flex flex-col gap-3">
+              <div className="font-mono text-xs font-bold text-terracotta uppercase text-center">{dia}</div>
+
+              {disciplina ? (
+                <Link
+                  href={`/aluno/questoes/simulado?prova=ENEM&materias=${encodeURIComponent(
+                    disciplina.nome
+                  )}&qtd=10`}
+                  className="bg-surface border border-border rounded-2xl p-3"
+                >
+                  <div className="font-mono text-[10px] font-bold uppercase text-ink-faint mb-1">
+                    Nivelamento
+                  </div>
+                  <div className="font-bold text-xs">{disciplina.nome}</div>
+                  <div className="text-[11px] text-ink-faint mt-0.5">10 questões</div>
+                </Link>
+              ) : (
+                <div className="bg-surface border border-border rounded-2xl p-3">
+                  <div className="text-[11px] text-ink-faint">Sem matéria na grade ainda</div>
                 </div>
-              </div>
-              {chave && <ConcluirEstudoButton chave={chave} concluido={concluido} />}
+              )}
+
+              {disciplina && (
+                <div className="bg-surface border border-border rounded-2xl p-3">
+                  <div className="font-bold text-xs mb-2">Revisar {disciplina.nome}</div>
+                  {chave && <ConcluirEstudoButton chave={chave} concluido={concluido} />}
+                </div>
+              )}
             </div>
           );
         })}
-        <div className="bg-yellow/10 border border-yellow/30 rounded-2xl p-4">
-          <div className="font-mono text-xs font-bold text-yellow-ink uppercase">Sábado</div>
-          <div className="font-extrabold text-sm mt-0.5">Aula presencial — {turma.nome}</div>
+        <div className="flex flex-col gap-3">
+          <div className="font-mono text-xs font-bold text-terracotta uppercase text-center">Sábado</div>
+          <div className="bg-yellow/10 border border-yellow/30 rounded-2xl p-3">
+            <div className="font-mono text-[10px] font-bold uppercase text-yellow-ink mb-1">Ao vivo</div>
+            <div className="font-bold text-xs">Aula presencial — {turma.nome}</div>
+          </div>
         </div>
       </div>
     </div>

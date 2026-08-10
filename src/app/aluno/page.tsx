@@ -106,7 +106,7 @@ export default async function AlunoDashboardPage() {
           href="/aluno/cronograma"
           className="flex items-center justify-center gap-2 bg-teal/10 text-teal font-extrabold text-sm py-3 rounded-full mb-5"
         >
-          🗓️ Ver meu cronograma de estudos
+          🗓️ Ver meu plano de estudos
         </Link>
       )}
 

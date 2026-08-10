@@ -233,6 +233,11 @@ model Estudante {
   trabalha              Boolean?
   motivacao             String?
 
+  // Perfil do Banco de Questões — preenchido no onboarding, ajustável depois
+  perfilIntensidade String? // "SEM_PRESSAO" | "EQUILIBRISTA" | "MONSTRAO"
+  linguaEstrangeira String? // "Inglês" | "Espanhol"
+  questoesPorDia    Int?
+
   matriculas              Matricula[]
   frequencias             Frequencia[]
   redacoes                Redacao[]
@@ -240,6 +245,7 @@ model Estudante {
   solicitacoesAgendamento SolicitacaoAgendamento[]
   materiaisFavoritos      MaterialFavorito[]
   cronogramaConclusoes    CronogramaConclusao[]
+  tentativasBanco         TentativaQuestaoBanco[]
 }
 
 model Matricula {
@@ -426,7 +432,26 @@ model QuestaoBanco {
   subtema         String? // visível só pra prof/coordenação, não pro aluno
   createdAt       DateTime @default(now())
 
+  tentativas TentativaQuestaoBanco[]
+
   @@index([prova, materia])
+}
+
+// Cada resposta que o aluno dá no Banco de Questões (prática livre ou simulado)
+// — é o que alimenta streak, meta diária, revisão de erros e desempenho.
+model TentativaQuestaoBanco {
+  id                String   @id @default(cuid())
+  estudanteId       String
+  questaoId         String
+  respostaEscolhida String
+  correta           Boolean
+  createdAt         DateTime @default(now())
+
+  estudante Estudante    @relation(fields: [estudanteId], references: [id])
+  questao   QuestaoBanco @relation(fields: [questaoId], references: [id])
+
+  @@index([estudanteId, createdAt])
+  @@index([questaoId])
 }
 
 model Simulado {

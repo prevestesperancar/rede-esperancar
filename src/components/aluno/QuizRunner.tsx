@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { salvarTentativasBanco } from "@/actions/banco";
 
 type Opcao = { letra: string; texto: string };
 type Questao = {
@@ -25,6 +26,20 @@ export function QuizRunner({ questoes }: { questoes: Questao[] }) {
   const [respostas, setRespostas] = useState<Record<string, string>>({});
   const [segundos, setSegundos] = useState(0);
   const [finalizado, setFinalizado] = useState(false);
+  const salvouRef = useRef(false);
+
+  useEffect(() => {
+    if (!finalizado || salvouRef.current) return;
+    salvouRef.current = true;
+    const respondidas = questoes
+      .filter((q) => respostas[q.id])
+      .map((q) => ({
+        questaoId: q.id,
+        respostaEscolhida: respostas[q.id],
+        correta: respostas[q.id] === q.respostaCorreta,
+      }));
+    salvarTentativasBanco(respondidas);
+  }, [finalizado, questoes, respostas]);
 
   useEffect(() => {
     if (finalizado) return;

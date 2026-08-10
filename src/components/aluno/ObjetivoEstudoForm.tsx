@@ -5,7 +5,8 @@ import { salvarObjetivoEstudo } from "@/actions/banco";
 
 const OBJETIVOS = [
   { valor: "PASSAR_ENEM_ANO", label: "Passar no Enem esse ano" },
-  { valor: "TREINO_ENEM", label: "Fazer Enem como treino" },
+  { valor: "PASSAR_UERJ_ANO", label: "Passar na Uerj esse ano" },
+  { valor: "TREINO_ENEM", label: "Fazer Enem/Uerj como treino" },
   { valor: "MANDAR_BEM_ESCOLA", label: "Mandar bem na escola" },
   { valor: "AINDA_NAO_SEI", label: "Ainda não sei" },
 ];

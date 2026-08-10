@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { ordenarPorDiaSemana } from "@/lib/dias";
 
 export async function getEstudanteByUserId(userId: string) {
   return prisma.estudante.findUnique({
@@ -27,6 +28,8 @@ export async function getTurmaAtivaDoEstudante(estudanteId: string) {
     },
   });
   if (!matricula) return null;
+
+  matricula.turma.disciplinas = ordenarPorDiaSemana(matricula.turma.disciplinas);
 
   // Avisos gerais do núcleo (turmaId nulo) também valem pra essa turma,
   // não só os que foram criados especificamente pra ela. Somem depois de 7 dias.
@@ -57,13 +60,14 @@ export async function getMateriaisDoNucleo(nucleoId: string, estudanteId?: strin
 }
 
 export async function getMonitoriasDaTurma(turmaId: string, nucleoId: string) {
-  return prisma.monitoria.findMany({
+  const monitorias = await prisma.monitoria.findMany({
     where: {
       OR: [{ turmaId }, { AND: [{ nucleoId }, { turmaId: null }] }, { global: true }],
     },
     include: { disciplina: true },
-    orderBy: { diaSemana: "asc" },
+    orderBy: { horaInicio: "asc" },
   });
+  return ordenarPorDiaSemana(monitorias);
 }
 
 export async function getProximaProva(nucleoId: string) {

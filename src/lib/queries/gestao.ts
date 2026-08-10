@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { ordenarPorDiaSemana } from "@/lib/dias";
 
 export async function getUsuariosDoNucleo(nucleoId: string, role?: string) {
   return prisma.user.findMany({
@@ -295,11 +296,12 @@ export async function getProvasDoNucleo(nucleoId: string) {
 }
 
 export async function getMonitoriasDoNucleo(nucleoId: string) {
-  return prisma.monitoria.findMany({
+  const monitorias = await prisma.monitoria.findMany({
     where: { OR: [{ nucleoId }, { global: true }] },
     include: { turma: true, disciplina: true, professor: true },
-    orderBy: { diaSemana: "asc" },
+    orderBy: { horaInicio: "asc" },
   });
+  return ordenarPorDiaSemana(monitorias);
 }
 
 export async function getDisciplinasDoNucleo(nucleoId: string) {
@@ -346,22 +348,24 @@ export async function getFrequenciaGeralTurma(turmaId: string) {
 }
 
 export async function getGradeDoProfessor(professorId: string) {
-  return prisma.turmaDisciplina.findMany({
+  const grade = await prisma.turmaDisciplina.findMany({
     where: { professorId },
     include: { disciplina: true, turma: true },
-    orderBy: [{ diaSemana: "asc" }, { horaInicio: "asc" }],
+    orderBy: { horaInicio: "asc" },
   });
+  return ordenarPorDiaSemana(grade);
 }
 
 export async function getMonitoriasDoProfessor(professorId: string) {
   const turmaIds = await getTurmasDoProfessor(professorId);
-  return prisma.monitoria.findMany({
+  const monitorias = await prisma.monitoria.findMany({
     where: {
       OR: [{ turmaId: { in: turmaIds } }, { professorId }],
     },
     include: { turma: true, disciplina: true },
-    orderBy: { diaSemana: "asc" },
+    orderBy: { horaInicio: "asc" },
   });
+  return ordenarPorDiaSemana(monitorias);
 }
 
 export async function getTurmasDoProfessor(professorId: string) {

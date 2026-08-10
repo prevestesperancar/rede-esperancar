@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { ordenarPorDiaSemana } from "@/lib/dias";
 
 export async function getNucleos(busca?: string) {
   return prisma.nucleo.findMany({
@@ -23,7 +24,7 @@ export async function getNucleos(busca?: string) {
 }
 
 export async function getNucleoBySlug(slug: string) {
-  return prisma.nucleo.findUnique({
+  const nucleo = await prisma.nucleo.findUnique({
     where: { slug },
     include: {
       turmas: {
@@ -32,13 +33,17 @@ export async function getNucleoBySlug(slug: string) {
           matriculas: { where: { status: "APROVADA" } },
           disciplinas: {
             include: { disciplina: true, professor: true },
-            orderBy: [{ diaSemana: "asc" }, { horaInicio: "asc" }],
+            orderBy: { horaInicio: "asc" },
           },
         },
       },
       coordenador: true,
     },
   });
+  if (!nucleo) return null;
+
+  nucleo.turmas = nucleo.turmas.map((t) => ({ ...t, disciplinas: ordenarPorDiaSemana(t.disciplinas) }));
+  return nucleo;
 }
 
 export async function getMateriaisPublicos(limit?: number) {

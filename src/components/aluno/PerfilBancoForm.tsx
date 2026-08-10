@@ -49,7 +49,7 @@ export function PerfilBancoForm({
       </div>
 
       <div>
-        <div className="font-bold text-sm mb-3">Qual língua você vai fazer no Enem?</div>
+        <div className="font-bold text-sm mb-3">Qual língua você vai fazer no Enem/Uerj?</div>
         <div className="flex gap-2">
           {["Inglês", "Espanhol"].map((l) => (
             <button

@@ -15,7 +15,13 @@ async function requireEstudante() {
   return estudante;
 }
 
-const OBJETIVOS_VALIDOS = ["PASSAR_ENEM_ANO", "TREINO_ENEM", "MANDAR_BEM_ESCOLA", "AINDA_NAO_SEI"];
+const OBJETIVOS_VALIDOS = [
+  "PASSAR_ENEM_ANO",
+  "PASSAR_UERJ_ANO",
+  "TREINO_ENEM",
+  "MANDAR_BEM_ESCOLA",
+  "AINDA_NAO_SEI",
+];
 
 export async function salvarObjetivoEstudo(_prevState: string | undefined, formData: FormData) {
   const session = await auth();

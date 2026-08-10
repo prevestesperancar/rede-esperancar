@@ -10,6 +10,10 @@ export async function getMateriasDisponiveis(prova: string) {
   return rows.map((r) => r.materia);
 }
 
+export async function getContagemQuestoesPorMaterias(prova: string, materias: string[]) {
+  return prisma.questaoBanco.count({ where: { prova, materia: { in: materias } } });
+}
+
 export async function getQuestoesAleatorias(
   prova: string,
   materias: string[],

@@ -21,12 +21,21 @@ function formatarTempo(segundos: number) {
   return `${m}:${s}`;
 }
 
-export function QuizRunner({ questoes }: { questoes: Questao[] }) {
+export function QuizRunner({
+  questoes,
+  duracaoMinutos,
+}: {
+  questoes: Questao[];
+  duracaoMinutos?: number;
+}) {
   const [indice, setIndice] = useState(0);
   const [respostas, setRespostas] = useState<Record<string, string>>({});
   const [segundos, setSegundos] = useState(0);
   const [finalizado, setFinalizado] = useState(false);
   const salvouRef = useRef(false);
+
+  const limiteSegundos = duracaoMinutos ? duracaoMinutos * 60 : null;
+  const tempoExibido = limiteSegundos ? Math.max(limiteSegundos - segundos, 0) : segundos;
 
   useEffect(() => {
     if (!finalizado || salvouRef.current) return;
@@ -43,9 +52,17 @@ export function QuizRunner({ questoes }: { questoes: Questao[] }) {
 
   useEffect(() => {
     if (finalizado) return;
-    const timer = setInterval(() => setSegundos((s) => s + 1), 1000);
+    const timer = setInterval(() => {
+      setSegundos((s) => {
+        const proximo = s + 1;
+        if (limiteSegundos && proximo >= limiteSegundos) {
+          setFinalizado(true);
+        }
+        return proximo;
+      });
+    }, 1000);
     return () => clearInterval(timer);
-  }, [finalizado]);
+  }, [finalizado, limiteSegundos]);
 
   if (finalizado) {
     const acertos = questoes.filter((q) => respostas[q.id] === q.respostaCorreta).length;
@@ -106,8 +123,12 @@ export function QuizRunner({ questoes }: { questoes: Questao[] }) {
         <div className="font-mono text-xs font-bold text-terracotta uppercase tracking-wide">
           Questão {indice + 1}/{questoes.length} · {questao.materia}
         </div>
-        <div className="font-mono text-sm font-bold bg-surface border border-border rounded-full px-3.5 py-1.5">
-          ⏱ {formatarTempo(segundos)}
+        <div
+          className={`font-mono text-sm font-bold bg-surface border border-border rounded-full px-3.5 py-1.5 ${
+            limiteSegundos && tempoExibido < 300 ? "text-terracotta border-terracotta" : ""
+          }`}
+        >
+          ⏱ {formatarTempo(tempoExibido)}
         </div>
       </div>
 

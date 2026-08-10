@@ -6,12 +6,12 @@ import { QuizRunner } from "@/components/aluno/QuizRunner";
 export default async function SimuladoPage({
   searchParams,
 }: {
-  searchParams: Promise<{ prova?: string; materias?: string; qtd?: string }>;
+  searchParams: Promise<{ prova?: string; materias?: string; qtd?: string; duracao?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const { prova, materias, qtd } = await searchParams;
+  const { prova, materias, qtd, duracao } = await searchParams;
   if (!prova || !materias || !qtd) redirect("/aluno/questoes");
 
   const questoes = await getQuestoesAleatorias(
@@ -45,6 +45,7 @@ export default async function SimuladoPage({
         ],
         respostaCorreta: q.respostaCorreta,
       }))}
+      duracaoMinutos={duracao ? Number(duracao) : undefined}
     />
   );
 }

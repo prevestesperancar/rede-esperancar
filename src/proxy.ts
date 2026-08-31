@@ -11,8 +11,9 @@ export default async function proxy(req: NextRequest) {
   const isAlunoRoute = pathname.startsWith("/aluno");
   const isGestaoRoute = pathname.startsWith("/gestao");
   const isAdminRoute = pathname.startsWith("/admin");
+  const isVisualizadorRoute = pathname.startsWith("/visualizador");
 
-  if ((isAlunoRoute || isGestaoRoute || isAdminRoute) && !session?.user) {
+  if ((isAlunoRoute || isGestaoRoute || isAdminRoute || isVisualizadorRoute) && !session?.user) {
     const loginUrl = new URL("/login", req.nextUrl);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
@@ -20,7 +21,10 @@ export default async function proxy(req: NextRequest) {
 
   // Quem foi importado por CSV entra com a senha padrão — obriga a trocar
   // antes de acessar qualquer outra parte do portal.
-  if (session?.user?.precisaTrocarSenha && (isAlunoRoute || isGestaoRoute || isAdminRoute)) {
+  if (
+    session?.user?.precisaTrocarSenha &&
+    (isAlunoRoute || isGestaoRoute || isAdminRoute || isVisualizadorRoute)
+  ) {
     return NextResponse.redirect(new URL("/trocar-senha-obrigatoria", req.nextUrl));
   }
 
@@ -36,9 +40,13 @@ export default async function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL("/", req.nextUrl));
   }
 
+  if (isVisualizadorRoute && session?.user.role !== "VISUALIZADOR_SIMULADO") {
+    return NextResponse.redirect(new URL("/", req.nextUrl));
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/aluno/:path*", "/gestao/:path*", "/admin/:path*"],
+  matcher: ["/aluno/:path*", "/gestao/:path*", "/admin/:path*", "/visualizador/:path*"],
 };

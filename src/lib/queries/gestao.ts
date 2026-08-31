@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { ordenarPorDiaSemana } from "@/lib/dias";
 import { montarGabaritoEfetivo, IDIOMAS_BLOCO_LINGUA } from "@/lib/simulado";
 import { grupoDaMateria } from "@/lib/grupo-materia";
+import { normalizarNome } from "@/lib/normalizar-nome";
 
 export async function getUsuariosDoNucleo(nucleoId: string, role?: string) {
   return prisma.user.findMany({
@@ -644,12 +645,18 @@ export async function getMateriasDoSimulado(simuladoId: string) {
 // Panorama geral do simulado: % de erro por matéria, por subtema e por
 // grupo amplo (Humanas/Exatas/Biológicas/Linguagens) — visão de "onde a
 // turma inteira está errando mais", sem precisar escolher nada antes.
-export async function getPercentualErroDetalhado(simuladoId: string) {
+export async function getPercentualErroDetalhado(simuladoId: string, nomesFiltro?: string[]) {
   const simulado = await prisma.simulado.findUnique({
     where: { id: simuladoId },
     include: { respostas: true },
   });
   if (!simulado) return null;
+
+  if (nomesFiltro) {
+    const permitidos = new Set(nomesFiltro.map(normalizarNome));
+    simulado.respostas = simulado.respostas.filter((r) => permitidos.has(normalizarNome(r.nomeCompleto)));
+  }
+  if (simulado.respostas.length === 0) return null;
 
   const questoesBanco = await prisma.questaoBanco.findMany({
     where: { simuladoId, numeroSimulado: { not: null } },
@@ -726,4 +733,20 @@ export async function getPercentualErroDetalhado(simuladoId: string) {
       return { ...v, materia, subtema };
     }),
   };
+}
+
+// Usada pela conta VISUALIZADOR_SIMULADO — acha os simulados em que pelo
+// menos um dos nomes permitidos tem cartão-resposta lançado.
+export async function getSimuladosComAlunos(nomesFiltro: string[]) {
+  const permitidos = new Set(nomesFiltro.map(normalizarNome));
+  const respostas = await prisma.simuladoResposta.findMany({
+    include: { simulado: true },
+  });
+  const encontrados = respostas.filter((r) => permitidos.has(normalizarNome(r.nomeCompleto)));
+
+  const porSimulado = new Map<string, { id: string; nome: string; data: Date }>();
+  for (const r of encontrados) {
+    porSimulado.set(r.simuladoId, { id: r.simuladoId, nome: r.simulado.nome, data: r.simulado.data });
+  }
+  return Array.from(porSimulado.values()).sort((a, b) => b.data.getTime() - a.data.getTime());
 }

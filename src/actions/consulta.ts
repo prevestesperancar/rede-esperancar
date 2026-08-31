@@ -48,6 +48,35 @@ export async function getResultadosSimuladosPorEstudante(
   }));
 }
 
+export type ResultadoConsultaComNome = ResultadoConsulta & { nomeAluno: string; simuladoId: string };
+
+// Usada pela conta VISUALIZADOR_SIMULADO — mesma lógica de casamento por
+// nome, mas pra uma lista de vários alunos de uma vez (não um só).
+export async function getResultadosSimuladosPorNomes(
+  nomesFiltro: string[]
+): Promise<ResultadoConsultaComNome[]> {
+  if (nomesFiltro.length === 0) return [];
+  const permitidos = new Set(nomesFiltro.map(normalizarNome));
+
+  const candidatos = await prisma.simuladoResposta.findMany({
+    include: { simulado: true },
+    orderBy: { simulado: { data: "desc" } },
+  });
+
+  return candidatos
+    .filter((r) => permitidos.has(normalizarNome(r.nomeCompleto)))
+    .map((r) => ({
+      nomeAluno: r.nomeCompleto,
+      simuladoId: r.simuladoId,
+      simulado: r.simulado.nome,
+      data: r.simulado.data.toLocaleDateString("pt-BR"),
+      nota: r.nota,
+      gabarito: montarGabaritoEfetivo(r.simulado, r.linguaEscolhida),
+      respostas: r.respostas,
+      linguaEscolhida: r.linguaEscolhida,
+    }));
+}
+
 export async function consultarNotaSimulado(
   _prevState: EstadoConsultaSimulado | undefined,
   formData: FormData

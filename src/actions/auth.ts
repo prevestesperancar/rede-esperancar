@@ -35,6 +35,9 @@ export async function login(_prevState: string | undefined, formData: FormData) 
   if (user?.role === "ADMIN") {
     redirect("/admin");
   }
+  if (user?.role === "VISUALIZADOR_SIMULADO") {
+    redirect("/visualizador");
+  }
   redirect("/gestao");
 }
 

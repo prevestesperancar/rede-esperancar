@@ -16,6 +16,9 @@ enum Role {
   COORDENACAO
   APOIO_PSICOSSOCIAL
   ADMIN
+  // Acesso super restrito: só vê resultado/estatística de simulado de uma
+  // lista específica de alunos (ver AcessoAlunoSimulado), nada mais no portal.
+  VISUALIZADOR_SIMULADO
 }
 
 enum StatusInscricao {
@@ -58,6 +61,7 @@ model User {
   temasRedacaoCriados       TemaRedacao[]            @relation("TemasCriados")
   redacoesCorrigidas        Redacao[]                @relation("RedacoesCorrigidas")
   notificacoes              Notificacao[]
+  acessosAlunoSimulado      AcessoAlunoSimulado[]
 
   @@index([nucleoId])
 }
@@ -416,6 +420,18 @@ model Frequencia {
   turma     Turma     @relation(fields: [turmaId], references: [id])
 
   @@unique([estudanteId, turmaId, data])
+}
+
+// Lista de alunos (por nome, casado por normalizarNome) que uma conta
+// VISUALIZADOR_SIMULADO pode ver o resultado/estatística de simulado — não
+// depende de cadastro de Estudante, casa direto com SimuladoResposta.nomeCompleto.
+model AcessoAlunoSimulado {
+  id           String @id @default(cuid())
+  userId       String
+  nomeCompleto String
+  user         User   @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }
 
 model QuestaoBanco {

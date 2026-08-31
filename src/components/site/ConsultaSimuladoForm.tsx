@@ -51,7 +51,10 @@ export function ConsultaSimuladoForm() {
               {estado.resultados.map((r, i) => (
                 <div key={i} className="bg-surface border border-border rounded-2xl p-4">
                   <div className="font-extrabold text-sm">{r.simulado}</div>
-                  <div className="text-xs text-ink-faint font-mono mb-2">{r.data}</div>
+                  <div className="text-xs text-ink-faint font-mono mb-2">
+                    {r.data}
+                    {r.linguaEscolhida && ` · Língua: ${r.linguaEscolhida}`}
+                  </div>
                   {r.nota !== null ? (
                     <>
                       <div className="font-mono text-2xl font-bold text-teal">

@@ -45,7 +45,8 @@ export function ImportarCartoesRespostaForm({ simuladoId }: { simuladoId: string
           </p>
           {estado.itens.map((item, i) => (
             <div key={i} className="text-xs rounded-lg px-2.5 py-1.5 bg-teal/10 text-teal">
-              ✓ {item.nomeLido || "(sem nome lido)"} — nota {item.nota?.toFixed(1) ?? "—"}
+              ✓ {item.nomeLido || "(sem nome lido)"}
+              {item.linguaLida && ` (${item.linguaLida})`} — nota {item.nota ?? "—"}
             </div>
           ))}
         </div>

@@ -5,7 +5,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { normalizarNome } from "@/lib/normalizar-nome";
-import { corrigirAutomaticamente } from "@/lib/simulado";
+import { corrigirComLingua } from "@/lib/simulado";
 import { TAMANHO_MAXIMO_DOCUMENTO } from "@/lib/upload-limits";
 
 const COORDENACAO_ROLES = ["COORDENACAO", "ADMIN"];
@@ -22,12 +22,14 @@ type CartaoLido = {
   nome: string;
   dataNascimento: string;
   respostas: string;
+  lingua: string;
 };
 
 export type ItemImportado = {
   nomeLido: string;
   dataNascimentoLida: string;
   respostasLidas: string;
+  linguaLida: string;
   nota?: number;
 };
 
@@ -101,10 +103,11 @@ export async function importarCartoesResposta(
 Para CADA página/folha, extraia:
 - "nome": o nome completo do estudante, exatamente como está escrito no cartão.
 - "dataNascimento": a data de nascimento, no formato AAAA-MM-DD. Se não achar, use "".
-- "respostas": a sequência das ${numeroQuestoes} respostas marcadas, uma letra (A, B, C, D ou E) por questão, na ordem das questões, separadas por vírgula. Se uma questão estiver em branco, com dupla marcação, ou ilegível, use "?" naquela posição.
+- "respostas": a sequência das ${numeroQuestoes} respostas marcadas, uma letra (A, B, C, D ou E) por questão, na ordem das questões, separadas por vírgula. Se uma questão estiver em branco, com dupla marcação, ou ilegível, use "?" naquela posição. Nas questões 23 a 27 (bloco de língua estrangeira), marque só as respostas do idioma que o estudante escolheu — não invente respostas pros idiomas que ele não marcou.
+- "lingua": qual idioma o estudante escolheu no bloco de língua estrangeira (questões 23 a 27) — "Inglês", "Espanhol" ou "Francês". Se não conseguir identificar, use "".
 
 Processe TODAS as páginas do documento, mesmo que sejam muitas. Responda APENAS com um array JSON válido, sem nenhum texto antes ou depois, sem markdown, no formato exato:
-[{"nome": "...", "dataNascimento": "AAAA-MM-DD", "respostas": "A,B,C,..."}]`,
+[{"nome": "...", "dataNascimento": "AAAA-MM-DD", "respostas": "A,B,C,...", "lingua": "..."}]`,
       },
     ]);
 
@@ -135,14 +138,16 @@ Processe TODAS as páginas do documento, mesmo que sejam muitas. Responda APENAS
     const nomeLido = (cartao.nome ?? "").trim();
     const dataLidaStr = (cartao.dataNascimento ?? "").trim();
     const respostasLidas = (cartao.respostas ?? "").trim();
+    const linguaLida = (cartao.lingua ?? "").trim();
 
     if (!nomeLido || !respostasLidas) continue;
 
     const dataNascimento = /^\d{4}-\d{2}-\d{2}$/.test(dataLidaStr)
       ? new Date(`${dataLidaStr}T00:00:00`)
       : null;
+    const linguaEscolhida = ["Inglês", "Espanhol", "Francês"].includes(linguaLida) ? linguaLida : null;
 
-    const nota = corrigirAutomaticamente(simulado.gabarito, respostasLidas);
+    const nota = corrigirComLingua(simulado, respostasLidas, linguaEscolhida);
 
     const existente = respostasExistentes.find(
       (r) => normalizarNome(r.nomeCompleto) === normalizarNome(nomeLido)
@@ -151,15 +156,22 @@ Processe TODAS as páginas do documento, mesmo que sejam muitas. Responda APENAS
     if (existente) {
       await prisma.simuladoResposta.update({
         where: { id: existente.id },
-        data: { respostas: respostasLidas, nota, dataNascimento, corrigidoManualmente: false },
+        data: { respostas: respostasLidas, linguaEscolhida, nota, dataNascimento, corrigidoManualmente: false },
       });
     } else {
       await prisma.simuladoResposta.create({
-        data: { simuladoId, nomeCompleto: nomeLido, dataNascimento, respostas: respostasLidas, nota },
+        data: {
+          simuladoId,
+          nomeCompleto: nomeLido,
+          dataNascimento,
+          respostas: respostasLidas,
+          linguaEscolhida,
+          nota,
+        },
       });
     }
 
-    itens.push({ nomeLido, dataNascimentoLida: dataLidaStr, respostasLidas, nota });
+    itens.push({ nomeLido, dataNascimentoLida: dataLidaStr, respostasLidas, linguaLida, nota });
   }
 
   revalidatePath("/gestao/simulados");

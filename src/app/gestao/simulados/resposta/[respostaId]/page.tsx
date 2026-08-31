@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { conceitoUerj } from "@/lib/simulado";
+import { conceitoUerj, montarGabaritoEfetivo } from "@/lib/simulado";
 
 const PERMITIDOS = ["PROFESSOR", "COORDENACAO", "APOIO_PSICOSSOCIAL", "ADMIN"];
 
@@ -23,7 +23,9 @@ export default async function RespostaSimuladoPage({
 
   if (!resposta || resposta.simulado.nucleoId !== session.user.nucleoId) notFound();
 
-  const gabarito = resposta.simulado.gabarito.split(",").map((r) => r.trim().toUpperCase());
+  const gabarito = montarGabaritoEfetivo(resposta.simulado, resposta.linguaEscolhida)
+    .split(",")
+    .map((r) => r.trim().toUpperCase());
   const marcadas = resposta.respostas.split(",").map((r) => r.trim().toUpperCase());
   const totalQuestoes = gabarito.length;
 
@@ -38,6 +40,7 @@ export default async function RespostaSimuladoPage({
           <h1 className="font-display text-2xl mb-1">{resposta.nomeCompleto}</h1>
           <p className="text-sm text-ink-soft">
             {resposta.simulado.nome} · {resposta.simulado.data.toLocaleDateString("pt-BR")}
+            {resposta.linguaEscolhida && ` · Língua: ${resposta.linguaEscolhida}`}
           </p>
         </div>
         {resposta.nota !== null && (
@@ -79,15 +82,20 @@ export default async function RespostaSimuladoPage({
             {gabarito.map((certa, i) => {
               const marcada = marcadas[i] ?? "—";
               const anulada = certa === "ANULADA";
-              const acertou = anulada || (certa && marcada === certa);
+              const semIdioma = certa === "?";
+              const acertou = anulada || (certa && certa !== "?" && marcada === certa);
               return (
                 <tr key={i} className="border-b border-border last:border-b-0">
                   <td className="px-4 py-2.5 font-mono text-xs text-ink-faint">{i + 1}</td>
                   <td className="px-4 py-2.5 font-bold">{marcada}</td>
-                  <td className="px-4 py-2.5 font-bold">{anulada ? "Anulada" : certa}</td>
+                  <td className="px-4 py-2.5 font-bold">
+                    {anulada ? "Anulada" : semIdioma ? "—" : certa}
+                  </td>
                   <td className="px-4 py-2.5">
                     {anulada ? (
                       <span className="text-xs font-bold text-ink-faint">conta como acerto</span>
+                    ) : semIdioma ? (
+                      <span className="text-xs font-bold text-ink-faint">sem língua escolhida</span>
                     ) : acertou ? (
                       <span className="text-teal font-bold">✓</span>
                     ) : (

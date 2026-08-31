@@ -459,8 +459,14 @@ model Simulado {
   id        String   @id @default(cuid())
   nome      String
   data      DateTime
-  gabarito  String // ex: "A,B,C,D,A,B,..."
+  gabarito  String // ex: "A,B,C,D,A,B,..." — questões 23 a 27 (língua estrangeira) ficam com "?" aqui
   createdAt DateTime @default(now())
+
+  // Bloco de língua estrangeira (questões 23 a 27, padrão Uerj) — um gabarito
+  // por idioma, já que cada aluno escolhe um só na hora da prova.
+  gabaritoIngles   String? // 5 respostas, ex: "A,B,C,D,A"
+  gabaritoEspanhol String?
+  gabaritoFrances  String?
 
   nucleoId String
   nucleo   Nucleo @relation(fields: [nucleoId], references: [id])
@@ -481,6 +487,7 @@ model SimuladoResposta {
   nomeCompleto         String
   dataNascimento       DateTime?
   respostas            String // ex: "A,B,C,D,A,B,..."
+  linguaEscolhida      String? // "Inglês" | "Espanhol" | "Francês" — bloco das questões 23 a 27
   nota                 Float?
   corrigidoManualmente Boolean   @default(false)
   fotoCartaoResposta   String? // foto do cartão-resposta físico, só de referência

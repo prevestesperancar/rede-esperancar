@@ -2,6 +2,8 @@
 
 import { useActionState, useState } from "react";
 import { criarSimulado } from "@/actions/gestao";
+import { BlocoLinguaEditor } from "@/components/gestao/BlocoLinguaEditor";
+import { INICIO_BLOCO_LINGUA, FIM_BLOCO_LINGUA } from "@/lib/simulado";
 
 const QUANTIDADES_RAPIDAS = [10, 20, 40, 50, 60, 70];
 const OPCOES = ["A", "B", "C", "D", "ANULADA"];
@@ -74,26 +76,34 @@ export function NovoSimuladoForm() {
           Gabarito oficial ({gabarito.length} questões)
         </label>
         <div className="flex flex-wrap gap-1.5">
-          {gabarito.map((r, i) => (
-            <div key={i} className="flex flex-col items-center gap-0.5">
-              <span className="text-[9px] font-mono text-ink-faint">{i + 1}</span>
-              <select
-                value={r}
-                onChange={(e) => atualizarResposta(i, e.target.value)}
-                className={`rounded-md border px-1 py-0.5 text-[11px] font-bold outline-none focus:border-ink ${
-                  r === "ANULADA" ? "border-terracotta text-terracotta" : "border-border-strong"
-                }`}
-              >
-                {OPCOES.map((o) => (
-                  <option key={o} value={o}>
-                    {o === "ANULADA" ? "X" : o}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ))}
+          {gabarito.map((r, i) => {
+            const posicao = i + 1;
+            const naLingua = posicao >= INICIO_BLOCO_LINGUA && posicao <= FIM_BLOCO_LINGUA;
+            return (
+              <div key={i} className="flex flex-col items-center gap-0.5">
+                <span className="text-[9px] font-mono text-ink-faint">{i + 1}</span>
+                <select
+                  value={r}
+                  onChange={(e) => atualizarResposta(i, e.target.value)}
+                  disabled={naLingua}
+                  title={naLingua ? "Definido no bloco de língua estrangeira, abaixo" : undefined}
+                  className={`rounded-md border px-1 py-0.5 text-[11px] font-bold outline-none focus:border-ink disabled:opacity-40 ${
+                    r === "ANULADA" ? "border-terracotta text-terracotta" : "border-border-strong"
+                  }`}
+                >
+                  {OPCOES.map((o) => (
+                    <option key={o} value={o}>
+                      {o === "ANULADA" ? "X" : o}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            );
+          })}
         </div>
       </div>
+
+      {gabarito.length >= FIM_BLOCO_LINGUA && <BlocoLinguaEditor />}
 
       {error && <p className="text-sm text-terracotta font-semibold">{error}</p>}
       <button

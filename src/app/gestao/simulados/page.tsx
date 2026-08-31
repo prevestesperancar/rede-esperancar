@@ -47,7 +47,15 @@ export default async function SimuladosPage() {
                   <div className="text-xs text-ink-faint font-mono">
                     {s.data.toLocaleDateString("pt-BR")} · {totalQuestoes} questões
                   </div>
-                  {!somenteLeitura && <GabaritoEditorForm simuladoId={s.id} gabaritoAtual={s.gabarito} />}
+                  {!somenteLeitura && (
+                    <GabaritoEditorForm
+                      simuladoId={s.id}
+                      gabaritoAtual={s.gabarito}
+                      gabaritoIngles={s.gabaritoIngles}
+                      gabaritoEspanhol={s.gabaritoEspanhol}
+                      gabaritoFrances={s.gabaritoFrances}
+                    />
+                  )}
                 </div>
                 {!somenteLeitura && (
                   <ApagarItemButton
@@ -81,6 +89,7 @@ export default async function SimuladosPage() {
                         nomeCompleto={r.nomeCompleto}
                         dataNascimento={r.dataNascimento}
                         respostasAtuais={r.respostas}
+                        linguaEscolhida={r.linguaEscolhida}
                         nota={r.nota}
                         totalQuestoes={totalQuestoes}
                         corrigidoManualmente={r.corrigidoManualmente}

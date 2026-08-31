@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { salvarArquivo, ArquivoInvalidoError } from "@/lib/upload";
 import { parseCsv, parseDataBr } from "@/lib/csv";
 import { validarSenhaForte } from "@/lib/senha";
-import { corrigirAutomaticamente } from "@/lib/simulado";
+import { corrigirComLingua } from "@/lib/simulado";
 import {
   classificarSituacaoEscolar,
   classificarProvas,
@@ -913,11 +913,22 @@ export async function criarSimulado(_prevState: string | undefined, formData: Fo
   const nome = formData.get("nome") as string;
   const data = formData.get("data") as string;
   const gabarito = formData.get("gabarito") as string;
+  const gabaritoIngles = (formData.get("gabaritoIngles") as string) || null;
+  const gabaritoEspanhol = (formData.get("gabaritoEspanhol") as string) || null;
+  const gabaritoFrances = (formData.get("gabaritoFrances") as string) || null;
 
   if (!nome || !data || !gabarito) return "Preencha nome, data e gabarito.";
 
   await prisma.simulado.create({
-    data: { nome, data: new Date(data), gabarito: gabarito.trim(), nucleoId: user.nucleoId! },
+    data: {
+      nome,
+      data: new Date(data),
+      gabarito: gabarito.trim(),
+      gabaritoIngles,
+      gabaritoEspanhol,
+      gabaritoFrances,
+      nucleoId: user.nucleoId!,
+    },
   });
 
   revalidatePath("/gestao/simulados");
@@ -929,18 +940,27 @@ export async function editarGabaritoSimulado(_prevState: string | undefined, for
 
   const simuladoId = formData.get("simuladoId") as string;
   const gabarito = formData.get("gabarito") as string;
+  const gabaritoIngles = (formData.get("gabaritoIngles") as string) || null;
+  const gabaritoEspanhol = (formData.get("gabaritoEspanhol") as string) || null;
+  const gabaritoFrances = (formData.get("gabaritoFrances") as string) || null;
 
   if (!gabarito) return "Preencha o gabarito.";
 
+  const simuladoAtualizado = {
+    gabarito: gabarito.trim(),
+    gabaritoIngles,
+    gabaritoEspanhol,
+    gabaritoFrances,
+  };
   const respostas = await prisma.simuladoResposta.findMany({ where: { simuladoId } });
 
   await prisma.$transaction([
-    prisma.simulado.update({ where: { id: simuladoId }, data: { gabarito: gabarito.trim() } }),
+    prisma.simulado.update({ where: { id: simuladoId }, data: simuladoAtualizado }),
     ...respostas.map((r) =>
       prisma.simuladoResposta.update({
         where: { id: r.id },
         data: {
-          nota: corrigirAutomaticamente(gabarito.trim(), r.respostas),
+          nota: corrigirComLingua(simuladoAtualizado, r.respostas, r.linguaEscolhida),
           corrigidoManualmente: false,
         },
       })
@@ -966,6 +986,7 @@ export async function lancarResposta(_prevState: string | undefined, formData: F
   const nomeCompleto = (formData.get("nomeCompleto") as string)?.trim();
   const dataNascimentoStr = formData.get("dataNascimento") as string;
   const respostas = formData.get("respostas") as string;
+  const linguaEscolhida = (formData.get("linguaEscolhida") as string) || null;
   const foto = formData.get("foto") as File | null;
 
   if (!nomeCompleto) return "Digite o nome completo do estudante.";
@@ -974,7 +995,7 @@ export async function lancarResposta(_prevState: string | undefined, formData: F
   const simulado = await prisma.simulado.findUnique({ where: { id: simuladoId } });
   if (!simulado) return "Simulado não encontrado.";
 
-  const nota = corrigirAutomaticamente(simulado.gabarito, respostas);
+  const nota = corrigirComLingua(simulado, respostas, linguaEscolhida);
   const dataNascimento = dataNascimentoStr ? new Date(`${dataNascimentoStr}T00:00:00`) : null;
 
   let fotoCartaoResposta: string | undefined;
@@ -994,6 +1015,7 @@ export async function lancarResposta(_prevState: string | undefined, formData: F
         nomeCompleto,
         dataNascimento,
         respostas: respostas.trim(),
+        linguaEscolhida,
         nota,
         corrigidoManualmente: false,
         ...(fotoCartaoResposta ? { fotoCartaoResposta } : {}),
@@ -1001,7 +1023,15 @@ export async function lancarResposta(_prevState: string | undefined, formData: F
     });
   } else {
     await prisma.simuladoResposta.create({
-      data: { simuladoId, nomeCompleto, dataNascimento, respostas: respostas.trim(), nota, fotoCartaoResposta },
+      data: {
+        simuladoId,
+        nomeCompleto,
+        dataNascimento,
+        respostas: respostas.trim(),
+        linguaEscolhida,
+        nota,
+        fotoCartaoResposta,
+      },
     });
   }
 

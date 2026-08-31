@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { normalizarNome } from "@/lib/normalizar-nome";
+import { montarGabaritoEfetivo } from "@/lib/simulado";
 
 export type ResultadoConsulta = {
   simulado: string;
@@ -9,6 +10,7 @@ export type ResultadoConsulta = {
   nota: number | null;
   gabarito: string;
   respostas: string | null;
+  linguaEscolhida: string | null;
 };
 
 export type EstadoConsultaSimulado = {
@@ -53,8 +55,9 @@ export async function consultarNotaSimulado(
       simulado: r.simulado.nome,
       data: r.simulado.data.toLocaleDateString("pt-BR"),
       nota: r.nota,
-      gabarito: r.simulado.gabarito,
+      gabarito: montarGabaritoEfetivo(r.simulado, r.linguaEscolhida),
       respostas: r.respostas,
+      linguaEscolhida: r.linguaEscolhida,
     })),
   };
 }

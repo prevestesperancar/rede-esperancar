@@ -5,7 +5,7 @@ import Link from "next/link";
 import { lancarResposta, corrigirRespostaManual, apagarRespostaSimulado } from "@/actions/gestao";
 import { CampoArquivo } from "@/components/common/CampoArquivo";
 import { TAMANHO_MAXIMO_FOTO } from "@/lib/upload-limits";
-import { conceitoUerj } from "@/lib/simulado";
+import { conceitoUerj, FIM_BLOCO_LINGUA, IDIOMAS_BLOCO_LINGUA } from "@/lib/simulado";
 import { RespostasPorQuestaoInput } from "@/components/gestao/RespostasPorQuestaoInput";
 
 function paraInputDate(data: Date | null) {
@@ -19,6 +19,7 @@ function CamposCartao({
   nomeCompleto,
   dataNascimento,
   respostasAtuais,
+  linguaEscolhida,
   totalQuestoes,
   pending,
 }: {
@@ -27,6 +28,7 @@ function CamposCartao({
   nomeCompleto?: string;
   dataNascimento?: Date | null;
   respostasAtuais?: string;
+  linguaEscolhida?: string | null;
   totalQuestoes: number;
   pending: boolean;
 }) {
@@ -48,6 +50,20 @@ function CamposCartao({
           defaultValue={paraInputDate(dataNascimento ?? null)}
           className="w-[130px] rounded-lg border border-border-strong px-2 py-1.5 text-xs outline-none focus:border-ink"
         />
+        {totalQuestoes >= FIM_BLOCO_LINGUA && (
+          <select
+            name="linguaEscolhida"
+            defaultValue={linguaEscolhida ?? ""}
+            className="rounded-lg border border-border-strong px-2 py-1.5 text-xs outline-none focus:border-ink bg-surface"
+          >
+            <option value="">Língua: —</option>
+            {IDIOMAS_BLOCO_LINGUA.map((idioma) => (
+              <option key={idioma} value={idioma}>
+                {idioma}
+              </option>
+            ))}
+          </select>
+        )}
         <CampoArquivo
           name="foto"
           accept="image/*"
@@ -78,6 +94,7 @@ export function LancarRespostaForm({
   nomeCompleto,
   dataNascimento,
   respostasAtuais,
+  linguaEscolhida,
   nota,
   totalQuestoes,
   corrigidoManualmente,
@@ -88,6 +105,7 @@ export function LancarRespostaForm({
   nomeCompleto?: string;
   dataNascimento?: Date | null;
   respostasAtuais?: string;
+  linguaEscolhida?: string | null;
   nota?: number | null;
   totalQuestoes: number;
   corrigidoManualmente?: boolean;
@@ -111,6 +129,7 @@ export function LancarRespostaForm({
           nomeCompleto={nomeCompleto}
           dataNascimento={dataNascimento}
           respostasAtuais={respostasAtuais}
+          linguaEscolhida={linguaEscolhida}
           totalQuestoes={totalQuestoes}
           pending={pendingLancar}
         />
@@ -130,6 +149,8 @@ export function LancarRespostaForm({
   return (
     <div className="flex items-center gap-2 py-2 border-b border-border last:border-b-0 text-sm flex-wrap">
       <span className="flex-1 min-w-[140px] font-semibold truncate">{nomeCompleto}</span>
+
+      {linguaEscolhida && <span className="text-[11px] font-bold text-ink-faint">{linguaEscolhida}</span>}
 
       {nota !== undefined && nota !== null && (
         <span className={`font-mono text-xs font-bold ${corrigidoManualmente ? "text-terracotta" : "text-teal"}`}>

@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { editarGabaritoSimulado } from "@/actions/gestao";
 
 const OPCOES = ["A", "B", "C", "D", "ANULADA"];
+const QUANTIDADES_RAPIDAS = [10, 20, 40, 50, 60, 70];
 
 export function GabaritoEditorForm({ simuladoId, gabaritoAtual }: { simuladoId: string; gabaritoAtual: string }) {
   const [aberto, setAberto] = useState(false);
@@ -23,12 +24,46 @@ export function GabaritoEditorForm({ simuladoId, gabaritoAtual }: { simuladoId: 
   const atualizar = (i: number, valor: string) =>
     setRespostas((prev) => prev.map((r, idx) => (idx === i ? valor : r)));
 
+  function mudarQuantidade(quantidade: number) {
+    setRespostas((prev) => {
+      if (quantidade <= prev.length) return prev.slice(0, quantidade);
+      return [...prev, ...Array(quantidade - prev.length).fill("A")];
+    });
+  }
+
   return (
     <form action={action} className="bg-paper rounded-xl p-3.5 mt-2 flex flex-col gap-3">
       <input type="hidden" name="simuladoId" value={simuladoId} />
       <input type="hidden" name="gabarito" value={respostas.join(",")} />
 
-      <div className="text-xs font-bold text-ink-faint uppercase tracking-wide">Gabarito oficial</div>
+      <div className="text-xs font-bold text-ink-faint uppercase tracking-wide">
+        Gabarito oficial ({respostas.length} questões)
+      </div>
+
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {QUANTIDADES_RAPIDAS.map((q) => (
+          <button
+            key={q}
+            type="button"
+            onClick={() => mudarQuantidade(q)}
+            className={`font-bold text-xs w-9 h-8 rounded-full border ${
+              respostas.length === q ? "bg-ink border-ink text-paper" : "border-border-strong text-ink-soft"
+            }`}
+          >
+            {q}
+          </button>
+        ))}
+        <input
+          type="number"
+          min={1}
+          placeholder="Outro"
+          onChange={(e) => {
+            const valor = Number(e.target.value);
+            if (valor > 0) mudarQuantidade(valor);
+          }}
+          className="w-16 rounded-full border border-border-strong px-2.5 py-1.5 text-xs outline-none focus:border-ink"
+        />
+      </div>
 
       <div className="flex flex-wrap gap-2">
         {respostas.map((r, i) => (

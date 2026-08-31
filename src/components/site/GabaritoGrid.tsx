@@ -17,6 +17,9 @@ export function GabaritoGrid({
 
   return (
     <div className="flex flex-col gap-4">
+      <p className="text-[11px] text-ink-faint">
+        Linha de cima: sua resposta · Linha de baixo: gabarito
+      </p>
       {secoes.map((secao) => {
         const indices = Array.from(
           { length: secao.fim - secao.inicio + 1 },
@@ -62,6 +65,21 @@ export function GabaritoGrid({
                         }`}
                       >
                         {marcada === "?" ? "—" : marcada}
+                      </td>
+                    );
+                  })}
+                </tr>
+                <tr>
+                  {indices.map((i) => {
+                    const certa = gabarito[i];
+                    const anulada = certa === "ANULADA";
+                    const semGabarito = certa === "?" || !certa;
+                    return (
+                      <td
+                        key={`gabarito-${i}`}
+                        className="border border-border text-center text-[10px] font-bold text-ink-faint bg-paper w-8 h-6"
+                      >
+                        {anulada ? "Anul." : semGabarito ? "—" : certa}
                       </td>
                     );
                   })}

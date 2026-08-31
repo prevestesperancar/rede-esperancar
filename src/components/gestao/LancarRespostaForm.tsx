@@ -164,21 +164,23 @@ export function LancarRespostaForm({
 
       {linguaEscolhida && <span className="text-[11px] font-bold text-ink-faint">{linguaEscolhida}</span>}
 
-      {nota !== undefined && nota !== null && (
-        <span
-          className={`font-mono text-xs font-bold ${
-            conceitoUerj(nota, totalQuestoes) === "E"
-              ? "text-terracotta"
-              : corrigidoManualmente
-              ? "text-terracotta"
-              : "text-teal"
-          }`}
-        >
-          {nota}/{totalQuestoes} · Conceito {conceitoUerj(nota, totalQuestoes)} —{" "}
-          {rotuloConceito(conceitoUerj(nota, totalQuestoes))}
-          {corrigidoManualmente ? " (manual)" : ""}
-        </span>
-      )}
+      {nota !== undefined &&
+        nota !== null &&
+        (() => {
+          const conceito = conceitoUerj(nota, totalQuestoes);
+          const rotulo = rotuloConceito(conceito);
+          return (
+            <span
+              className={`font-mono text-xs font-bold ${
+                conceito === "E" ? "text-terracotta" : corrigidoManualmente ? "text-terracotta" : "text-teal"
+              }`}
+            >
+              {nota}/{totalQuestoes} · Conceito {conceito}
+              {rotulo && ` — ${rotulo}`}
+              {corrigidoManualmente ? " (manual)" : ""}
+            </span>
+          );
+        })()}
 
       {respostaId && (
         <Link href={`/gestao/simulados/resposta/${respostaId}`} className="text-[11px] font-bold text-ink-soft">

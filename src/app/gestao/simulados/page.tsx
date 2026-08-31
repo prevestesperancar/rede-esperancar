@@ -76,10 +76,13 @@ export default async function SimuladosPage() {
                         <span className="font-semibold">{r.nomeCompleto}</span>
                         <span className="font-mono text-xs font-bold text-teal">
                           {r.nota !== null
-                            ? `${r.nota}/${totalQuestoes} · Conceito ${conceitoUerj(
-                                r.nota,
-                                totalQuestoes
-                              )} — ${rotuloConceito(conceitoUerj(r.nota, totalQuestoes))}`
+                            ? (() => {
+                                const conceito = conceitoUerj(r.nota, totalQuestoes);
+                                const rotulo = rotuloConceito(conceito);
+                                return `${r.nota}/${totalQuestoes} · Conceito ${conceito}${
+                                  rotulo ? ` — ${rotulo}` : ""
+                                }`;
+                              })()
                             : "sem nota"}
                         </span>
                       </div>

@@ -96,9 +96,10 @@ export function pontosConceito(conceito: "A" | "B" | "C" | "D" | "E"): number | 
   return FAIXAS_CONCEITO_UERJ.find((f) => f.letra === conceito)?.pontos ?? null;
 }
 
-// Texto pra mostrar ao lado do conceito: "Eliminado(a)" no E, "20 pontos" etc.
+// Texto pra mostrar ao lado do conceito: "20 pontos" etc. — vazio no E
+// (eliminação já fica implícita em não ter pontuação nenhuma).
 export function rotuloConceito(conceito: "A" | "B" | "C" | "D" | "E"): string {
-  if (conceito === "E") return "Eliminado(a)";
+  if (conceito === "E") return "";
   return `${pontosConceito(conceito)} pontos`;
 }
 

@@ -70,7 +70,8 @@ export function ConsultaSimuladoForm() {
                               conceito === "E" ? "text-terracotta" : "text-ink-soft"
                             }`}
                           >
-                            Conceito {conceito} — {rotuloConceito(conceito)}
+                            Conceito {conceito}
+                            {rotuloConceito(conceito) && ` — ${rotuloConceito(conceito)}`}
                           </div>
                         </>
                       );

@@ -57,7 +57,8 @@ export default async function RespostaSimuladoPage({
                   {resposta.nota}/{totalQuestoes}
                 </div>
                 <div className="text-xs text-paper/70 font-bold">
-                  Conceito {conceito} — {rotuloConceito(conceito)}
+                  Conceito {conceito}
+                  {rotuloConceito(conceito) && ` — ${rotuloConceito(conceito)}`}
                 </div>
               </div>
             );

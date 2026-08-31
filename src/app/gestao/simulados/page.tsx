@@ -9,12 +9,14 @@ import { apagarSimulado } from "@/actions/gestao";
 import { NovoSimuladoForm } from "@/components/gestao/NovoSimuladoForm";
 import { LancarRespostaForm } from "@/components/gestao/LancarRespostaForm";
 import { ApagarItemButton } from "@/components/gestao/ApagarItemButton";
+import { ImportarCartoesRespostaForm } from "@/components/gestao/ImportarCartoesRespostaForm";
 
 export default async function SimuladosPage() {
   const session = await auth();
   if (!session?.user?.nucleoId) redirect("/login");
 
   const somenteLeitura = session.user.role === "APOIO_PSICOSSOCIAL";
+  const podeImportarCartoes = ["COORDENACAO", "ADMIN"].includes(session.user.role);
 
   const [simulados, estudantes, nucleoNome] = await Promise.all([
     getSimuladosDoNucleo(session.user.nucleoId),
@@ -92,6 +94,8 @@ export default async function SimuladosPage() {
                   <p className="text-sm text-ink-faint">Nenhum estudante matriculado ainda.</p>
                 )}
               </div>
+
+              {podeImportarCartoes && <ImportarCartoesRespostaForm simuladoId={s.id} />}
             </div>
           );
         })}

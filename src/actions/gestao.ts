@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { salvarArquivo, ArquivoInvalidoError } from "@/lib/upload";
 import { parseCsv, parseDataBr } from "@/lib/csv";
 import { validarSenhaForte } from "@/lib/senha";
+import { corrigirAutomaticamente } from "@/lib/simulado";
 import {
   classificarSituacaoEscolar,
   classificarProvas,
@@ -904,16 +905,6 @@ export async function atualizarGoogleSheetsNucleo(
   revalidatePath("/gestao/perfil");
   revalidatePath("/gestao/estudantes");
   return "Link da planilha atualizado!";
-}
-
-function corrigirAutomaticamente(gabarito: string, respostas: string) {
-  const certas = gabarito.split(",").map((s) => s.trim().toUpperCase());
-  const dadas = respostas.split(",").map((s) => s.trim().toUpperCase());
-  let acertos = 0;
-  certas.forEach((c, i) => {
-    if (c && dadas[i] === c) acertos++;
-  });
-  return Math.round((acertos / certas.length) * 1000) / 100;
 }
 
 export async function criarSimulado(_prevState: string | undefined, formData: FormData) {

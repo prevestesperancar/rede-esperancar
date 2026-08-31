@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { normalizarNome } from "@/lib/normalizar-nome";
 
 export type ResultadoConsulta = {
   simulado: string;
@@ -15,10 +16,6 @@ export type EstadoConsultaSimulado = {
   nomeEncontrado?: string;
   resultados?: ResultadoConsulta[];
 };
-
-function normalizar(texto: string) {
-  return texto.trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-}
 
 export async function consultarNotaSimulado(
   _prevState: EstadoConsultaSimulado | undefined,
@@ -47,7 +44,9 @@ export async function consultarNotaSimulado(
     },
   });
 
-  const estudante = candidatos.find((c) => normalizar(c.user.nome) === normalizar(nomeCompleto));
+  const estudante = candidatos.find(
+    (c) => normalizarNome(c.user.nome) === normalizarNome(nomeCompleto)
+  );
 
   if (!estudante) {
     return { erro: "Não encontramos nenhum estudante com esse nome e data de nascimento." };

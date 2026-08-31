@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { ordenarPorDiaSemana } from "@/lib/dias";
-import { montarGabaritoEfetivo } from "@/lib/simulado";
+import { montarGabaritoEfetivo, IDIOMAS_BLOCO_LINGUA } from "@/lib/simulado";
+import { grupoDaMateria } from "@/lib/grupo-materia";
 
 export async function getUsuariosDoNucleo(nucleoId: string, role?: string) {
   return prisma.user.findMany({
@@ -553,6 +554,19 @@ export async function getEstatisticasSimuladoPorSecoes(
     let acertos = 0;
     let questoesValidas = 0;
     for (const i of indicesOrdenados) {
+      // Questões 23-27 (língua estrangeira) têm uma versão de QuestaoBanco
+      // por idioma com o MESMO número — se essa questão é de um idioma e o
+      // aluno escolheu outro na prova, ela não conta pra ele (senão as
+      // estatísticas de Inglês/Espanhol/Francês ficam misturadas).
+      const materiaDaQuestao = questaoBancoPorNumero.get(i + 1)?.materia;
+      if (
+        materiaDaQuestao &&
+        (IDIOMAS_BLOCO_LINGUA as readonly string[]).includes(materiaDaQuestao) &&
+        materiaDaQuestao !== r.linguaEscolhida
+      ) {
+        continue;
+      }
+
       const certa = gabaritoEfetivo[i];
       if (!certa || certa === "?") continue;
       questoesValidas++;
@@ -625,4 +639,91 @@ export async function getMateriasDoSimulado(simuladoId: string) {
     orderBy: { materia: "asc" },
   });
   return rows.map((r) => r.materia);
+}
+
+// Panorama geral do simulado: % de erro por matéria, por subtema e por
+// grupo amplo (Humanas/Exatas/Biológicas/Linguagens) — visão de "onde a
+// turma inteira está errando mais", sem precisar escolher nada antes.
+export async function getPercentualErroDetalhado(simuladoId: string) {
+  const simulado = await prisma.simulado.findUnique({
+    where: { id: simuladoId },
+    include: { respostas: true },
+  });
+  if (!simulado) return null;
+
+  const questoesBanco = await prisma.questaoBanco.findMany({
+    where: { simuladoId, numeroSimulado: { not: null } },
+  });
+  if (questoesBanco.length === 0) return null;
+
+  const porMateria = new Map<string, { acertos: number; respondidas: number }>();
+  const porSubtema = new Map<
+    string,
+    { materia: string; numero: number; acertos: number; respondidas: number }
+  >();
+  const porGrupo = new Map<string, { acertos: number; respondidas: number }>();
+
+  for (const questao of questoesBanco) {
+    const numero = questao.numeroSimulado!;
+    const indice = numero - 1;
+    const ehIdioma = (IDIOMAS_BLOCO_LINGUA as readonly string[]).includes(questao.materia);
+
+    let acertos = 0;
+    let respondidas = 0;
+    for (const r of simulado.respostas) {
+      if (ehIdioma && questao.materia !== r.linguaEscolhida) continue;
+
+      const gabaritoEfetivo = montarGabaritoEfetivo(simulado, r.linguaEscolhida)
+        .split(",")
+        .map((s) => s.trim().toUpperCase());
+      const marcadas = r.respostas.split(",").map((s) => s.trim().toUpperCase());
+
+      const certa = gabaritoEfetivo[indice];
+      if (!certa || certa === "?") continue;
+      respondidas++;
+      const marcada = marcadas[indice] ?? "?";
+      if (certa === "ANULADA" || marcada === certa) acertos++;
+    }
+
+    const materiaAtual = porMateria.get(questao.materia) ?? { acertos: 0, respondidas: 0 };
+    materiaAtual.acertos += acertos;
+    materiaAtual.respondidas += respondidas;
+    porMateria.set(questao.materia, materiaAtual);
+
+    const grupo = grupoDaMateria(questao.materia);
+    const grupoAtual = porGrupo.get(grupo) ?? { acertos: 0, respondidas: 0 };
+    grupoAtual.acertos += acertos;
+    grupoAtual.respondidas += respondidas;
+    porGrupo.set(grupo, grupoAtual);
+
+    const chaveSubtema = `${questao.materia}::${questao.subtema ?? `Questão ${numero}`}`;
+    porSubtema.set(chaveSubtema, {
+      materia: questao.materia,
+      numero,
+      acertos,
+      respondidas,
+    });
+  }
+
+  function paraLista<T extends { acertos: number; respondidas: number }>(
+    mapa: Map<string, T>
+  ) {
+    return Array.from(mapa.entries())
+      .map(([chave, v]) => ({
+        chave,
+        ...v,
+        percentualErro: v.respondidas > 0 ? Math.round(((v.respondidas - v.acertos) / v.respondidas) * 100) : 0,
+      }))
+      .filter((v) => v.respondidas > 0)
+      .sort((a, b) => b.percentualErro - a.percentualErro);
+  }
+
+  return {
+    porMateria: paraLista(porMateria),
+    porGrupo: paraLista(porGrupo),
+    porSubtema: paraLista(porSubtema).map((v) => {
+      const [materia, subtema] = v.chave.split("::");
+      return { ...v, materia, subtema };
+    }),
+  };
 }

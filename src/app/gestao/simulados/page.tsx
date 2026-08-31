@@ -1,6 +1,12 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { getSimuladosDoNucleo, getNucleoNome, getMateriasDoSimulado } from "@/lib/queries/gestao";
+import {
+  getSimuladosDoNucleo,
+  getNucleoNome,
+  getMateriasDoSimulado,
+  getPercentualErroDetalhado,
+} from "@/lib/queries/gestao";
+import { PanoramaSimulado } from "@/components/gestao/PanoramaSimulado";
 import { apagarSimulado } from "@/actions/gestao";
 import { NovoSimuladoForm } from "@/components/gestao/NovoSimuladoForm";
 import { LancarRespostaForm } from "@/components/gestao/LancarRespostaForm";
@@ -31,6 +37,14 @@ export default async function SimuladosPage() {
         )
       )
     : new Map<string, string[]>();
+
+  const panoramaPorSimulado = podeImportarCartoes
+    ? new Map(
+        await Promise.all(
+          simulados.map(async (s) => [s.id, await getPercentualErroDetalhado(s.id)] as const)
+        )
+      )
+    : new Map<string, Awaited<ReturnType<typeof getPercentualErroDetalhado>>>();
 
   return (
     <div>
@@ -129,6 +143,16 @@ export default async function SimuladosPage() {
               {!somenteLeitura && <AnexarProvaForm simuladoId={s.id} arquivoAtual={s.arquivoProva} />}
 
               {podeImportarCartoes && <ImportarCartoesRespostaForm simuladoId={s.id} />}
+
+              {podeImportarCartoes && panoramaPorSimulado.get(s.id) && (
+                <div className="mt-4 pt-4 border-t border-border">
+                  <PanoramaSimulado
+                    porGrupo={panoramaPorSimulado.get(s.id)!.porGrupo}
+                    porMateria={panoramaPorSimulado.get(s.id)!.porMateria}
+                    porSubtema={panoramaPorSimulado.get(s.id)!.porSubtema}
+                  />
+                </div>
+              )}
 
               {podeImportarCartoes && (
                 <ResultadosSimulado

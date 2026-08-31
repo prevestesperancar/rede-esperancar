@@ -7,7 +7,7 @@ import { LancarRespostaForm } from "@/components/gestao/LancarRespostaForm";
 import { ApagarItemButton } from "@/components/gestao/ApagarItemButton";
 import { ImportarCartoesRespostaForm } from "@/components/gestao/ImportarCartoesRespostaForm";
 import { GabaritoEditorForm } from "@/components/gestao/GabaritoEditorForm";
-import { conceitoUerj } from "@/lib/simulado";
+import { conceitoUerj, rotuloConceito } from "@/lib/simulado";
 
 export default async function SimuladosPage() {
   const session = await auth();
@@ -76,7 +76,10 @@ export default async function SimuladosPage() {
                         <span className="font-semibold">{r.nomeCompleto}</span>
                         <span className="font-mono text-xs font-bold text-teal">
                           {r.nota !== null
-                            ? `${r.nota}/${totalQuestoes} · Conceito ${conceitoUerj(r.nota, totalQuestoes)}`
+                            ? `${r.nota}/${totalQuestoes} · Conceito ${conceitoUerj(
+                                r.nota,
+                                totalQuestoes
+                              )} — ${rotuloConceito(conceitoUerj(r.nota, totalQuestoes))}`
                             : "sem nota"}
                         </span>
                       </div>

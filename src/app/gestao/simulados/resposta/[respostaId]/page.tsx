@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { conceitoUerj, montarGabaritoEfetivo } from "@/lib/simulado";
+import { conceitoUerj, rotuloConceito, montarGabaritoEfetivo } from "@/lib/simulado";
 
 const PERMITIDOS = ["PROFESSOR", "COORDENACAO", "APOIO_PSICOSSOCIAL", "ADMIN"];
 
@@ -43,16 +43,24 @@ export default async function RespostaSimuladoPage({
             {resposta.linguaEscolhida && ` · Língua: ${resposta.linguaEscolhida}`}
           </p>
         </div>
-        {resposta.nota !== null && (
-          <div className="bg-ink text-paper rounded-2xl px-5 py-3 text-center">
-            <div className="font-display text-2xl">
-              {resposta.nota}/{totalQuestoes}
-            </div>
-            <div className="text-xs text-paper/70 font-bold">
-              Conceito {conceitoUerj(resposta.nota, totalQuestoes)}
-            </div>
-          </div>
-        )}
+        {resposta.nota !== null &&
+          (() => {
+            const conceito = conceitoUerj(resposta.nota, totalQuestoes);
+            return (
+              <div
+                className={`rounded-2xl px-5 py-3 text-center text-paper ${
+                  conceito === "E" ? "bg-terracotta" : "bg-ink"
+                }`}
+              >
+                <div className="font-display text-2xl">
+                  {resposta.nota}/{totalQuestoes}
+                </div>
+                <div className="text-xs text-paper/70 font-bold">
+                  Conceito {conceito} — {rotuloConceito(conceito)}
+                </div>
+              </div>
+            );
+          })()}
       </div>
 
       {resposta.fotoCartaoResposta && (

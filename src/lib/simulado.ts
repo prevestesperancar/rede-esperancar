@@ -73,14 +73,31 @@ export function corrigirComLingua(
   return corrigirAutomaticamente(montarGabaritoEfetivo(simulado, linguaEscolhida), respostas);
 }
 
-// Faixas de conceito do Exame de Qualificação da Uerj (baseadas nos 60
-// pontos oficiais: A 54-60, B 42-53, C 30-41, D 18-29, E 0-17), aplicadas
-// como percentual pra funcionar com qualquer quantidade de questões.
+// Faixas oficiais do Exame de Qualificação da Uerj — 60 questões, acertos
+// mínimos e pontuação de cada conceito. Conceito E é eliminação.
+const FAIXAS_CONCEITO_UERJ = [
+  { letra: "A" as const, minimoEm60: 43, pontos: 20 },
+  { letra: "B" as const, minimoEm60: 37, pontos: 15 },
+  { letra: "C" as const, minimoEm60: 31, pontos: 10 },
+  { letra: "D" as const, minimoEm60: 25, pontos: 5 },
+  { letra: "E" as const, minimoEm60: 0, pontos: null },
+];
+
+// Se a prova não tiver exatamente 60 questões, escala os acertos pra base
+// 60 antes de comparar com as faixas oficiais.
 export function conceitoUerj(acertos: number, totalQuestoes: number): "A" | "B" | "C" | "D" | "E" {
-  const percentual = totalQuestoes > 0 ? (acertos / totalQuestoes) * 100 : 0;
-  if (percentual >= 90) return "A";
-  if (percentual >= 70) return "B";
-  if (percentual >= 50) return "C";
-  if (percentual >= 30) return "D";
-  return "E";
+  const acertosEm60 = totalQuestoes > 0 ? Math.round((acertos / totalQuestoes) * 60) : 0;
+  const faixa = FAIXAS_CONCEITO_UERJ.find((f) => acertosEm60 >= f.minimoEm60);
+  return faixa?.letra ?? "E";
+}
+
+// Pontuação do conceito (20/15/10/5) — null quando é eliminação (conceito E).
+export function pontosConceito(conceito: "A" | "B" | "C" | "D" | "E"): number | null {
+  return FAIXAS_CONCEITO_UERJ.find((f) => f.letra === conceito)?.pontos ?? null;
+}
+
+// Texto pra mostrar ao lado do conceito: "Eliminado(a)" no E, "20 pontos" etc.
+export function rotuloConceito(conceito: "A" | "B" | "C" | "D" | "E"): string {
+  if (conceito === "E") return "Eliminado(a)";
+  return `${pontosConceito(conceito)} pontos`;
 }

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { lancarResposta, corrigirRespostaManual, apagarRespostaSimulado } from "@/actions/gestao";
 import { CampoArquivo } from "@/components/common/CampoArquivo";
 import { TAMANHO_MAXIMO_FOTO } from "@/lib/upload-limits";
-import { conceitoUerj, FIM_BLOCO_LINGUA, IDIOMAS_BLOCO_LINGUA } from "@/lib/simulado";
+import { conceitoUerj, rotuloConceito, FIM_BLOCO_LINGUA, IDIOMAS_BLOCO_LINGUA } from "@/lib/simulado";
 import { RespostasPorQuestaoInput } from "@/components/gestao/RespostasPorQuestaoInput";
 
 function paraInputDate(data: Date | null) {
@@ -165,8 +165,17 @@ export function LancarRespostaForm({
       {linguaEscolhida && <span className="text-[11px] font-bold text-ink-faint">{linguaEscolhida}</span>}
 
       {nota !== undefined && nota !== null && (
-        <span className={`font-mono text-xs font-bold ${corrigidoManualmente ? "text-terracotta" : "text-teal"}`}>
-          {nota}/{totalQuestoes} · Conceito {conceitoUerj(nota, totalQuestoes)}
+        <span
+          className={`font-mono text-xs font-bold ${
+            conceitoUerj(nota, totalQuestoes) === "E"
+              ? "text-terracotta"
+              : corrigidoManualmente
+              ? "text-terracotta"
+              : "text-teal"
+          }`}
+        >
+          {nota}/{totalQuestoes} · Conceito {conceitoUerj(nota, totalQuestoes)} —{" "}
+          {rotuloConceito(conceitoUerj(nota, totalQuestoes))}
           {corrigidoManualmente ? " (manual)" : ""}
         </span>
       )}

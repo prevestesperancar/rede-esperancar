@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { consultarNotaSimulado } from "@/actions/consulta";
-import { conceitoUerj } from "@/lib/simulado";
+import { conceitoUerj, rotuloConceito } from "@/lib/simulado";
 
 export function ConsultaSimuladoForm() {
   const [estado, action, pending] = useActionState(consultarNotaSimulado, undefined);
@@ -56,14 +56,24 @@ export function ConsultaSimuladoForm() {
                     {r.linguaEscolhida && ` · Língua: ${r.linguaEscolhida}`}
                   </div>
                   {r.nota !== null ? (
-                    <>
-                      <div className="font-mono text-2xl font-bold text-teal">
-                        {r.nota}/{r.gabarito.split(",").length}
-                      </div>
-                      <div className="text-xs font-bold text-ink-soft">
-                        Conceito {conceitoUerj(r.nota, r.gabarito.split(",").length)}
-                      </div>
-                    </>
+                    (() => {
+                      const total = r.gabarito.split(",").length;
+                      const conceito = conceitoUerj(r.nota, total);
+                      return (
+                        <>
+                          <div className="font-mono text-2xl font-bold text-teal">
+                            {r.nota}/{total}
+                          </div>
+                          <div
+                            className={`text-xs font-bold ${
+                              conceito === "E" ? "text-terracotta" : "text-ink-soft"
+                            }`}
+                          >
+                            Conceito {conceito} — {rotuloConceito(conceito)}
+                          </div>
+                        </>
+                      );
+                    })()
                   ) : (
                     <p className="text-xs text-ink-faint">Nota ainda não lançada.</p>
                   )}

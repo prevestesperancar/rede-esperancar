@@ -21,6 +21,7 @@ const spaceMono = Space_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://rede-esperancar.vercel.app"),
   title: "Rede Esperançar",
   description: "Uma rede de pré-vestibulares sociais e gratuitos.",
 };

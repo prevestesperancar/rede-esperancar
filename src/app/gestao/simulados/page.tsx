@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { normalizarNome } from "@/lib/normalizar-nome";
 import {
   getSimuladosDoNucleo,
   getNucleoNome,
@@ -42,6 +44,25 @@ export default async function SimuladosPage() {
     ? new Map(
         await Promise.all(
           simulados.map(async (s) => [s.id, await getPercentualErroDetalhado(s.id)] as const)
+        )
+      )
+    : new Map<string, Awaited<ReturnType<typeof getPercentualErroDetalhado>>>();
+
+  // Alunos que essa conta marcou (ver AcessoAlunoSimulado) — permite ver o
+  // resultado/estatística só desses alunos, sem precisar filtrar matéria por
+  // matéria nem criar outra conta.
+  const nomesMarcados = podeImportarCartoes
+    ? (await prisma.acessoAlunoSimulado.findMany({ where: { userId: session.user.id } })).map(
+        (a) => a.nomeCompleto
+      )
+    : [];
+
+  const panoramaMarcadosPorSimulado = nomesMarcados.length
+    ? new Map(
+        await Promise.all(
+          simulados.map(
+            async (s) => [s.id, await getPercentualErroDetalhado(s.id, nomesMarcados)] as const
+          )
         )
       )
     : new Map<string, Awaited<ReturnType<typeof getPercentualErroDetalhado>>>();
@@ -151,6 +172,44 @@ export default async function SimuladosPage() {
                     porMateria={panoramaPorSimulado.get(s.id)!.porMateria}
                     porSubtema={panoramaPorSimulado.get(s.id)!.porSubtema}
                   />
+                </div>
+              )}
+
+              {nomesMarcados.length > 0 && panoramaMarcadosPorSimulado.get(s.id) && (
+                <div className="mt-4 pt-4 border-t border-border">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-[11px] font-bold text-terracotta uppercase tracking-wide">
+                      Alunos marcados ({nomesMarcados.length})
+                    </div>
+                  </div>
+                  <PanoramaSimulado
+                    porGrupo={panoramaMarcadosPorSimulado.get(s.id)!.porGrupo}
+                    porMateria={panoramaMarcadosPorSimulado.get(s.id)!.porMateria}
+                    porSubtema={panoramaMarcadosPorSimulado.get(s.id)!.porSubtema}
+                  />
+                  <div className="flex flex-col gap-1">
+                    {s.respostas
+                      .filter((r) =>
+                        nomesMarcados.some((nome) => normalizarNome(nome) === normalizarNome(r.nomeCompleto))
+                      )
+                      .filter((r) => r.nota !== null)
+                      .sort((a, b) => b.nota! - a.nota!)
+                      .map((r) => {
+                        const conceito = conceitoUerj(r.nota!, totalQuestoes);
+                        return (
+                          <div
+                            key={r.id}
+                            className="flex items-center justify-between text-xs bg-paper rounded-lg px-3 py-2"
+                          >
+                            <span className="font-semibold truncate">{r.nomeCompleto}</span>
+                            <span className="font-mono font-bold text-ink flex-shrink-0">
+                              {r.nota}/{totalQuestoes} · Conceito {conceito}
+                              {rotuloConceito(conceito) ? ` — ${rotuloConceito(conceito)}` : ""}
+                            </span>
+                          </div>
+                        );
+                      })}
+                  </div>
                 </div>
               )}
 

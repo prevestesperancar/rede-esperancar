@@ -2,9 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getEstudanteByUserId, getTurmaAtivaDoEstudante } from "@/lib/queries/aluno";
+import { getResultadosSimuladosPorEstudante } from "@/actions/consulta";
 import { logout } from "@/actions/auth";
 import { EditarPerfilForm } from "@/components/common/EditarPerfilForm";
 import { AlterarSenhaForm } from "@/components/common/AlterarSenhaForm";
+import { ResultadosSimuladoLista } from "@/components/site/ResultadosSimuladoLista";
 
 export default async function AlunoPerfilPage() {
   const session = await auth();
@@ -13,7 +15,10 @@ export default async function AlunoPerfilPage() {
   const estudante = await getEstudanteByUserId(session.user.id);
   if (!estudante) redirect("/login");
 
-  const turma = await getTurmaAtivaDoEstudante(estudante.id);
+  const [turma, resultadosSimulados] = await Promise.all([
+    getTurmaAtivaDoEstudante(estudante.id),
+    getResultadosSimuladosPorEstudante(estudante.user.nome, estudante.dataNascimento),
+  ]);
   const primeiroNome = estudante.user.nome.split(" ")[0];
 
   return (
@@ -59,6 +64,13 @@ export default async function AlunoPerfilPage() {
         {estudante.user.telefone && (
           <div className="text-sm mt-1">{estudante.user.telefone}</div>
         )}
+      </div>
+
+      <div className="mb-6">
+        <div className="font-mono text-[11px] font-bold uppercase tracking-wide text-ink-faint mb-2.5">
+          Resultados simulados
+        </div>
+        <ResultadosSimuladoLista resultados={resultadosSimulados} />
       </div>
 
       <div className="bg-surface border border-border rounded-2xl p-4 mb-3.5">

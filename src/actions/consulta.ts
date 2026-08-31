@@ -19,6 +19,35 @@ export type EstadoConsultaSimulado = {
   resultados?: ResultadoConsulta[];
 };
 
+// Usada no perfil do aluno logado — mesma lógica de casamento por
+// nome+data de nascimento da consulta pública, só que sem formulário
+// (os dados já vêm do cadastro do próprio aluno).
+export async function getResultadosSimuladosPorEstudante(
+  nomeCompleto: string,
+  dataNascimento: Date | null
+): Promise<ResultadoConsulta[]> {
+  if (!dataNascimento) return [];
+
+  const candidatos = await prisma.simuladoResposta.findMany({
+    where: { dataNascimento },
+    include: { simulado: true },
+    orderBy: { simulado: { data: "desc" } },
+  });
+
+  const encontrados = candidatos.filter(
+    (r) => normalizarNome(r.nomeCompleto) === normalizarNome(nomeCompleto)
+  );
+
+  return encontrados.map((r) => ({
+    simulado: r.simulado.nome,
+    data: r.simulado.data.toLocaleDateString("pt-BR"),
+    nota: r.nota,
+    gabarito: montarGabaritoEfetivo(r.simulado, r.linguaEscolhida),
+    respostas: r.respostas,
+    linguaEscolhida: r.linguaEscolhida,
+  }));
+}
+
 export async function consultarNotaSimulado(
   _prevState: EstadoConsultaSimulado | undefined,
   formData: FormData

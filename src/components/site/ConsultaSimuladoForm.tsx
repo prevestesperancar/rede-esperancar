@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { consultarNotaSimulado } from "@/actions/consulta";
 import { conceitoUerj, rotuloConceito } from "@/lib/simulado";
+import { GabaritoGrid } from "@/components/site/GabaritoGrid";
 
 export function ConsultaSimuladoForm() {
   const [estado, action, pending] = useActionState(consultarNotaSimulado, undefined);
@@ -78,9 +79,11 @@ export function ConsultaSimuladoForm() {
                     <p className="text-xs text-ink-faint">Nota ainda não lançada.</p>
                   )}
                   {r.respostas && (
-                    <div className="text-xs text-ink-faint mt-2">
-                      <div>Suas respostas: {r.respostas}</div>
-                      <div>Gabarito: {r.gabarito}</div>
+                    <div className="mt-3 pt-3 border-t border-border">
+                      <GabaritoGrid
+                        gabarito={r.gabarito.split(",").map((s) => s.trim().toUpperCase())}
+                        respostas={r.respostas.split(",").map((s) => s.trim().toUpperCase())}
+                      />
                     </div>
                   )}
                 </div>

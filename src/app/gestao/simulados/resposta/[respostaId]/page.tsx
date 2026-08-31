@@ -3,6 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { conceitoUerj, rotuloConceito, montarGabaritoEfetivo } from "@/lib/simulado";
+import { GabaritoGrid } from "@/components/site/GabaritoGrid";
 
 const PERMITIDOS = ["PROFESSOR", "COORDENACAO", "APOIO_PSICOSSOCIAL", "ADMIN"];
 
@@ -73,6 +74,10 @@ export default async function RespostaSimuladoPage({
           />
         </div>
       )}
+
+      <div className="bg-surface border border-border rounded-[18px] p-5 mb-6">
+        <GabaritoGrid gabarito={gabarito} respostas={marcadas} />
+      </div>
 
       <div className="bg-surface border border-border rounded-[18px] overflow-hidden">
         <table className="w-full text-sm">

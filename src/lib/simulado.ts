@@ -101,3 +101,15 @@ export function rotuloConceito(conceito: "A" | "B" | "C" | "D" | "E"): string {
   if (conceito === "E") return "Eliminado(a)";
   return `${pontosConceito(conceito)} pontos`;
 }
+
+// Seções do cartão-resposta oficial da Uerj (prova de 60 questões), na mesma
+// ordem/numeração impressa no gabarito físico — usado pra montar a grade de
+// conferência parecida com o cartão real.
+export const SECOES_UERJ_60 = [
+  { nome: "Texto Base", inicio: 1, fim: 8 },
+  { nome: "Linguagens", inicio: 9, fim: 22 },
+  { nome: "Língua Estrangeira", inicio: INICIO_BLOCO_LINGUA, fim: FIM_BLOCO_LINGUA },
+  { nome: "Matemática", inicio: 28, fim: 34 },
+  { nome: "Ciências da Natureza", inicio: 35, fim: 47 },
+  { nome: "Ciências Humanas", inicio: 48, fim: 60 },
+];

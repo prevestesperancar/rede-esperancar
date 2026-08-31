@@ -971,27 +971,14 @@ export async function editarGabaritoSimulado(_prevState: string | undefined, for
   return undefined;
 }
 
-export async function anexarProvaSimulado(_prevState: string | undefined, formData: FormData) {
+// O PDF em si já foi pro Vercel Blob direto do navegador (ver
+// /api/upload-prova) — aqui só salvamos a URL resultante, um payload minúsculo
+// que nunca esbarra no limite de corpo de requisição das funções do Vercel.
+export async function salvarUrlProvaSimulado(simuladoId: string, url: string) {
   await requireCoordenacao();
-
-  const simuladoId = formData.get("simuladoId") as string;
-  const arquivo = formData.get("arquivo") as File | null;
-
-  if (!arquivo || arquivo.size === 0) return "Escolha o PDF da prova.";
-
-  let arquivoProva: string | null;
-  try {
-    arquivoProva = await salvarArquivo(arquivo, "provas-simulado", "documento");
-  } catch (error) {
-    if (error instanceof ArquivoInvalidoError) return error.message;
-    throw error;
-  }
-
-  await prisma.simulado.update({ where: { id: simuladoId }, data: { arquivoProva } });
-
+  await prisma.simulado.update({ where: { id: simuladoId }, data: { arquivoProva: url } });
   revalidatePath("/gestao/simulados");
   revalidatePath("/gestao/simulados/minhas-questoes");
-  return undefined;
 }
 
 export async function apagarSimulado(simuladoId: string) {

@@ -5,7 +5,6 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { normalizarNome } from "@/lib/normalizar-nome";
 import { corrigirComLingua } from "@/lib/simulado";
-import { TAMANHO_MAXIMO_DOCUMENTO } from "@/lib/upload-limits";
 import type { ItemImportado, EstadoImportacao } from "@/lib/importar-cartoes-tipos";
 
 // Lendo página por página (mais lento, bem mais preciso) precisamos de mais
@@ -83,21 +82,14 @@ export async function POST(request: Request): Promise<NextResponse<EstadoImporta
     });
   }
 
-  const formData = await request.formData();
-  const simuladoId = formData.get("simuladoId") as string;
-  const arquivo = formData.get("arquivo") as File | null;
+  // O PDF já foi pro Vercel Blob direto do navegador (o corpo de uma
+  // requisição de função no Vercel tem limite de 4.5MB, bem menor que
+  // cartões-resposta escaneados costumam pesar) — aqui só recebemos a URL e
+  // baixamos o arquivo a partir dela.
+  const { simuladoId, url } = (await request.json()) as { simuladoId?: string; url?: string };
 
   if (!simuladoId) return NextResponse.json({ erro: "Escolha o simulado." });
-  if (!arquivo || arquivo.size === 0) {
-    return NextResponse.json({ erro: "Envie o PDF com os cartões-resposta." });
-  }
-  if (arquivo.size > TAMANHO_MAXIMO_DOCUMENTO) {
-    return NextResponse.json({
-      erro: `O arquivo tem ${(arquivo.size / (1024 * 1024)).toFixed(1)}MB — o máximo aceito é ${
-        TAMANHO_MAXIMO_DOCUMENTO / (1024 * 1024)
-      }MB. Divida em lotes menores.`,
-    });
-  }
+  if (!url) return NextResponse.json({ erro: "Envie o PDF com os cartões-resposta." });
 
   const simulado = await prisma.simulado.findUnique({ where: { id: simuladoId } });
   if (!simulado) return NextResponse.json({ erro: "Simulado não encontrado." });
@@ -106,7 +98,9 @@ export async function POST(request: Request): Promise<NextResponse<EstadoImporta
 
   let paginasBase64: string[];
   try {
-    const bytesOriginais = await arquivo.arrayBuffer();
+    const respostaArquivo = await fetch(url);
+    if (!respostaArquivo.ok) throw new Error("Não foi possível baixar o PDF enviado.");
+    const bytesOriginais = await respostaArquivo.arrayBuffer();
     const documentoOriginal = await PDFDocument.load(bytesOriginais);
     const totalPaginas = documentoOriginal.getPageCount();
 

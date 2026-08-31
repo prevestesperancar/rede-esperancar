@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CampoArquivo } from "@/components/common/CampoArquivo";
-import { TAMANHO_MAXIMO_DOCUMENTO } from "@/lib/upload-limits";
+import { upload } from "@vercel/blob/client";
 import type { EstadoImportacao } from "@/lib/importar-cartoes-tipos";
 
 export function ImportarCartoesRespostaForm({ simuladoId }: { simuladoId: string }) {
@@ -11,28 +10,40 @@ export function ImportarCartoesRespostaForm({ simuladoId }: { simuladoId: string
   const [estado, setEstado] = useState<EstadoImportacao | undefined>(undefined);
   const [pending, setPending] = useState(false);
 
-  async function enviar(formData: FormData) {
+  async function enviarArquivo(e: React.ChangeEvent<HTMLInputElement>) {
+    const arquivo = e.target.files?.[0];
+    if (!arquivo) return;
+
     setPending(true);
     setEstado(undefined);
     try {
-      const resposta = await fetch("/api/importar-cartoes-resposta", { method: "POST", body: formData });
+      // O PDF vai direto do navegador pro Vercel Blob (o corpo de uma
+      // requisição de função no Vercel tem limite de 4.5MB) — a rota de
+      // importação recebe só a URL depois.
+      const blob = await upload(arquivo.name, arquivo, {
+        access: "public",
+        handleUploadUrl: "/api/upload-prova",
+      });
+
+      const resposta = await fetch("/api/importar-cartoes-resposta", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ simuladoId, url: blob.url }),
+      });
       const dados: EstadoImportacao = await resposta.json();
       setEstado(dados);
       if (dados.itens?.some((i) => !i.erro)) router.refresh();
-    } catch {
-      setEstado({ erro: "Não foi possível conectar pra importar. Tente de novo." });
+    } catch (err) {
+      setEstado({ erro: err instanceof Error ? err.message : "Não foi possível importar. Tente de novo." });
     } finally {
       setPending(false);
+      e.target.value = "";
     }
   }
 
   return (
     <div className="bg-paper rounded-xl p-3.5 mt-2">
-      <form
-        action={enviar}
-        className="flex flex-col gap-2"
-      >
-        <input type="hidden" name="simuladoId" value={simuladoId} />
+      <div className="flex flex-col gap-2">
         <div className="text-xs font-bold text-ink-faint uppercase tracking-wide">
           Importar cartões-resposta (PDF)
         </div>
@@ -42,21 +53,16 @@ export function ImportarCartoesRespostaForm({ simuladoId }: { simuladoId: string
           errado.
         </p>
         <div className="flex items-center gap-2">
-          <CampoArquivo
-            name="arquivo"
+          <input
+            type="file"
             accept="application/pdf"
-            tamanhoMaximo={TAMANHO_MAXIMO_DOCUMENTO}
-            className="flex-1 rounded-lg border border-border-strong px-2 py-1.5 text-xs outline-none focus:border-ink file:mr-2 file:rounded-full file:border-0 file:bg-surface file:text-[10px] file:font-bold file:px-2.5 file:py-1"
-          />
-          <button
-            type="submit"
+            onChange={enviarArquivo}
             disabled={pending}
-            className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-ink text-paper disabled:opacity-60 flex-shrink-0"
-          >
-            {pending ? "Lendo…" : "Importar"}
-          </button>
+            className="flex-1 rounded-lg border border-border-strong px-2 py-1.5 text-xs outline-none focus:border-ink file:mr-2 file:rounded-full file:border-0 file:bg-surface file:text-[10px] file:font-bold file:px-2.5 file:py-1 disabled:opacity-60"
+          />
+          {pending && <span className="text-[11px] font-bold text-ink-faint flex-shrink-0">Lendo…</span>}
         </div>
-      </form>
+      </div>
 
       {estado?.erro && <p className="text-xs font-semibold text-terracotta mt-2">{estado.erro}</p>}
 

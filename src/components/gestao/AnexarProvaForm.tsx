@@ -1,9 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
-import { anexarProvaSimulado } from "@/actions/gestao";
-import { CampoArquivo } from "@/components/common/CampoArquivo";
-import { TAMANHO_MAXIMO_DOCUMENTO } from "@/lib/upload-limits";
+import { useState } from "react";
+import { upload } from "@vercel/blob/client";
+import { salvarUrlProvaSimulado } from "@/actions/gestao";
 
 export function AnexarProvaForm({
   simuladoId,
@@ -12,33 +11,53 @@ export function AnexarProvaForm({
   simuladoId: string;
   arquivoAtual: string | null;
 }) {
-  const [error, action, pending] = useActionState(anexarProvaSimulado, undefined);
+  const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+
+  async function enviarArquivo(e: React.ChangeEvent<HTMLInputElement>) {
+    const arquivo = e.target.files?.[0];
+    if (!arquivo) return;
+
+    setEnviando(true);
+    setErro(null);
+    try {
+      const blob = await upload(arquivo.name, arquivo, {
+        access: "public",
+        handleUploadUrl: "/api/upload-prova",
+      });
+      await salvarUrlProvaSimulado(simuladoId, blob.url);
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : "Não foi possível enviar o arquivo.");
+    } finally {
+      setEnviando(false);
+      e.target.value = "";
+    }
+  }
 
   return (
-    <form action={action} className="flex items-center gap-2 mt-2 flex-wrap">
-      <input type="hidden" name="simuladoId" value={simuladoId} />
+    <div className="flex items-center gap-2 mt-2 flex-wrap">
       <span className="text-[11px] font-bold text-ink-faint uppercase tracking-wide">
         PDF da prova (pros professores)
       </span>
-      <CampoArquivo
-        name="arquivo"
+      <input
+        type="file"
         accept="application/pdf"
-        tamanhoMaximo={TAMANHO_MAXIMO_DOCUMENTO}
-        className="w-[180px] text-[11px] rounded-lg border border-border-strong px-1.5 py-1 outline-none focus:border-ink file:mr-1.5 file:rounded-full file:border-0 file:bg-paper file:text-[10px] file:font-bold file:px-2 file:py-1"
+        onChange={enviarArquivo}
+        disabled={enviando}
+        className="w-[200px] text-[11px] rounded-lg border border-border-strong px-1.5 py-1 outline-none focus:border-ink file:mr-1.5 file:rounded-full file:border-0 file:bg-paper file:text-[10px] file:font-bold file:px-2 file:py-1 disabled:opacity-60"
       />
-      <button
-        type="submit"
-        disabled={pending}
-        className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-ink text-paper disabled:opacity-60"
-      >
-        {pending ? "…" : arquivoAtual ? "Substituir" : "Anexar"}
-      </button>
-      {arquivoAtual && (
-        <a href={arquivoAtual} target="_blank" rel="noopener noreferrer" className="text-[11px] font-bold text-terracotta">
+      {enviando && <span className="text-[11px] font-bold text-ink-faint">Enviando…</span>}
+      {arquivoAtual && !enviando && (
+        <a
+          href={arquivoAtual}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[11px] font-bold text-terracotta"
+        >
           Ver PDF atual →
         </a>
       )}
-      {error && <p className="text-xs font-semibold text-terracotta w-full">{error}</p>}
-    </form>
+      {erro && <p className="text-xs font-semibold text-terracotta w-full">{erro}</p>}
+    </div>
   );
 }

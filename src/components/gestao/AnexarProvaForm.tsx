@@ -24,6 +24,7 @@ export function AnexarProvaForm({
       const blob = await upload(arquivo.name, arquivo, {
         access: "public",
         handleUploadUrl: "/api/upload-prova",
+        multipart: true,
       });
       await salvarUrlProvaSimulado(simuladoId, blob.url);
     } catch (err) {

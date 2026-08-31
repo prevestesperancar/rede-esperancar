@@ -23,6 +23,7 @@ export function ImportarCartoesRespostaForm({ simuladoId }: { simuladoId: string
       const blob = await upload(arquivo.name, arquivo, {
         access: "public",
         handleUploadUrl: "/api/upload-prova",
+        multipart: true,
       });
 
       const resposta = await fetch("/api/importar-cartoes-resposta", {

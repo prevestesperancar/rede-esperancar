@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { upload } from "@vercel/blob/client";
+import { supabaseBrowser, SUPABASE_UPLOADS_BUCKET } from "@/lib/supabase-browser";
 import { salvarUrlProvaSimulado } from "@/actions/gestao";
 
 export function AnexarProvaForm({
@@ -21,12 +21,20 @@ export function AnexarProvaForm({
     setEnviando(true);
     setErro(null);
     try {
-      const blob = await upload(arquivo.name, arquivo, {
-        access: "public",
-        handleUploadUrl: "/api/upload-prova",
-        multipart: true,
+      const resposta = await fetch("/api/upload-prova", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nomeArquivo: arquivo.name }),
       });
-      await salvarUrlProvaSimulado(simuladoId, blob.url);
+      const dados = await resposta.json();
+      if (!resposta.ok) throw new Error(dados.error ?? "Não foi possível gerar o upload.");
+
+      const { error } = await supabaseBrowser.storage
+        .from(SUPABASE_UPLOADS_BUCKET)
+        .uploadToSignedUrl(dados.path, dados.token, arquivo);
+      if (error) throw new Error(error.message);
+
+      await salvarUrlProvaSimulado(simuladoId, dados.publicUrl);
     } catch (err) {
       console.error("Erro ao enviar PDF da prova:", err);
       setErro(err instanceof Error ? err.message : "Não foi possível enviar o arquivo.");

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { upload } from "@vercel/blob/client";
+import { supabaseBrowser, SUPABASE_UPLOADS_BUCKET } from "@/lib/supabase-browser";
 import type { EstadoImportacao } from "@/lib/importar-cartoes-tipos";
 
 export function ImportarCartoesRespostaForm({ simuladoId }: { simuladoId: string }) {
@@ -17,19 +17,26 @@ export function ImportarCartoesRespostaForm({ simuladoId }: { simuladoId: string
     setPending(true);
     setEstado(undefined);
     try {
-      // O PDF vai direto do navegador pro Vercel Blob (o corpo de uma
+      // O PDF vai direto do navegador pro Supabase Storage (o corpo de uma
       // requisição de função no Vercel tem limite de 4.5MB) — a rota de
       // importação recebe só a URL depois.
-      const blob = await upload(arquivo.name, arquivo, {
-        access: "public",
-        handleUploadUrl: "/api/upload-prova",
-        multipart: true,
+      const respostaUpload = await fetch("/api/upload-prova", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nomeArquivo: arquivo.name }),
       });
+      const dadosUpload = await respostaUpload.json();
+      if (!respostaUpload.ok) throw new Error(dadosUpload.error ?? "Não foi possível gerar o upload.");
+
+      const { error: erroUpload } = await supabaseBrowser.storage
+        .from(SUPABASE_UPLOADS_BUCKET)
+        .uploadToSignedUrl(dadosUpload.path, dadosUpload.token, arquivo);
+      if (erroUpload) throw new Error(erroUpload.message);
 
       const resposta = await fetch("/api/importar-cartoes-resposta", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ simuladoId, url: blob.url }),
+        body: JSON.stringify({ simuladoId, url: dadosUpload.publicUrl }),
       });
       const dados: EstadoImportacao = await resposta.json();
       setEstado(dados);

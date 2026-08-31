@@ -1,7 +1,7 @@
 import { writeFile, mkdir } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
-import { put } from "@vercel/blob";
+import { supabaseAdmin, SUPABASE_UPLOADS_BUCKET } from "@/lib/supabase";
 import { TAMANHO_MAXIMO_FOTO, TAMANHO_MAXIMO_DOCUMENTO } from "@/lib/upload-limits";
 
 export { TAMANHO_MAXIMO_FOTO, TAMANHO_MAXIMO_DOCUMENTO };
@@ -27,17 +27,20 @@ export async function salvarArquivo(
   const ext = path.extname(file.name) || "";
   const nomeArquivo = `${randomUUID()}${ext}`;
 
-  // No Vercel (e em qualquer ambiente com armazenamento Blob configurado) o
-  // servidor não permite gravar arquivos no disco — usamos o Vercel Blob.
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
-    const blob = await put(`${pasta}/${nomeArquivo}`, file, {
-      access: "public",
-      addRandomSuffix: false,
-    });
-    return blob.url;
+  // No Vercel (e em qualquer ambiente com Supabase configurado) o servidor
+  // não permite gravar arquivos no disco — usamos o Supabase Storage.
+  if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const caminho = `${pasta}/${nomeArquivo}`;
+    const { error } = await supabaseAdmin.storage
+      .from(SUPABASE_UPLOADS_BUCKET)
+      .upload(caminho, file, { contentType: file.type || undefined, upsert: false });
+    if (error) throw new ArquivoInvalidoError(`Não foi possível enviar o arquivo: ${error.message}`);
+
+    const { data } = supabaseAdmin.storage.from(SUPABASE_UPLOADS_BUCKET).getPublicUrl(caminho);
+    return data.publicUrl;
   }
 
-  // Localmente, sem Blob configurado, continua salvando em public/uploads.
+  // Localmente, sem Supabase configurado, continua salvando em public/uploads.
   const bytes = Buffer.from(await file.arrayBuffer());
   const dir = path.join(process.cwd(), "public", "uploads", pasta);
   await mkdir(dir, { recursive: true });

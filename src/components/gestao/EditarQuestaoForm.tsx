@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { upload } from "@vercel/blob/client";
+import { supabaseBrowser, SUPABASE_UPLOADS_BUCKET } from "@/lib/supabase-browser";
 import { editarQuestaoBanco } from "@/actions/gestao";
 
 const inputClass =
@@ -42,12 +42,20 @@ export function EditarQuestaoForm({
     if (!arquivo) return;
     setEnviandoImagem(true);
     try {
-      const blob = await upload(arquivo.name, arquivo, {
-        access: "public",
-        handleUploadUrl: "/api/upload-imagem-questao",
-        multipart: true,
+      const resposta = await fetch("/api/upload-imagem-questao", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nomeArquivo: arquivo.name }),
       });
-      setImagemUrl(blob.url);
+      const dados = await resposta.json();
+      if (!resposta.ok) throw new Error(dados.error ?? "Não foi possível gerar o upload.");
+
+      const { error } = await supabaseBrowser.storage
+        .from(SUPABASE_UPLOADS_BUCKET)
+        .uploadToSignedUrl(dados.path, dados.token, arquivo);
+      if (error) throw new Error(error.message);
+
+      setImagemUrl(dados.publicUrl);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Não foi possível enviar a imagem.");
     } finally {

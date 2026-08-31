@@ -28,6 +28,7 @@ export function AnexarProvaForm({
       });
       await salvarUrlProvaSimulado(simuladoId, blob.url);
     } catch (err) {
+      console.error("Erro ao enviar PDF da prova:", err);
       setErro(err instanceof Error ? err.message : "Não foi possível enviar o arquivo.");
     } finally {
       setEnviando(false);

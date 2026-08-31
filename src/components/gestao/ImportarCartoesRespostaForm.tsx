@@ -35,6 +35,7 @@ export function ImportarCartoesRespostaForm({ simuladoId }: { simuladoId: string
       setEstado(dados);
       if (dados.itens?.some((i) => !i.erro)) router.refresh();
     } catch (err) {
+      console.error("Erro ao importar cartões-resposta:", err);
       setEstado({ erro: err instanceof Error ? err.message : "Não foi possível importar. Tente de novo." });
     } finally {
       setPending(false);

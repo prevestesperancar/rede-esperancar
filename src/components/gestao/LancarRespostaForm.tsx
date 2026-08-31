@@ -2,6 +2,8 @@
 
 import { useState, useActionState } from "react";
 import { lancarResposta, corrigirRespostaManual } from "@/actions/gestao";
+import { CampoArquivo } from "@/components/common/CampoArquivo";
+import { TAMANHO_MAXIMO_FOTO } from "@/lib/upload-limits";
 
 export function LancarRespostaForm({
   simuladoId,
@@ -11,6 +13,7 @@ export function LancarRespostaForm({
   respostasAtuais,
   nota,
   corrigidoManualmente,
+  fotoCartaoResposta,
 }: {
   simuladoId: string;
   estudanteId: string;
@@ -19,6 +22,7 @@ export function LancarRespostaForm({
   respostasAtuais?: string;
   nota?: number | null;
   corrigidoManualmente?: boolean;
+  fotoCartaoResposta?: string | null;
 }) {
   const [ajuste, setAjuste] = useState(false);
   const [, actionLancar, pendingLancar] = useActionState(lancarResposta, undefined);
@@ -37,6 +41,12 @@ export function LancarRespostaForm({
           placeholder="A,B,C,D..."
           className="w-[160px] rounded-lg border border-border-strong px-2 py-1.5 text-xs outline-none focus:border-ink"
         />
+        <CampoArquivo
+          name="foto"
+          accept="image/*"
+          tamanhoMaximo={TAMANHO_MAXIMO_FOTO}
+          className="w-[150px] text-[11px] rounded-lg border border-border-strong px-1.5 py-1 outline-none focus:border-ink file:mr-1.5 file:rounded-full file:border-0 file:bg-paper file:text-[10px] file:font-bold file:px-2 file:py-1"
+        />
         <button
           type="submit"
           disabled={pendingLancar}
@@ -45,6 +55,17 @@ export function LancarRespostaForm({
           {pendingLancar ? "…" : "Lançar/corrigir"}
         </button>
       </form>
+
+      {fotoCartaoResposta && (
+        <a
+          href={fotoCartaoResposta}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[11px] font-bold text-terracotta"
+        >
+          Ver cartão →
+        </a>
+      )}
 
       {nota !== undefined && nota !== null && (
         <span className={`font-mono text-xs font-bold ${corrigidoManualmente ? "text-terracotta" : "text-teal"}`}>

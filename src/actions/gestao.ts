@@ -946,6 +946,7 @@ export async function lancarResposta(_prevState: string | undefined, formData: F
   const simuladoId = formData.get("simuladoId") as string;
   const estudanteId = formData.get("estudanteId") as string;
   const respostas = formData.get("respostas") as string;
+  const foto = formData.get("foto") as File | null;
 
   if (!respostas) return "Digite as respostas marcadas.";
 
@@ -954,10 +955,25 @@ export async function lancarResposta(_prevState: string | undefined, formData: F
 
   const nota = corrigirAutomaticamente(simulado.gabarito, respostas);
 
+  let fotoCartaoResposta: string | undefined;
+  if (foto && foto.size > 0) {
+    try {
+      fotoCartaoResposta = (await salvarArquivo(foto, "cartoes-resposta")) ?? undefined;
+    } catch (error) {
+      if (error instanceof ArquivoInvalidoError) return error.message;
+      throw error;
+    }
+  }
+
   await prisma.simuladoResposta.upsert({
     where: { simuladoId_estudanteId: { simuladoId, estudanteId } },
-    update: { respostas: respostas.trim(), nota, corrigidoManualmente: false },
-    create: { simuladoId, estudanteId, respostas: respostas.trim(), nota },
+    update: {
+      respostas: respostas.trim(),
+      nota,
+      corrigidoManualmente: false,
+      ...(fotoCartaoResposta ? { fotoCartaoResposta } : {}),
+    },
+    create: { simuladoId, estudanteId, respostas: respostas.trim(), nota, fotoCartaoResposta },
   });
 
   revalidatePath("/gestao/simulados");

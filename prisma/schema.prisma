@@ -477,6 +477,7 @@ model SimuladoResposta {
   respostas            String // ex: "A,B,C,D,A,B,..."
   nota                 Float?
   corrigidoManualmente Boolean  @default(false)
+  fotoCartaoResposta   String? // foto do cartão-resposta físico, só de referência
   createdAt            DateTime @default(now())
 
   simulado  Simulado  @relation(fields: [simuladoId], references: [id])

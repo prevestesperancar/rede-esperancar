@@ -84,6 +84,7 @@ export default async function SimuladosPage() {
                           respostasAtuais={resposta?.respostas}
                           nota={resposta?.nota}
                           corrigidoManualmente={resposta?.corrigidoManualmente}
+                          fotoCartaoResposta={resposta?.fotoCartaoResposta}
                         />
                       );
                     })}

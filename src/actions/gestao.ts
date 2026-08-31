@@ -1219,6 +1219,51 @@ export async function criarQuestaoBanco(_prevState: string | undefined, formData
   return "Questão adicionada!";
 }
 
+export async function editarQuestaoBanco(_prevState: string | undefined, formData: FormData) {
+  await requireGestao();
+
+  const questaoId = formData.get("questaoId") as string;
+  const prova = formData.get("prova") as string;
+  const materia = formData.get("materia") as string;
+  const anoStr = formData.get("ano") as string;
+  const enunciado = formData.get("enunciado") as string;
+  const imagemUrl = formData.get("imagemUrl") as string;
+  const opcaoA = formData.get("opcaoA") as string;
+  const opcaoB = formData.get("opcaoB") as string;
+  const opcaoC = formData.get("opcaoC") as string;
+  const opcaoD = formData.get("opcaoD") as string;
+  const opcaoE = formData.get("opcaoE") as string;
+  const respostaCorreta = formData.get("respostaCorreta") as string;
+  const subtema = formData.get("subtema") as string;
+
+  if (!questaoId || !prova || !materia || !enunciado || !opcaoA || !opcaoB || !opcaoC || !opcaoD || !respostaCorreta) {
+    return "Preencha prova, matéria, enunciado, as alternativas e a resposta correta.";
+  }
+
+  await prisma.questaoBanco.update({
+    where: { id: questaoId },
+    data: {
+      prova,
+      materia,
+      ano: anoStr ? Number(anoStr) : null,
+      enunciado,
+      imagemUrl: imagemUrl || null,
+      opcaoA,
+      opcaoB,
+      opcaoC,
+      opcaoD,
+      opcaoE: opcaoE || null,
+      respostaCorreta,
+      subtema: subtema || null,
+    },
+  });
+
+  revalidatePath("/admin/questoes");
+  revalidatePath("/gestao/questoes");
+  revalidatePath("/gestao/simulados/minhas-questoes");
+  return "Questão atualizada!";
+}
+
 export async function apagarQuestaoBanco(questaoId: string) {
   await requireGestao();
   await prisma.questaoBanco.delete({ where: { id: questaoId } });

@@ -28,6 +28,47 @@ const MAPA_MATERIA_SECOES: Record<string, string[]> = {
   "língua estrangeira (francês)": ["Língua Estrangeira"],
 };
 
+// Casa a matéria do professor (campo livre, ex: "Matemática 1", "Sociologia,
+// Filosofia") com as matérias exatas usadas no Banco de Questões (QuestaoBanco.materia)
+// — diferente de secoesDaMateria, que devolve a seção ampla da prova (usada só
+// pro texto legado). Isso permite mostrar só as questões que são de verdade da
+// disciplina do professor, inclusive dentro do Texto Base, que mistura matérias.
+const MAPA_MATERIA_REAL: Record<string, string[]> = {
+  "matemática": ["Matemática"],
+  "matemática 1": ["Matemática"],
+  "matemática 2": ["Matemática"],
+  física: ["Física"],
+  química: ["Química"],
+  biologia: ["Biologia"],
+  "ciências da natureza": ["Física", "Química", "Biologia"],
+  história: ["História"],
+  geografia: ["Geografia"],
+  sociologia: ["Sociologia"],
+  filosofia: ["Filosofia"],
+  "sociologia/filosofia": ["Sociologia", "Filosofia"],
+  "ciências humanas": ["História", "Geografia", "Sociologia", "Filosofia"],
+  "língua portuguesa": ["Português"],
+  português: ["Português"],
+  redação: ["Português"],
+  inglês: ["Inglês"],
+  espanhol: ["Espanhol"],
+  francês: ["Francês"],
+};
+
+export function materiasIndividuaisDaMateria(materia: string | null | undefined): string[] {
+  if (!materia) return [];
+  const partes = materia.split(/[,/]/).map((p) => normalizar(p));
+  const materiasReais = new Set<string>();
+  for (const parte of partes) {
+    for (const [chave, valores] of Object.entries(MAPA_MATERIA_REAL)) {
+      if (normalizar(chave) === parte || parte.includes(normalizar(chave))) {
+        valores.forEach((v) => materiasReais.add(v));
+      }
+    }
+  }
+  return Array.from(materiasReais);
+}
+
 function normalizar(texto: string) {
   return texto.trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 }

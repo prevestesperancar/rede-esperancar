@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { ordenarPorDiaSemana } from "@/lib/dias";
-import { montarGabaritoEfetivo, SECOES_UERJ_60 } from "@/lib/simulado";
+import { montarGabaritoEfetivo } from "@/lib/simulado";
 
 export async function getUsuariosDoNucleo(nucleoId: string, role?: string) {
   return prisma.user.findMany({
@@ -512,22 +512,30 @@ export async function getEstudanteDetalhe(matriculaId: string, nucleoId?: string
 
 // Estatísticas de um simulado restritas às seções (blocos) informadas —
 // usado pra dar ao professor uma visão só da sua matéria dentro da prova.
-export async function getEstatisticasSimuladoPorSecoes(simuladoId: string, nomesSecoes: string[]) {
+// Recebe as matérias reais do professor (ex: ["Geografia"], não a seção ampla
+// "Ciências Humanas") — casa cada questão do simulado com sua matéria de
+// verdade via QuestaoBanco.numeroSimulado, então só entram as questões que
+// são realmente da matéria do professor (inclusive do Texto Base, que mistura
+// disciplinas).
+export async function getEstatisticasSimuladoPorSecoes(simuladoId: string, materias: string[]) {
   const simulado = await prisma.simulado.findUnique({
     where: { id: simuladoId },
     include: { respostas: true },
   });
   if (!simulado) return null;
 
-  const totalQuestoes = simulado.gabarito.split(",").length;
-  const secoes = (totalQuestoes === 60 ? SECOES_UERJ_60 : []).filter((s) =>
-    nomesSecoes.includes(s.nome)
-  );
-  const indices = new Set<number>();
-  secoes.forEach((s) => {
-    for (let i = s.inicio - 1; i < s.fim && i < totalQuestoes; i++) indices.add(i);
-  });
-  const indicesOrdenados = Array.from(indices).sort((a, b) => a - b);
+  const questoesBanco =
+    materias.length > 0
+      ? await prisma.questaoBanco.findMany({
+          where: { simuladoId, materia: { in: materias }, numeroSimulado: { not: null } },
+          orderBy: { numeroSimulado: "asc" },
+        })
+      : [];
+
+  const indicesOrdenados = Array.from(
+    new Set(questoesBanco.map((q) => q.numeroSimulado! - 1))
+  ).sort((a, b) => a - b);
+  const questaoBancoPorNumero = new Map(questoesBanco.map((q) => [q.numeroSimulado!, q]));
 
   const porQuestao = indicesOrdenados.map((i) => ({ numero: i + 1, acertos: 0, respondidas: 0 }));
   const porQuestaoMap = new Map(porQuestao.map((q) => [q.numero, q]));
@@ -562,13 +570,30 @@ export async function getEstatisticasSimuladoPorSecoes(simuladoId: string, nomes
     };
   });
 
-  const questoesComEstatistica = porQuestao.map((q) => ({
-    numero: q.numero,
-    acertos: q.acertos,
-    erros: q.respondidas - q.acertos,
-    respondidas: q.respondidas,
-    percentualErro: q.respondidas > 0 ? Math.round(((q.respondidas - q.acertos) / q.respondidas) * 100) : 0,
-  }));
+  const questoesComEstatistica = porQuestao.map((q) => {
+    const questao = questaoBancoPorNumero.get(q.numero) ?? null;
+    return {
+      numero: q.numero,
+      acertos: q.acertos,
+      erros: q.respondidas - q.acertos,
+      respondidas: q.respondidas,
+      percentualErro: q.respondidas > 0 ? Math.round(((q.respondidas - q.acertos) / q.respondidas) * 100) : 0,
+      questao: questao
+        ? {
+            id: questao.id,
+            enunciado: questao.enunciado,
+            imagemUrl: questao.imagemUrl,
+            opcaoA: questao.opcaoA,
+            opcaoB: questao.opcaoB,
+            opcaoC: questao.opcaoC,
+            opcaoD: questao.opcaoD,
+            opcaoE: questao.opcaoE,
+            respostaCorreta: questao.respostaCorreta,
+            subtema: questao.subtema,
+          }
+        : null,
+    };
+  });
 
   const rankeados = desempenhoAlunos
     .filter((a) => a.totalSecao > 0)

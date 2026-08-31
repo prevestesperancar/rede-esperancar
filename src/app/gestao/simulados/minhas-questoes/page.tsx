@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getSimuladosDoNucleo, getNucleoNome, getEstatisticasSimuladoPorSecoes } from "@/lib/queries/gestao";
-import { secoesDaMateria } from "@/lib/materia-secao";
+import { materiasIndividuaisDaMateria } from "@/lib/materia-secao";
+import { QuestaoDoSimulado } from "@/components/gestao/QuestaoDoSimulado";
 
 export default async function MinhasQuestoesSimuladoPage() {
   const session = await auth();
@@ -15,7 +16,7 @@ export default async function MinhasQuestoesSimuladoPage() {
     getNucleoNome(session.user.nucleoId),
   ]);
 
-  const secoes = secoesDaMateria(usuario?.materia);
+  const materias = materiasIndividuaisDaMateria(usuario?.materia);
 
   return (
     <div>
@@ -27,10 +28,10 @@ export default async function MinhasQuestoesSimuladoPage() {
         Questões e estatísticas dos simulados, na parte que cai da sua matéria.
       </p>
 
-      {secoes.length === 0 ? (
+      {materias.length === 0 ? (
         <p className="text-sm text-ink-faint">
-          Sua matéria ({usuario?.materia || "não definida"}) ainda não está mapeada pra nenhum bloco da
-          prova. Peça pra coordenação conferir seu cadastro.
+          Sua matéria ({usuario?.materia || "não definida"}) ainda não está mapeada pra nenhuma
+          disciplina da prova. Peça pra coordenação conferir seu cadastro.
         </p>
       ) : simulados.length === 0 ? (
         <p className="text-sm text-ink-faint">Nenhum simulado cadastrado ainda.</p>
@@ -38,7 +39,7 @@ export default async function MinhasQuestoesSimuladoPage() {
         <div className="flex flex-col gap-5">
           {await Promise.all(
             simulados.map(async (s) => {
-              const stats = await getEstatisticasSimuladoPorSecoes(s.id, secoes);
+              const stats = await getEstatisticasSimuladoPorSecoes(s.id, materias);
               if (!stats || stats.totalQuestoesSecao === 0) return null;
 
               return (
@@ -48,7 +49,7 @@ export default async function MinhasQuestoesSimuladoPage() {
                       <div className="font-extrabold text-base">{stats.simuladoNome}</div>
                       <div className="text-xs text-ink-faint font-mono">
                         {stats.simuladoData.toLocaleDateString("pt-BR")} · {stats.totalQuestoesSecao}{" "}
-                        questão(ões) da sua parte · seções: {secoes.join(", ")}
+                        questão(ões) da sua parte · matérias: {materias.join(", ")}
                       </div>
                     </div>
                     {stats.arquivoProva && (
@@ -70,18 +71,14 @@ export default async function MinhasQuestoesSimuladoPage() {
                       </div>
                       <div className="flex flex-col gap-1.5">
                         {stats.questoes.map((q) => (
-                          <div key={q.numero} className="flex items-center gap-2 text-xs">
-                            <span className="font-mono font-bold w-8">Q{q.numero}</span>
-                            <div className="flex-1 h-2 rounded-full bg-paper overflow-hidden">
-                              <div
-                                className="h-full bg-terracotta"
-                                style={{ width: `${q.percentualErro}%` }}
-                              />
-                            </div>
-                            <span className="text-ink-faint w-32 text-right">
-                              {q.acertos} acertos · {q.erros} erros ({q.percentualErro}% erro)
-                            </span>
-                          </div>
+                          <QuestaoDoSimulado
+                            key={q.numero}
+                            numero={q.numero}
+                            acertos={q.acertos}
+                            erros={q.erros}
+                            percentualErro={q.percentualErro}
+                            questao={q.questao}
+                          />
                         ))}
                       </div>
                       {stats.questoes.length > 0 && (

@@ -424,6 +424,7 @@ model QuestaoBanco {
   materia         String
   ano             Int?
   enunciado       String
+  imagemUrl       String?
   opcaoA          String
   opcaoB          String
   opcaoC          String
@@ -433,9 +434,17 @@ model QuestaoBanco {
   subtema         String? // visível só pra prof/coordenação, não pro aluno
   createdAt       DateTime @default(now())
 
+  // Quando a questão veio de um simulado específico, guarda o número dela na
+  // prova (1 a 60) — permite ao professor ver a estatística questão a questão
+  // já ligada ao texto completo, em vez de só um número solto.
+  simuladoId     String?
+  numeroSimulado Int?
+  simulado       Simulado? @relation(fields: [simuladoId], references: [id])
+
   tentativas TentativaQuestaoBanco[]
 
   @@index([prova, materia])
+  @@index([simuladoId, numeroSimulado])
 }
 
 // Cada resposta que o aluno dá no Banco de Questões (prática livre ou simulado)
@@ -472,7 +481,8 @@ model Simulado {
   nucleoId String
   nucleo   Nucleo @relation(fields: [nucleoId], references: [id])
 
-  respostas SimuladoResposta[]
+  respostas    SimuladoResposta[]
+  questoesBanco QuestaoBanco[]
 
   @@index([nucleoId])
 }

@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { getTodasQuestoes, getTodasDisciplinas } from "@/lib/queries/banco";
 import { getDisciplinasDoProfessor } from "@/lib/queries/gestao";
 import { NovaQuestaoForm } from "@/components/gestao/NovaQuestaoForm";
-import { ApagarQuestaoButton } from "@/components/gestao/ApagarQuestaoButton";
+import { QuestaoDaListaComEdicao } from "@/components/gestao/QuestaoDaListaComEdicao";
 
 export default async function GestaoQuestoesPage({
   searchParams,
@@ -76,16 +76,7 @@ export default async function GestaoQuestoesPage({
 
       <div className="bg-surface border border-border rounded-[18px] divide-y divide-border">
         {questoes.map((q) => (
-          <div key={q.id} className="p-4 flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <div className="font-mono text-[11px] font-bold text-terracotta uppercase tracking-wide mb-1">
-                {q.prova} · {q.materia} {q.ano ? `· ${q.ano}` : ""} {q.subtema ? `· ${q.subtema}` : ""}
-              </div>
-              <div className="text-sm line-clamp-2">{q.enunciado}</div>
-              <div className="text-xs text-ink-faint mt-1">Resposta: {q.respostaCorreta}</div>
-            </div>
-            <ApagarQuestaoButton questaoId={q.id} />
-          </div>
+          <QuestaoDaListaComEdicao key={q.id} questao={q} disciplinas={disciplinas} />
         ))}
         {questoes.length === 0 && (
           <p className="text-sm text-ink-faint p-4">Nenhuma questão encontrada.</p>

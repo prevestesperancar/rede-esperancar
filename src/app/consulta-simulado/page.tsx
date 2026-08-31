@@ -13,15 +13,13 @@ export const metadata = {
     description: DESCRICAO,
     url: URL_PAGINA,
     siteName: "Rede Esperançar",
-    images: [{ url: "/images/logo-icon.png", width: 371, height: 320, alt: "Rede Esperançar" }],
     locale: "pt_BR",
     type: "website",
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Consulta de nota — Simulado | Rede Esperançar",
     description: DESCRICAO,
-    images: ["/images/logo-icon.png"],
   },
 };
 

@@ -1,11 +1,15 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
 export const alt = "Rede Esperançar — Consulta de nota do simulado";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default function Image() {
+export default async function Image() {
+  const logoBuffer = await readFile(path.join(process.cwd(), "public", "images", "logo-icon.png"));
+  const logoDataUrl = `data:image/png;base64,${logoBuffer.toString("base64")}`;
+
   return new ImageResponse(
     (
       <div
@@ -20,7 +24,7 @@ export default function Image() {
           position: "relative",
         }}
       >
-        {/* estrela decorativa */}
+        {/* etiqueta decorativa */}
         <div
           style={{
             position: "absolute",
@@ -62,20 +66,30 @@ export default function Image() {
         >
           <div
             style={{
-              fontSize: 72,
-              fontWeight: 800,
-              color: "#f6f7f2",
-              lineHeight: 1.05,
               display: "flex",
+              alignItems: "center",
+              gap: 24,
             }}
           >
-            Rede Esperançar
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={logoDataUrl} width={80} height={69} alt="" />
+            <div
+              style={{
+                fontSize: 64,
+                fontWeight: 800,
+                color: "#f6f7f2",
+                lineHeight: 1.05,
+                display: "flex",
+              }}
+            >
+              Rede Esperançar
+            </div>
           </div>
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              marginTop: 18,
+              marginTop: 24,
             }}
           >
             <div

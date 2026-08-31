@@ -8,6 +8,7 @@ import { salvarArquivo, ArquivoInvalidoError } from "@/lib/upload";
 import { parseCsv, parseDataBr } from "@/lib/csv";
 import { validarSenhaForte } from "@/lib/senha";
 import { corrigirComLingua } from "@/lib/simulado";
+import { getEstatisticasSimuladoPorSecoes } from "@/lib/queries/gestao";
 import {
   classificarSituacaoEscolar,
   classificarProvas,
@@ -974,6 +975,11 @@ export async function editarGabaritoSimulado(_prevState: string | undefined, for
 // O PDF em si já foi pro Vercel Blob direto do navegador (ver
 // /api/upload-prova) — aqui só salvamos a URL resultante, um payload minúsculo
 // que nunca esbarra no limite de corpo de requisição das funções do Vercel.
+export async function buscarResultadosSimuladoPorMaterias(simuladoId: string, materias: string[]) {
+  await requireCoordenacao();
+  return getEstatisticasSimuladoPorSecoes(simuladoId, materias, 1000);
+}
+
 export async function salvarUrlProvaSimulado(simuladoId: string, url: string) {
   await requireCoordenacao();
   await prisma.simulado.update({ where: { id: simuladoId }, data: { arquivoProva: url } });

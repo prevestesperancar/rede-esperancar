@@ -36,6 +36,7 @@ export default async function SimuladoPage({
         id: q.id,
         materia: q.materia,
         enunciado: q.enunciado,
+        imagemUrl: q.imagemUrl,
         opcoes: [
           { letra: "A", texto: q.opcaoA },
           { letra: "B", texto: q.opcaoB },

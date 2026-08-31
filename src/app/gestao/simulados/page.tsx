@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { getSimuladosDoNucleo, getNucleoNome } from "@/lib/queries/gestao";
+import { getSimuladosDoNucleo, getNucleoNome, getMateriasDoSimulado } from "@/lib/queries/gestao";
 import { apagarSimulado } from "@/actions/gestao";
 import { NovoSimuladoForm } from "@/components/gestao/NovoSimuladoForm";
 import { LancarRespostaForm } from "@/components/gestao/LancarRespostaForm";
@@ -8,6 +8,7 @@ import { ApagarItemButton } from "@/components/gestao/ApagarItemButton";
 import { ImportarCartoesRespostaForm } from "@/components/gestao/ImportarCartoesRespostaForm";
 import { GabaritoEditorForm } from "@/components/gestao/GabaritoEditorForm";
 import { AnexarProvaForm } from "@/components/gestao/AnexarProvaForm";
+import { ResultadosSimulado } from "@/components/gestao/ResultadosSimulado";
 import { conceitoUerj, rotuloConceito } from "@/lib/simulado";
 
 export default async function SimuladosPage() {
@@ -22,6 +23,14 @@ export default async function SimuladosPage() {
     getSimuladosDoNucleo(session.user.nucleoId),
     getNucleoNome(session.user.nucleoId),
   ]);
+
+  const materiasPorSimulado = podeImportarCartoes
+    ? new Map(
+        await Promise.all(
+          simulados.map(async (s) => [s.id, await getMateriasDoSimulado(s.id)] as const)
+        )
+      )
+    : new Map<string, string[]>();
 
   return (
     <div>
@@ -120,6 +129,26 @@ export default async function SimuladosPage() {
               {!somenteLeitura && <AnexarProvaForm simuladoId={s.id} arquivoAtual={s.arquivoProva} />}
 
               {podeImportarCartoes && <ImportarCartoesRespostaForm simuladoId={s.id} />}
+
+              {podeImportarCartoes && (
+                <ResultadosSimulado
+                  simuladoId={s.id}
+                  materiasDisponiveis={materiasPorSimulado.get(s.id) ?? []}
+                  totalQuestoes={totalQuestoes}
+                  rankingGeral={s.respostas
+                    .filter((r) => r.nota !== null)
+                    .map((r) => {
+                      const conceito = conceitoUerj(r.nota!, totalQuestoes);
+                      return {
+                        nomeCompleto: r.nomeCompleto,
+                        nota: r.nota!,
+                        conceito,
+                        rotulo: rotuloConceito(conceito),
+                      };
+                    })
+                    .sort((a, b) => b.nota - a.nota)}
+                />
+              )}
             </div>
           );
         })}

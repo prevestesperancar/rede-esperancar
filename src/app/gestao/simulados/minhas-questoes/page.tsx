@@ -81,18 +81,25 @@ export default async function MinhasQuestoesSimuladoPage() {
                           />
                         ))}
                       </div>
-                      {stats.questoes.length > 0 && (
-                        <p className="text-xs text-ink-faint mt-2">
-                          Questão com mais erro:{" "}
-                          <strong>
-                            Q
-                            {
-                              [...stats.questoes].sort((a, b) => b.percentualErro - a.percentualErro)[0]
-                                .numero
-                            }
-                          </strong>{" "}
-                          — considere reforçar esse conteúdo.
-                        </p>
+                      {stats.questoes.some((q) => q.respondidas > 0) && (
+                        <div className="mt-3 bg-terracotta/5 rounded-xl p-3">
+                          <div className="text-[11px] font-bold text-terracotta uppercase tracking-wide mb-1.5">
+                            Temas pra revisar
+                          </div>
+                          <ul className="flex flex-col gap-1">
+                            {[...stats.questoes]
+                              .filter((q) => q.respondidas > 0)
+                              .sort((a, b) => b.percentualErro - a.percentualErro)
+                              .slice(0, 3)
+                              .map((q) => (
+                                <li key={q.numero} className="text-xs">
+                                  <strong>Q{q.numero}</strong>
+                                  {q.questao?.subtema ? ` — ${q.questao.subtema}` : ""} ({q.percentualErro}%
+                                  de erro)
+                                </li>
+                              ))}
+                          </ul>
+                        </div>
                       )}
                     </div>
 

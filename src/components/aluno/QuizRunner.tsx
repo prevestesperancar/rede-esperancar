@@ -9,6 +9,7 @@ type Questao = {
   id: string;
   materia: string;
   enunciado: string;
+  imagemUrl?: string | null;
   opcoes: Opcao[];
   respostaCorreta: string;
 };
@@ -93,6 +94,14 @@ export function QuizRunner({
                   Questão {i + 1} · {q.materia}
                 </div>
                 <div className="text-sm mb-2">{q.enunciado}</div>
+                {q.imagemUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={q.imagemUrl}
+                    alt={`Imagem da questão ${i + 1}`}
+                    className="rounded-lg border border-border mb-2 max-w-full"
+                  />
+                )}
                 <div
                   className={`text-xs font-bold ${
                     correta ? "text-teal" : "text-terracotta"
@@ -134,6 +143,14 @@ export function QuizRunner({
 
       <div className="bg-surface border border-border rounded-2xl p-5 mb-5">
         <p className="text-sm mb-4 whitespace-pre-line">{questao.enunciado}</p>
+        {questao.imagemUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={questao.imagemUrl}
+            alt={`Imagem da questão ${indice + 1}`}
+            className="rounded-lg border border-border mb-4 max-w-full"
+          />
+        )}
         <div className="flex flex-col gap-2">
           {questao.opcoes.map((op) => (
             <button

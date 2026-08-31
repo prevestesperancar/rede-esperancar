@@ -517,7 +517,11 @@ export async function getEstudanteDetalhe(matriculaId: string, nucleoId?: string
 // verdade via QuestaoBanco.numeroSimulado, então só entram as questões que
 // são realmente da matéria do professor (inclusive do Texto Base, que mistura
 // disciplinas).
-export async function getEstatisticasSimuladoPorSecoes(simuladoId: string, materias: string[]) {
+export async function getEstatisticasSimuladoPorSecoes(
+  simuladoId: string,
+  materias: string[],
+  limiteRanking = 5
+) {
   const simulado = await prisma.simulado.findUnique({
     where: { id: simuladoId },
     include: { respostas: true },
@@ -605,7 +609,20 @@ export async function getEstatisticasSimuladoPorSecoes(simuladoId: string, mater
     arquivoProva: simulado.arquivoProva,
     totalQuestoesSecao: indicesOrdenados.length,
     questoes: questoesComEstatistica,
-    melhoresAlunos: rankeados.slice(0, 5),
-    pioresAlunos: rankeados.slice(-5).reverse(),
+    melhoresAlunos: rankeados.slice(0, limiteRanking),
+    pioresAlunos: rankeados.slice(-limiteRanking).reverse(),
+    totalAlunosRankeados: rankeados.length,
   };
+}
+
+// Lista as matérias reais (QuestaoBanco.materia) que esse simulado tem
+// cadastradas — usada pro filtro de resultados da coordenação.
+export async function getMateriasDoSimulado(simuladoId: string) {
+  const rows = await prisma.questaoBanco.findMany({
+    where: { simuladoId, numeroSimulado: { not: null } },
+    select: { materia: true },
+    distinct: ["materia"],
+    orderBy: { materia: "asc" },
+  });
+  return rows.map((r) => r.materia);
 }

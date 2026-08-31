@@ -30,6 +30,14 @@ export default async function RevisaoBancoPage() {
                 {t.questao.prova} · {t.questao.materia}
               </div>
               <p className="text-sm mb-2 whitespace-pre-line">{t.questao.enunciado}</p>
+              {t.questao.imagemUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={t.questao.imagemUrl}
+                  alt="Imagem da questão"
+                  className="rounded-lg border border-border mb-2 max-w-full"
+                />
+              )}
               <div className="text-xs font-bold text-ink-soft">
                 Sua resposta: <span className="text-terracotta">{t.respostaEscolhida}</span> · Correta:{" "}
                 <span className="text-teal">{t.questao.respostaCorreta}</span>

@@ -7,11 +7,13 @@ import { LancarRespostaForm } from "@/components/gestao/LancarRespostaForm";
 import { ApagarItemButton } from "@/components/gestao/ApagarItemButton";
 import { ImportarCartoesRespostaForm } from "@/components/gestao/ImportarCartoesRespostaForm";
 import { GabaritoEditorForm } from "@/components/gestao/GabaritoEditorForm";
+import { AnexarProvaForm } from "@/components/gestao/AnexarProvaForm";
 import { conceitoUerj, rotuloConceito } from "@/lib/simulado";
 
 export default async function SimuladosPage() {
   const session = await auth();
   if (!session?.user?.nucleoId) redirect("/login");
+  if (session.user.role === "PROFESSOR") redirect("/gestao/simulados/minhas-questoes");
 
   const somenteLeitura = session.user.role === "APOIO_PSICOSSOCIAL";
   const podeImportarCartoes = ["COORDENACAO", "ADMIN"].includes(session.user.role);
@@ -114,6 +116,8 @@ export default async function SimuladosPage() {
                   </div>
                 )}
               </div>
+
+              {!somenteLeitura && <AnexarProvaForm simuladoId={s.id} arquivoAtual={s.arquivoProva} />}
 
               {podeImportarCartoes && <ImportarCartoesRespostaForm simuladoId={s.id} />}
             </div>

@@ -467,6 +467,7 @@ model Simulado {
   gabaritoIngles   String? // 5 respostas, ex: "A,B,C,D,A"
   gabaritoEspanhol String?
   gabaritoFrances  String?
+  arquivoProva     String? // PDF da prova completa, pra professor conferir as questões da própria matéria
 
   nucleoId String
   nucleo   Nucleo @relation(fields: [nucleoId], references: [id])

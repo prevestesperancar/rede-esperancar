@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { ordenarPorDiaSemana } from "@/lib/dias";
+import { montarGabaritoEfetivo, SECOES_UERJ_60 } from "@/lib/simulado";
 
 export async function getUsuariosDoNucleo(nucleoId: string, role?: string) {
   return prisma.user.findMany({
@@ -507,4 +508,79 @@ export async function getEstudanteDetalhe(matriculaId: string, nucleoId?: string
       turma: { include: { nucleo: true } },
     },
   });
+}
+
+// Estatísticas de um simulado restritas às seções (blocos) informadas —
+// usado pra dar ao professor uma visão só da sua matéria dentro da prova.
+export async function getEstatisticasSimuladoPorSecoes(simuladoId: string, nomesSecoes: string[]) {
+  const simulado = await prisma.simulado.findUnique({
+    where: { id: simuladoId },
+    include: { respostas: true },
+  });
+  if (!simulado) return null;
+
+  const totalQuestoes = simulado.gabarito.split(",").length;
+  const secoes = (totalQuestoes === 60 ? SECOES_UERJ_60 : []).filter((s) =>
+    nomesSecoes.includes(s.nome)
+  );
+  const indices = new Set<number>();
+  secoes.forEach((s) => {
+    for (let i = s.inicio - 1; i < s.fim && i < totalQuestoes; i++) indices.add(i);
+  });
+  const indicesOrdenados = Array.from(indices).sort((a, b) => a - b);
+
+  const porQuestao = indicesOrdenados.map((i) => ({ numero: i + 1, acertos: 0, respondidas: 0 }));
+  const porQuestaoMap = new Map(porQuestao.map((q) => [q.numero, q]));
+
+  const desempenhoAlunos = simulado.respostas.map((r) => {
+    const gabaritoEfetivo = montarGabaritoEfetivo(simulado, r.linguaEscolhida)
+      .split(",")
+      .map((s) => s.trim().toUpperCase());
+    const marcadas = r.respostas.split(",").map((s) => s.trim().toUpperCase());
+
+    let acertos = 0;
+    let questoesValidas = 0;
+    for (const i of indicesOrdenados) {
+      const certa = gabaritoEfetivo[i];
+      if (!certa || certa === "?") continue;
+      questoesValidas++;
+      const marcada = marcadas[i] ?? "?";
+      const acertou = certa === "ANULADA" || marcada === certa;
+      const q = porQuestaoMap.get(i + 1)!;
+      q.respondidas++;
+      if (acertou) {
+        q.acertos++;
+        acertos++;
+      }
+    }
+
+    return {
+      nomeCompleto: r.nomeCompleto,
+      acertos,
+      totalSecao: questoesValidas,
+      percentual: questoesValidas > 0 ? Math.round((acertos / questoesValidas) * 100) : null,
+    };
+  });
+
+  const questoesComEstatistica = porQuestao.map((q) => ({
+    numero: q.numero,
+    acertos: q.acertos,
+    erros: q.respondidas - q.acertos,
+    respondidas: q.respondidas,
+    percentualErro: q.respondidas > 0 ? Math.round(((q.respondidas - q.acertos) / q.respondidas) * 100) : 0,
+  }));
+
+  const rankeados = desempenhoAlunos
+    .filter((a) => a.totalSecao > 0)
+    .sort((a, b) => b.acertos - a.acertos);
+
+  return {
+    simuladoNome: simulado.nome,
+    simuladoData: simulado.data,
+    arquivoProva: simulado.arquivoProva,
+    totalQuestoesSecao: indicesOrdenados.length,
+    questoes: questoesComEstatistica,
+    melhoresAlunos: rankeados.slice(0, 5),
+    pioresAlunos: rankeados.slice(-5).reverse(),
+  };
 }

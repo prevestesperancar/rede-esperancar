@@ -34,7 +34,7 @@ const ITEMS_PROFESSOR = [
   { href: "/gestao/redacoes", label: "Redação", icon: "✍️" },
   { href: "/gestao/eventos", label: "Eventos", icon: "📅" },
   { href: "/gestao/avisos", label: "Avisos", icon: "📢" },
-  { href: "/gestao/simulados", label: "Simulados", icon: "📝" },
+  { href: "/gestao/simulados/minhas-questoes", label: "Simulados", icon: "📝" },
   { href: "/gestao/questoes", label: "Banco de questões", icon: "❓" },
 ];
 

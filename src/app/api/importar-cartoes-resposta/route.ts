@@ -180,8 +180,10 @@ export async function POST(request: Request): Promise<NextResponse<EstadoImporta
       continue;
     }
 
+    // UTC (Z) — mesma data string tem que virar sempre o mesmo instante,
+    // independente do fuso de onde o código roda (ver consulta.ts).
     const dataNascimento = /^\d{4}-\d{2}-\d{2}$/.test(dataLidaStr)
-      ? new Date(`${dataLidaStr}T00:00:00`)
+      ? new Date(`${dataLidaStr}T00:00:00Z`)
       : null;
     const linguaEscolhida = ["Inglês", "Espanhol", "Francês"].includes(linguaLida) ? linguaLida : null;
 

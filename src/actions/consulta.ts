@@ -88,7 +88,10 @@ export async function consultarNotaSimulado(
     return { erro: "Preencha seu nome completo e data de nascimento." };
   }
 
-  const dataNascimento = new Date(`${dataNascimentoStr}T00:00:00`);
+  // Sempre em UTC (Z) — servidor e scripts locais podem rodar em fusos
+  // diferentes, e comparar Date por igualdade exata quebra se cada lado
+  // interpretar "meia-noite" num fuso diferente.
+  const dataNascimento = new Date(`${dataNascimentoStr}T00:00:00Z`);
   if (Number.isNaN(dataNascimento.getTime())) {
     return { erro: "Data de nascimento inválida." };
   }

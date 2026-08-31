@@ -1012,7 +1012,9 @@ export async function lancarResposta(_prevState: string | undefined, formData: F
   if (!simulado) return "Simulado não encontrado.";
 
   const nota = corrigirComLingua(simulado, respostas, linguaEscolhida);
-  const dataNascimento = dataNascimentoStr ? new Date(`${dataNascimentoStr}T00:00:00`) : null;
+  // UTC (Z) — mesma data string tem que virar sempre o mesmo instante,
+  // independente do fuso de onde o código roda (ver consulta.ts).
+  const dataNascimento = dataNascimentoStr ? new Date(`${dataNascimentoStr}T00:00:00Z`) : null;
 
   let fotoCartaoResposta: string | undefined;
   if (foto && foto.size > 0) {

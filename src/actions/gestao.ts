@@ -935,16 +935,20 @@ export async function lancarResposta(_prevState: string | undefined, formData: F
   await requireGestao();
 
   const simuladoId = formData.get("simuladoId") as string;
-  const estudanteId = formData.get("estudanteId") as string;
+  const respostaId = (formData.get("respostaId") as string) || null;
+  const nomeCompleto = (formData.get("nomeCompleto") as string)?.trim();
+  const dataNascimentoStr = formData.get("dataNascimento") as string;
   const respostas = formData.get("respostas") as string;
   const foto = formData.get("foto") as File | null;
 
+  if (!nomeCompleto) return "Digite o nome completo do estudante.";
   if (!respostas) return "Digite as respostas marcadas.";
 
   const simulado = await prisma.simulado.findUnique({ where: { id: simuladoId } });
   if (!simulado) return "Simulado não encontrado.";
 
   const nota = corrigirAutomaticamente(simulado.gabarito, respostas);
+  const dataNascimento = dataNascimentoStr ? new Date(`${dataNascimentoStr}T00:00:00`) : null;
 
   let fotoCartaoResposta: string | undefined;
   if (foto && foto.size > 0) {
@@ -956,19 +960,32 @@ export async function lancarResposta(_prevState: string | undefined, formData: F
     }
   }
 
-  await prisma.simuladoResposta.upsert({
-    where: { simuladoId_estudanteId: { simuladoId, estudanteId } },
-    update: {
-      respostas: respostas.trim(),
-      nota,
-      corrigidoManualmente: false,
-      ...(fotoCartaoResposta ? { fotoCartaoResposta } : {}),
-    },
-    create: { simuladoId, estudanteId, respostas: respostas.trim(), nota, fotoCartaoResposta },
-  });
+  if (respostaId) {
+    await prisma.simuladoResposta.update({
+      where: { id: respostaId },
+      data: {
+        nomeCompleto,
+        dataNascimento,
+        respostas: respostas.trim(),
+        nota,
+        corrigidoManualmente: false,
+        ...(fotoCartaoResposta ? { fotoCartaoResposta } : {}),
+      },
+    });
+  } else {
+    await prisma.simuladoResposta.create({
+      data: { simuladoId, nomeCompleto, dataNascimento, respostas: respostas.trim(), nota, fotoCartaoResposta },
+    });
+  }
 
   revalidatePath("/gestao/simulados");
   return undefined;
+}
+
+export async function apagarRespostaSimulado(respostaId: string) {
+  await requireGestao();
+  await prisma.simuladoResposta.delete({ where: { id: respostaId } });
+  revalidatePath("/gestao/simulados");
 }
 
 export async function corrigirRespostaManual(

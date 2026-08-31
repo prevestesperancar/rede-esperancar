@@ -460,15 +460,6 @@ export async function getSimuladosDoNucleo(nucleoId: string) {
   });
 }
 
-export async function getEstudantesParaSimulado(nucleoId: string) {
-  const matriculas = await prisma.matricula.findMany({
-    where: { status: "APROVADA", turma: { nucleoId } },
-    include: { estudante: { include: { user: true } } },
-    orderBy: { createdAt: "asc" },
-  });
-  return matriculas.map((m) => ({ id: m.estudante.id, nome: m.estudante.user.nome }));
-}
-
 export async function getFrequenciaDetalhadaDoNucleo(nucleoId: string) {
   const matriculas = await prisma.matricula.findMany({
     where: { status: "APROVADA", turma: { nucleoId } },

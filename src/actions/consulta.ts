@@ -33,28 +33,23 @@ export async function consultarNotaSimulado(
     return { erro: "Data de nascimento inválida." };
   }
 
-  const candidatos = await prisma.estudante.findMany({
+  const candidatos = await prisma.simuladoResposta.findMany({
     where: { dataNascimento },
-    include: {
-      user: true,
-      simulados: {
-        include: { simulado: true },
-        orderBy: { simulado: { data: "desc" } },
-      },
-    },
+    include: { simulado: true },
+    orderBy: { simulado: { data: "desc" } },
   });
 
-  const estudante = candidatos.find(
-    (c) => normalizarNome(c.user.nome) === normalizarNome(nomeCompleto)
+  const encontrados = candidatos.filter(
+    (r) => normalizarNome(r.nomeCompleto) === normalizarNome(nomeCompleto)
   );
 
-  if (!estudante) {
-    return { erro: "Não encontramos nenhum estudante com esse nome e data de nascimento." };
+  if (encontrados.length === 0) {
+    return { erro: "Não encontramos nenhum resultado com esse nome e data de nascimento." };
   }
 
   return {
-    nomeEncontrado: estudante.user.nome,
-    resultados: estudante.simulados.map((r) => ({
+    nomeEncontrado: encontrados[0].nomeCompleto,
+    resultados: encontrados.map((r) => ({
       simulado: r.simulado.nome,
       data: r.simulado.data.toLocaleDateString("pt-BR"),
       nota: r.nota,

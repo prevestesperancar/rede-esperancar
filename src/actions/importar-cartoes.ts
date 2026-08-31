@@ -28,8 +28,6 @@ export type ItemImportado = {
   nomeLido: string;
   dataNascimentoLida: string;
   respostasLidas: string;
-  encontrado: boolean;
-  nomeEstudante?: string;
   nota?: number;
 };
 
@@ -37,6 +35,26 @@ export type EstadoImportacao = {
   erro?: string;
   itens?: ItemImportado[];
 };
+
+function extrairArrayJson(texto: string): unknown {
+  const semFences = texto
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/, "")
+    .replace(/```\s*$/, "")
+    .trim();
+  try {
+    return JSON.parse(semFences);
+  } catch {
+    // O modelo às vezes escreve uma frase antes/depois do array — pega só o
+    // trecho entre o primeiro "[" e o último "]".
+    const inicio = semFences.indexOf("[");
+    const fim = semFences.lastIndexOf("]");
+    if (inicio === -1 || fim === -1 || fim < inicio) {
+      throw new Error("Resposta da IA não contém um array JSON.");
+    }
+    return JSON.parse(semFences.slice(inicio, fim + 1));
+  }
+}
 
 export async function importarCartoesResposta(
   _prevState: EstadoImportacao | undefined,
@@ -68,6 +86,7 @@ export async function importarCartoesResposta(
   const base64 = Buffer.from(await arquivo.arrayBuffer()).toString("base64");
 
   let cartoes: CartaoLido[];
+  let textoBruto = "";
   try {
     const client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = client.getGenerativeModel({ model: "gemini-2.0-flash" });
@@ -77,29 +96,30 @@ export async function importarCartoesResposta(
         inlineData: { data: base64, mimeType: "application/pdf" },
       },
       {
-        text: `Este PDF contém folhas de cartão-resposta de um simulado, escaneadas — uma folha por estudante (pode haver mais de uma folha por página ou uma folha por página).
+        text: `Este PDF contém folhas de cartão-resposta de um simulado, escaneadas — uma folha por estudante, uma folha por página.
 
-Para CADA cartão-resposta que você encontrar, extraia:
+Para CADA página/folha, extraia:
 - "nome": o nome completo do estudante, exatamente como está escrito no cartão.
-- "dataNascimento": a data de nascimento, no formato AAAA-MM-DD.
+- "dataNascimento": a data de nascimento, no formato AAAA-MM-DD. Se não achar, use "".
 - "respostas": a sequência das ${numeroQuestoes} respostas marcadas, uma letra (A, B, C, D ou E) por questão, na ordem das questões, separadas por vírgula. Se uma questão estiver em branco, com dupla marcação, ou ilegível, use "?" naquela posição.
 
-Responda APENAS com um array JSON válido, sem nenhum texto antes ou depois, no formato exato:
-[{"nome": "...", "dataNascimento": "AAAA-MM-DD", "respostas": "A,B,C,..."}]
-
-Se não conseguir identificar nome ou data de nascimento em algum cartão, ainda assim inclua o item com o campo em branco ("").`,
+Processe TODAS as páginas do documento, mesmo que sejam muitas. Responda APENAS com um array JSON válido, sem nenhum texto antes ou depois, sem markdown, no formato exato:
+[{"nome": "...", "dataNascimento": "AAAA-MM-DD", "respostas": "A,B,C,..."}]`,
       },
     ]);
 
-    const texto = resultado.response.text().trim();
-    const jsonLimpo = texto.replace(/^```json\s*/i, "").replace(/^```\s*/, "").replace(/```\s*$/, "");
-    const dados = JSON.parse(jsonLimpo);
+    textoBruto = resultado.response.text().trim();
+    if (!textoBruto) {
+      return { erro: "A IA não retornou nenhum conteúdo pra esse PDF. Tente novamente." };
+    }
+    const dados = extrairArrayJson(textoBruto);
     if (!Array.isArray(dados)) throw new Error("Formato inesperado.");
-    cartoes = dados;
+    cartoes = dados as CartaoLido[];
   } catch (error) {
-    console.error("Erro ao ler cartões-resposta com IA:", error);
+    console.error("Erro ao ler cartões-resposta com IA:", error, "\nResposta bruta:", textoBruto);
+    const detalhe = error instanceof Error ? error.message : String(error);
     return {
-      erro: "Não foi possível ler o PDF automaticamente. Confira se o arquivo está legível e tente de novo.",
+      erro: `Não foi possível ler o PDF automaticamente (${detalhe}). Confira se o arquivo está legível, se tem no máximo umas 30-40 páginas por lote, e tente de novo.`,
     };
   }
 
@@ -107,45 +127,39 @@ Se não conseguir identificar nome ou data de nascimento em algum cartão, ainda
     return { erro: "Não identificamos nenhum cartão-resposta nesse PDF." };
   }
 
-  const estudantesComData = await prisma.estudante.findMany({
-    where: { dataNascimento: { not: null } },
-    include: { user: true },
-  });
+  const respostasExistentes = await prisma.simuladoResposta.findMany({ where: { simuladoId } });
 
   const itens: ItemImportado[] = [];
 
   for (const cartao of cartoes) {
     const nomeLido = (cartao.nome ?? "").trim();
-    const dataLida = (cartao.dataNascimento ?? "").trim();
+    const dataLidaStr = (cartao.dataNascimento ?? "").trim();
     const respostasLidas = (cartao.respostas ?? "").trim();
 
-    const estudante = estudantesComData.find((e) => {
-      if (normalizarNome(e.user.nome) !== normalizarNome(nomeLido)) return false;
-      if (!e.dataNascimento) return false;
-      const dataFormatada = e.dataNascimento.toISOString().slice(0, 10);
-      return dataFormatada === dataLida;
-    });
+    if (!nomeLido || !respostasLidas) continue;
 
-    if (!estudante || !respostasLidas) {
-      itens.push({ nomeLido, dataNascimentoLida: dataLida, respostasLidas, encontrado: false });
-      continue;
-    }
+    const dataNascimento = /^\d{4}-\d{2}-\d{2}$/.test(dataLidaStr)
+      ? new Date(`${dataLidaStr}T00:00:00`)
+      : null;
 
     const nota = corrigirAutomaticamente(simulado.gabarito, respostasLidas);
-    await prisma.simuladoResposta.upsert({
-      where: { simuladoId_estudanteId: { simuladoId, estudanteId: estudante.id } },
-      update: { respostas: respostasLidas, nota, corrigidoManualmente: false },
-      create: { simuladoId, estudanteId: estudante.id, respostas: respostasLidas, nota },
-    });
 
-    itens.push({
-      nomeLido,
-      dataNascimentoLida: dataLida,
-      respostasLidas,
-      encontrado: true,
-      nomeEstudante: estudante.user.nome,
-      nota,
-    });
+    const existente = respostasExistentes.find(
+      (r) => normalizarNome(r.nomeCompleto) === normalizarNome(nomeLido)
+    );
+
+    if (existente) {
+      await prisma.simuladoResposta.update({
+        where: { id: existente.id },
+        data: { respostas: respostasLidas, nota, dataNascimento, corrigidoManualmente: false },
+      });
+    } else {
+      await prisma.simuladoResposta.create({
+        data: { simuladoId, nomeCompleto: nomeLido, dataNascimento, respostas: respostasLidas, nota },
+      });
+    }
+
+    itens.push({ nomeLido, dataNascimentoLida: dataLidaStr, respostasLidas, nota });
   }
 
   revalidatePath("/gestao/simulados");

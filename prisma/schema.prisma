@@ -470,20 +470,26 @@ model Simulado {
   @@index([nucleoId])
 }
 
+// Não depende de cadastro de aluno — vem direto do cartão-resposta (lido por
+// IA ou digitado à mão), identificado só por nome + data de nascimento.
+// Se bater com um Estudante cadastrado, o vínculo é guardado só de bônus
+// (pra mostrar no perfil do aluno), mas nunca é obrigatório.
 model SimuladoResposta {
-  id                   String   @id @default(cuid())
+  id                   String    @id @default(cuid())
   simuladoId           String
-  estudanteId          String
+  estudanteId          String?
+  nomeCompleto         String
+  dataNascimento       DateTime?
   respostas            String // ex: "A,B,C,D,A,B,..."
   nota                 Float?
-  corrigidoManualmente Boolean  @default(false)
+  corrigidoManualmente Boolean   @default(false)
   fotoCartaoResposta   String? // foto do cartão-resposta físico, só de referência
-  createdAt            DateTime @default(now())
+  createdAt            DateTime  @default(now())
 
-  simulado  Simulado  @relation(fields: [simuladoId], references: [id])
-  estudante Estudante @relation(fields: [estudanteId], references: [id])
+  simulado  Simulado   @relation(fields: [simuladoId], references: [id])
+  estudante Estudante? @relation(fields: [estudanteId], references: [id])
 
-  @@unique([simuladoId, estudanteId])
+  @@index([simuladoId, dataNascimento])
 }
 
 model FormularioCustom {

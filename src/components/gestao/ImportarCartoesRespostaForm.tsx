@@ -40,23 +40,12 @@ export function ImportarCartoesRespostaForm({ simuladoId }: { simuladoId: string
 
       {estado?.itens && (
         <div className="mt-3 flex flex-col gap-1.5">
+          <p className="text-[11px] text-ink-faint">
+            {estado.itens.length} cartão(ões) lançado(s) — confira os nomes e notas na lista acima.
+          </p>
           {estado.itens.map((item, i) => (
-            <div
-              key={i}
-              className={`text-xs rounded-lg px-2.5 py-1.5 ${
-                item.encontrado ? "bg-teal/10 text-teal" : "bg-terracotta/10 text-terracotta"
-              }`}
-            >
-              {item.encontrado ? (
-                <>
-                  ✓ {item.nomeEstudante} — nota {item.nota?.toFixed(1)}
-                </>
-              ) : (
-                <>
-                  ✗ Não encontrado: &ldquo;{item.nomeLido || "sem nome lido"}&rdquo;
-                  {item.dataNascimentoLida && ` (${item.dataNascimentoLida})`} — lance manualmente
-                </>
-              )}
+            <div key={i} className="text-xs rounded-lg px-2.5 py-1.5 bg-teal/10 text-teal">
+              ✓ {item.nomeLido || "(sem nome lido)"} — nota {item.nota?.toFixed(1) ?? "—"}
             </div>
           ))}
         </div>

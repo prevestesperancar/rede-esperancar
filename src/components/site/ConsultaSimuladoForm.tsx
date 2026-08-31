@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { consultarNotaSimulado } from "@/actions/consulta";
+import { conceitoUerj } from "@/lib/simulado";
 
 export function ConsultaSimuladoForm() {
   const [estado, action, pending] = useActionState(consultarNotaSimulado, undefined);
@@ -52,7 +53,14 @@ export function ConsultaSimuladoForm() {
                   <div className="font-extrabold text-sm">{r.simulado}</div>
                   <div className="text-xs text-ink-faint font-mono mb-2">{r.data}</div>
                   {r.nota !== null ? (
-                    <div className="font-mono text-2xl font-bold text-teal">{r.nota.toFixed(1)}</div>
+                    <>
+                      <div className="font-mono text-2xl font-bold text-teal">
+                        {r.nota}/{r.gabarito.split(",").length}
+                      </div>
+                      <div className="text-xs font-bold text-ink-soft">
+                        Conceito {conceitoUerj(r.nota, r.gabarito.split(",").length)}
+                      </div>
+                    </>
                   ) : (
                     <p className="text-xs text-ink-faint">Nota ainda não lançada.</p>
                   )}

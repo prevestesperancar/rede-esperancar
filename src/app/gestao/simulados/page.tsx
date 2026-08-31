@@ -6,6 +6,8 @@ import { NovoSimuladoForm } from "@/components/gestao/NovoSimuladoForm";
 import { LancarRespostaForm } from "@/components/gestao/LancarRespostaForm";
 import { ApagarItemButton } from "@/components/gestao/ApagarItemButton";
 import { ImportarCartoesRespostaForm } from "@/components/gestao/ImportarCartoesRespostaForm";
+import { GabaritoEditorForm } from "@/components/gestao/GabaritoEditorForm";
+import { conceitoUerj } from "@/lib/simulado";
 
 export default async function SimuladosPage() {
   const session = await auth();
@@ -35,66 +37,73 @@ export default async function SimuladosPage() {
       {!somenteLeitura && <NovoSimuladoForm />}
 
       <div className="flex flex-col gap-4">
-        {simulados.map((s) => (
-          <div key={s.id} className="bg-surface border border-border rounded-[18px] p-5">
-            <div className="flex items-center justify-between mb-1">
-              <div>
-                <div className="font-extrabold text-base">{s.nome}</div>
-                <div className="text-xs text-ink-faint font-mono">
-                  {s.data.toLocaleDateString("pt-BR")} · gabarito: {s.gabarito}
-                </div>
-              </div>
-              {!somenteLeitura && (
-                <ApagarItemButton
-                  id={s.id}
-                  action={apagarSimulado}
-                  confirmMessage="Apagar este simulado e todas as respostas?"
-                />
-              )}
-            </div>
-
-            <div className="mt-3.5 pt-3.5 border-t border-border">
-              {somenteLeitura
-                ? s.respostas.map((r) => (
-                    <div
-                      key={r.id}
-                      className="flex items-center justify-between py-2 border-b border-border last:border-b-0 text-sm"
-                    >
-                      <span className="font-semibold">{r.nomeCompleto}</span>
-                      <span className="font-mono text-xs font-bold text-teal">
-                        {r.nota !== null ? r.nota.toFixed(1) : "sem nota"}
-                      </span>
-                    </div>
-                  ))
-                : s.respostas.map((r) => (
-                    <LancarRespostaForm
-                      key={r.id}
-                      simuladoId={s.id}
-                      respostaId={r.id}
-                      nomeCompleto={r.nomeCompleto}
-                      dataNascimento={r.dataNascimento}
-                      respostasAtuais={r.respostas}
-                      nota={r.nota}
-                      corrigidoManualmente={r.corrigidoManualmente}
-                      fotoCartaoResposta={r.fotoCartaoResposta}
-                    />
-                  ))}
-              {s.respostas.length === 0 && (
-                <p className="text-sm text-ink-faint">Nenhum cartão-resposta lançado ainda.</p>
-              )}
-              {!somenteLeitura && (
-                <div className="mt-2">
-                  <div className="text-[11px] font-bold text-ink-faint uppercase tracking-wide mb-1.5">
-                    Adicionar cartão manualmente
+        {simulados.map((s) => {
+          const totalQuestoes = s.gabarito.split(",").length;
+          return (
+            <div key={s.id} className="bg-surface border border-border rounded-[18px] p-5">
+              <div className="flex items-center justify-between mb-1">
+                <div>
+                  <div className="font-extrabold text-base">{s.nome}</div>
+                  <div className="text-xs text-ink-faint font-mono">
+                    {s.data.toLocaleDateString("pt-BR")} · {totalQuestoes} questões
                   </div>
-                  <LancarRespostaForm simuladoId={s.id} />
+                  {!somenteLeitura && <GabaritoEditorForm simuladoId={s.id} gabaritoAtual={s.gabarito} />}
                 </div>
-              )}
-            </div>
+                {!somenteLeitura && (
+                  <ApagarItemButton
+                    id={s.id}
+                    action={apagarSimulado}
+                    confirmMessage="Apagar este simulado e todas as respostas?"
+                  />
+                )}
+              </div>
 
-            {podeImportarCartoes && <ImportarCartoesRespostaForm simuladoId={s.id} />}
-          </div>
-        ))}
+              <div className="mt-3.5 pt-3.5 border-t border-border">
+                {somenteLeitura
+                  ? s.respostas.map((r) => (
+                      <div
+                        key={r.id}
+                        className="flex items-center justify-between py-2 border-b border-border last:border-b-0 text-sm"
+                      >
+                        <span className="font-semibold">{r.nomeCompleto}</span>
+                        <span className="font-mono text-xs font-bold text-teal">
+                          {r.nota !== null
+                            ? `${r.nota}/${totalQuestoes} · Conceito ${conceitoUerj(r.nota, totalQuestoes)}`
+                            : "sem nota"}
+                        </span>
+                      </div>
+                    ))
+                  : s.respostas.map((r) => (
+                      <LancarRespostaForm
+                        key={r.id}
+                        simuladoId={s.id}
+                        respostaId={r.id}
+                        nomeCompleto={r.nomeCompleto}
+                        dataNascimento={r.dataNascimento}
+                        respostasAtuais={r.respostas}
+                        nota={r.nota}
+                        totalQuestoes={totalQuestoes}
+                        corrigidoManualmente={r.corrigidoManualmente}
+                        fotoCartaoResposta={r.fotoCartaoResposta}
+                      />
+                    ))}
+                {s.respostas.length === 0 && (
+                  <p className="text-sm text-ink-faint">Nenhum cartão-resposta lançado ainda.</p>
+                )}
+                {!somenteLeitura && (
+                  <div className="mt-2">
+                    <div className="text-[11px] font-bold text-ink-faint uppercase tracking-wide mb-1.5">
+                      Adicionar cartão manualmente
+                    </div>
+                    <LancarRespostaForm simuladoId={s.id} totalQuestoes={totalQuestoes} />
+                  </div>
+                )}
+              </div>
+
+              {podeImportarCartoes && <ImportarCartoesRespostaForm simuladoId={s.id} />}
+            </div>
+          );
+        })}
         {simulados.length === 0 && (
           <p className="text-sm text-ink-faint">Nenhum simulado cadastrado ainda.</p>
         )}

@@ -924,6 +924,33 @@ export async function criarSimulado(_prevState: string | undefined, formData: Fo
   return undefined;
 }
 
+export async function editarGabaritoSimulado(_prevState: string | undefined, formData: FormData) {
+  await requireCoordenacao();
+
+  const simuladoId = formData.get("simuladoId") as string;
+  const gabarito = formData.get("gabarito") as string;
+
+  if (!gabarito) return "Preencha o gabarito.";
+
+  const respostas = await prisma.simuladoResposta.findMany({ where: { simuladoId } });
+
+  await prisma.$transaction([
+    prisma.simulado.update({ where: { id: simuladoId }, data: { gabarito: gabarito.trim() } }),
+    ...respostas.map((r) =>
+      prisma.simuladoResposta.update({
+        where: { id: r.id },
+        data: {
+          nota: corrigirAutomaticamente(gabarito.trim(), r.respostas),
+          corrigidoManualmente: false,
+        },
+      })
+    ),
+  ]);
+
+  revalidatePath("/gestao/simulados");
+  return undefined;
+}
+
 export async function apagarSimulado(simuladoId: string) {
   await requireCoordenacao();
   await prisma.simuladoResposta.deleteMany({ where: { simuladoId } });

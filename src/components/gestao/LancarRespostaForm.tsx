@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useActionState } from "react";
+import Link from "next/link";
 import { lancarResposta, corrigirRespostaManual, apagarRespostaSimulado } from "@/actions/gestao";
 import { CampoArquivo } from "@/components/common/CampoArquivo";
 import { TAMANHO_MAXIMO_FOTO } from "@/lib/upload-limits";
+import { conceitoUerj } from "@/lib/simulado";
 
 function paraInputDate(data: Date | null) {
   if (!data) return "";
@@ -17,6 +19,7 @@ export function LancarRespostaForm({
   dataNascimento,
   respostasAtuais,
   nota,
+  totalQuestoes,
   corrigidoManualmente,
   fotoCartaoResposta,
 }: {
@@ -26,6 +29,7 @@ export function LancarRespostaForm({
   dataNascimento?: Date | null;
   respostasAtuais?: string;
   nota?: number | null;
+  totalQuestoes: number;
   corrigidoManualmente?: boolean;
   fotoCartaoResposta?: string | null;
 }) {
@@ -76,9 +80,15 @@ export function LancarRespostaForm({
 
       {nota !== undefined && nota !== null && (
         <span className={`font-mono text-xs font-bold ${corrigidoManualmente ? "text-terracotta" : "text-teal"}`}>
-          {nota.toFixed(1)}
+          {nota}/{totalQuestoes} · Conceito {conceitoUerj(nota, totalQuestoes)}
           {corrigidoManualmente ? " (manual)" : ""}
         </span>
+      )}
+
+      {respostaId && (
+        <Link href={`/gestao/simulados/resposta/${respostaId}`} className="text-[11px] font-bold text-ink-soft">
+          Ver detalhes →
+        </Link>
       )}
 
       {fotoCartaoResposta && (
@@ -123,10 +133,10 @@ export function LancarRespostaForm({
           <input
             name="nota"
             type="number"
-            step="0.1"
+            step="1"
             min={0}
-            max={10}
-            placeholder="Nota"
+            max={totalQuestoes}
+            placeholder="Acertos"
             className="w-16 rounded-lg border border-border-strong px-2 py-1.5 text-xs outline-none focus:border-ink"
           />
           <button

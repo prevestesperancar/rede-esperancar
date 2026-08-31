@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useActionState } from "react";
+import { useState, useActionState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { lancarResposta, corrigirRespostaManual, apagarRespostaSimulado } from "@/actions/gestao";
 import { CampoArquivo } from "@/components/common/CampoArquivo";
@@ -113,9 +113,20 @@ export function LancarRespostaForm({
 }) {
   const [ajuste, setAjuste] = useState(false);
   const [editando, setEditando] = useState(!respostaId);
-  const [, actionLancar, pendingLancar] = useActionState(lancarResposta, undefined);
+  const [erroLancar, actionLancar, pendingLancar] = useActionState(lancarResposta, undefined);
   const [, actionCorrigir, pendingCorrigir] = useActionState(corrigirRespostaManual, undefined);
   const [apagando, setApagando] = useState(false);
+  const estavaPendente = useRef(false);
+
+  // useActionState não avisa quando terminou com sucesso — detecta a
+  // transição de "enviando" pra "parado" e, se não veio erro, fecha o
+  // formulário de volta pro resumo com a nota atualizada.
+  useEffect(() => {
+    if (estavaPendente.current && !pendingLancar && !erroLancar && respostaId) {
+      setEditando(false);
+    }
+    estavaPendente.current = pendingLancar;
+  }, [pendingLancar, erroLancar, respostaId]);
 
   if (editando) {
     return (
@@ -133,6 +144,7 @@ export function LancarRespostaForm({
           totalQuestoes={totalQuestoes}
           pending={pendingLancar}
         />
+        {erroLancar && <p className="text-xs font-semibold text-terracotta">{erroLancar}</p>}
         {respostaId && (
           <button
             type="button"

@@ -89,7 +89,7 @@ export async function importarCartoesResposta(
   let textoBruto = "";
   try {
     const client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = client.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = client.getGenerativeModel({ model: "gemini-3.6-flash" });
 
     const resultado = await model.generateContent([
       {

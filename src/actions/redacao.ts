@@ -152,7 +152,7 @@ export async function gerarDiagnosticoIA(redacaoId: string): Promise<string> {
   let texto: string;
   try {
     const client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = client.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = client.getGenerativeModel({ model: "gemini-3.6-flash" });
     const resultado = await model.generateContent(
       `Você é um assistente que ajuda uma professora de redação a corrigir textos de estudantes de um pré-vestibular social para o ${redacao.tema.prova}.
 

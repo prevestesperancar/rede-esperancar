@@ -8,8 +8,18 @@ export const dynamic = "force-dynamic";
 const ROLES_ARTE = ["COORDENACAO", "APOIO_PSICOSSOCIAL", "ADMIN"];
 const INK = "#14161f";
 const PAPER = "#f6f7f2";
-const YELLOW = "#f19700";
-const INK_SOFT = "#3a3d4a";
+const PAPER_SOFT = "#c9ccd6";
+const DESTAQUE_PADRAO = "#f19700";
+
+// Escolhe texto claro ou escuro conforme a luminosidade da cor de fundo.
+function textoSobre(hex: string) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  const luminosidade = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminosidade > 0.6 ? INK : PAPER;
+}
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -35,12 +45,12 @@ export async function GET(request: Request) {
   // Só usa imagens cadastradas na identidade do próprio núcleo.
   const logo = identidade?.logoUrl ?? null;
   const foto = Number.isInteger(indiceFoto) ? identidade?.fotos[indiceFoto] ?? null : null;
+  const destaque = identidade?.paleta?.[0] ?? DESTAQUE_PADRAO;
   const ehStory = modelo === "story";
-  // Cor de destaque vem da paleta do núcleo (primeira cor); se não houver, usa o amarelo padrão.
-  const destaque = identidade?.paleta?.[0] ?? YELLOW;
 
-  const fotoAltura = ehStory ? 1040 : 600;
-  const tituloTamanho = ehStory ? 104 : 84;
+  const margem = ehStory ? 90 : 64;
+  const tituloTamanho = ehStory ? 120 : 84;
+  const subtituloTamanho = ehStory ? 50 : 36;
 
   return new ImageResponse(
     (
@@ -50,16 +60,23 @@ export async function GET(request: Request) {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          background: PAPER,
-          padding: ehStory ? "110px 70px 120px" : "56px",
+          background: INK,
+          padding: `${margem}px`,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: ehStory ? 170 : 120 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            height: ehStory ? 180 : 130,
+            flexShrink: 0,
+          }}
+        >
           {logo ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={logo} style={{ height: "100%", objectFit: "contain" }} />
+            <img src={logo} style={{ height: "100%", objectFit: "contain", objectPosition: "left center" }} />
           ) : (
-            <div style={{ display: "flex", fontSize: 44, fontWeight: 800, color: INK }}>
+            <div style={{ display: "flex", fontSize: 48, fontWeight: 800, color: PAPER }}>
               {nucleo?.nome ?? "Esperançar"}
             </div>
           )}
@@ -68,11 +85,12 @@ export async function GET(request: Request) {
         <div
           style={{
             display: "flex",
-            height: fotoAltura,
-            marginTop: ehStory ? 50 : 36,
+            flex: 1,
+            minHeight: 0,
+            marginTop: ehStory ? 60 : 40,
             borderRadius: 36,
             overflow: "hidden",
-            background: INK,
+            background: "#1f2230",
           }}
         >
           {foto ? (
@@ -81,14 +99,32 @@ export async function GET(request: Request) {
           ) : null}
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", marginTop: ehStory ? 60 : 40, flex: 1 }}>
+        <div style={{ display: "flex", flexDirection: "column", flexShrink: 0, marginTop: ehStory ? 64 : 40 }}>
+          <div style={{ display: "flex", width: ehStory ? 120 : 90, height: 10, borderRadius: 5, background: destaque }} />
           {titulo ? (
-            <div style={{ display: "flex", fontSize: tituloTamanho, fontWeight: 800, color: INK, lineHeight: 1.05 }}>
+            <div
+              style={{
+                display: "flex",
+                marginTop: ehStory ? 36 : 26,
+                fontSize: tituloTamanho,
+                fontWeight: 800,
+                color: PAPER,
+                lineHeight: 1.02,
+              }}
+            >
               {titulo}
             </div>
           ) : null}
           {subtitulo ? (
-            <div style={{ display: "flex", marginTop: 20, fontSize: ehStory ? 44 : 36, color: INK_SOFT, lineHeight: 1.25 }}>
+            <div
+              style={{
+                display: "flex",
+                marginTop: ehStory ? 28 : 18,
+                fontSize: subtituloTamanho,
+                color: PAPER_SOFT,
+                lineHeight: 1.3,
+              }}
+            >
               {subtitulo}
             </div>
           ) : null}
@@ -99,12 +135,13 @@ export async function GET(request: Request) {
             style={{
               display: "flex",
               alignSelf: "flex-start",
+              marginTop: ehStory ? 52 : 32,
               background: destaque,
-              borderRadius: 20,
-              padding: "18px 32px",
-              fontSize: 36,
+              borderRadius: 999,
+              padding: ehStory ? "26px 52px" : "16px 36px",
+              fontSize: ehStory ? 52 : 36,
               fontWeight: 800,
-              color: INK,
+              color: textoSobre(destaque),
             }}
           >
             {data}

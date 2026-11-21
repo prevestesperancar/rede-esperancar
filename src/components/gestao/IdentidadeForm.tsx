@@ -130,13 +130,13 @@ export function IdentidadeForm({ logoUrl, fotos, paleta }: { logoUrl: string | n
           <div className="flex items-center gap-3 flex-wrap">
             {cores.map((cor, i) => (
               <div key={i} className="flex items-center gap-2">
-                <span className="h-10 w-10 rounded-lg border border-border flex-shrink-0" style={{ background: cor }} />
                 <input
                   value={cor}
                   maxLength={7}
                   onChange={(e) => setCores(cores.map((c, j) => (j === i ? e.target.value.toUpperCase() : c)))}
                   className="w-28 rounded-lg border border-border-strong px-2.5 py-1.5 text-sm font-mono outline-none focus:border-ink"
                 />
+                <span className="h-10 w-10 rounded-lg border border-border flex-shrink-0" style={{ background: cor }} />
               </div>
             ))}
           </div>

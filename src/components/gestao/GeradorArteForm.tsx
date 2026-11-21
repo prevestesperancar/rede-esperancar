@@ -9,6 +9,7 @@ const labelClass = "block text-xs font-bold text-ink-faint uppercase tracking-wi
 
 export function GeradorArteForm({ quantidadeFotos }: { quantidadeFotos: number }) {
   const [modelo, setModelo] = useState<Modelo>("post");
+  const [estilo, setEstilo] = useState<"cartaz" | "foto">("cartaz");
   const [foto, setFoto] = useState(0);
   const [titulo, setTitulo] = useState<string>(TEXTOS_PRONTOS[0].titulo);
   const [subtitulo, setSubtitulo] = useState<string>(TEXTOS_PRONTOS[0].subtitulo);
@@ -18,6 +19,7 @@ export function GeradorArteForm({ quantidadeFotos }: { quantidadeFotos: number }
   function montarUrl() {
     const params = new URLSearchParams({
       modelo,
+      estilo,
       foto: String(foto),
       titulo,
       subtitulo,
@@ -42,6 +44,29 @@ export function GeradorArteForm({ quantidadeFotos }: { quantidadeFotos: number }
                 }`}
               >
                 {MODELOS[m].rotulo}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <span className={labelClass}>Estilo</span>
+          <div className="flex gap-2">
+            {(
+              [
+                ["cartaz", "Cartaz (vermelho e amarelo)"],
+                ["foto", "Foto em tela cheia"],
+              ] as const
+            ).map(([valor, rotulo]) => (
+              <button
+                key={valor}
+                type="button"
+                onClick={() => setEstilo(valor)}
+                className={`text-xs font-bold px-4 py-2 rounded-full border ${
+                  estilo === valor ? "bg-ink text-paper border-ink" : "bg-surface border-border-strong"
+                }`}
+              >
+                {rotulo}
               </button>
             ))}
           </div>
@@ -110,7 +135,7 @@ export function GeradorArteForm({ quantidadeFotos }: { quantidadeFotos: number }
           {urlGerada && (
             <a
               href={urlGerada}
-              download={`arte-${modelo}.png`}
+              download={`arte-${estilo}-${modelo}.png`}
               className="font-bold text-sm px-5 py-2.5 rounded-full bg-surface border border-border-strong"
             >
               Baixar PNG

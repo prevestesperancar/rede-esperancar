@@ -21,7 +21,7 @@ export default async function IdentidadePage() {
       <p className="text-sm text-ink-soft mb-7">
         Logo e fotos do pré-vestibular, usadas pra montar as artes das redes sociais.
       </p>
-      <IdentidadeForm logoUrl={identidade?.logoUrl ?? null} fotos={identidade?.fotos ?? []} />
+      <IdentidadeForm logoUrl={identidade?.logoUrl ?? null} fotos={identidade?.fotos ?? []} paleta={identidade?.paleta ?? []} />
     </div>
   );
 }

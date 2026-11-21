@@ -50,3 +50,16 @@ export async function removerFotoNucleo(url: string) {
   });
   revalidatePath("/gestao/identidade");
 }
+
+export async function definirPaletaNucleo(cores: string[]) {
+  const nucleoId = await requireIdentidade();
+  const HEX = /^#[0-9a-fA-F]{6}$/;
+  const validas = cores.filter((c) => HEX.test(c)).slice(0, 5);
+  if (validas.length === 0) throw new Error("Escolha pelo menos uma cor válida.");
+  await prisma.identidadeNucleo.upsert({
+    where: { nucleoId },
+    update: { paleta: validas },
+    create: { nucleoId, paleta: validas },
+  });
+  revalidatePath("/gestao/identidade");
+}

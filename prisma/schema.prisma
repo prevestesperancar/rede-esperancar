@@ -620,4 +620,6 @@ model IdentidadeNucleo {
   nucleo  Nucleo   @relation(fields: [nucleoId], references: [id])
   logoUrl String?
   fotos   String[] @default([])
+  // Paleta de cores da marca (hex). A primeira é a cor de destaque das artes.
+  paleta  String[] @default([])
 }

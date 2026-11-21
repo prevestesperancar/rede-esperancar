@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser, SUPABASE_UPLOADS_BUCKET } from "@/lib/supabase-browser";
-import { definirLogoNucleo, adicionarFotoNucleo, removerFotoNucleo } from "@/actions/identidade";
+import { definirLogoNucleo, adicionarFotoNucleo, removerFotoNucleo, definirPaletaNucleo } from "@/actions/identidade";
+import { extrairPaleta } from "@/lib/paleta";
 
 const MAX_FOTOS = 5;
 const TAMANHO_MAX_MB = 8;
@@ -27,8 +28,9 @@ async function enviarArquivo(arquivo: File, tipo: "logo" | "foto"): Promise<stri
   return dados.publicUrl as string;
 }
 
-export function IdentidadeForm({ logoUrl, fotos }: { logoUrl: string | null; fotos: string[] }) {
+export function IdentidadeForm({ logoUrl, fotos, paleta }: { logoUrl: string | null; fotos: string[]; paleta: string[] }) {
   const router = useRouter();
+  const [cores, setCores] = useState<string[]>(paleta);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -40,6 +42,12 @@ export function IdentidadeForm({ logoUrl, fotos }: { logoUrl: string | null; fot
     try {
       const url = await enviarArquivo(arquivo, "logo");
       await definirLogoNucleo(url);
+      // Sugere a paleta a partir da nova logo; a coordenação pode alterar depois.
+      const sugestao = await extrairPaleta(arquivo);
+      if (sugestao.length > 0) {
+        setCores(sugestao);
+        await definirPaletaNucleo(sugestao);
+      }
       router.refresh();
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Erro ao enviar a logo.");
@@ -63,6 +71,19 @@ export function IdentidadeForm({ logoUrl, fotos }: { logoUrl: string | null; fot
     } finally {
       setEnviando(false);
       e.target.value = "";
+    }
+  }
+
+  async function salvarCores() {
+    setEnviando(true);
+    setErro(null);
+    try {
+      await definirPaletaNucleo(cores);
+      router.refresh();
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : "Erro ao salvar as cores.");
+    } finally {
+      setEnviando(false);
     }
   }
 
@@ -99,6 +120,36 @@ export function IdentidadeForm({ logoUrl, fotos }: { logoUrl: string | null; fot
           <input type="file" accept="image/png,image/jpeg,image/webp" onChange={trocarLogo} disabled={enviando} className={inputClass} />
         </div>
       </section>
+
+      {cores.length > 0 && (
+        <section className="bg-surface border border-border rounded-[18px] p-5">
+          <div className="font-extrabold text-sm mb-1">Paleta de cores</div>
+          <p className="text-xs text-ink-faint mb-3">
+            Sugerida a partir da logo. A primeira cor é o destaque das artes. Pode alterar qualquer uma.
+          </p>
+          <div className="flex items-center gap-3 flex-wrap">
+            {cores.map((cor, i) => (
+              <label key={i} className="flex flex-col items-center gap-1 text-[11px] font-mono text-ink-faint">
+                <input
+                  type="color"
+                  value={cor}
+                  onChange={(e) => setCores(cores.map((c, j) => (j === i ? e.target.value : c)))}
+                  className="h-12 w-12 rounded-lg border border-border cursor-pointer bg-transparent"
+                />
+                {cor}
+              </label>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={salvarCores}
+            disabled={enviando}
+            className="mt-4 font-extrabold text-sm px-5 py-2.5 rounded-full bg-yellow text-yellow-ink disabled:opacity-60"
+          >
+            Salvar cores
+          </button>
+        </section>
+      )}
 
       <section className="bg-surface border border-border rounded-[18px] p-5">
         <div className="font-extrabold text-sm mb-1">Fotos do núcleo ({fotos.length}/{MAX_FOTOS})</div>

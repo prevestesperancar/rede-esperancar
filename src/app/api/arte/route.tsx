@@ -36,6 +36,8 @@ export async function GET(request: Request) {
   const logo = identidade?.logoUrl ?? null;
   const foto = Number.isInteger(indiceFoto) ? identidade?.fotos[indiceFoto] ?? null : null;
   const ehStory = modelo === "story";
+  // Cor de destaque vem da paleta do núcleo (primeira cor); se não houver, usa o amarelo padrão.
+  const destaque = identidade?.paleta?.[0] ?? YELLOW;
 
   const fotoAltura = ehStory ? 1040 : 600;
   const tituloTamanho = ehStory ? 104 : 84;
@@ -97,7 +99,7 @@ export async function GET(request: Request) {
             style={{
               display: "flex",
               alignSelf: "flex-start",
-              background: YELLOW,
+              background: destaque,
               borderRadius: 20,
               padding: "18px 32px",
               fontSize: 36,

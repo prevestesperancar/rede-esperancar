@@ -128,6 +128,7 @@ model Nucleo {
   coordenador   User?   @relation("CoordenadorDoNucleo", fields: [coordenadorId], references: [id])
 
   usuarios                User[]                   @relation("UsuariosDoNucleo")
+  identidade              IdentidadeNucleo?
   turmas                  Turma[]
   materiais               Material[]
   avisos                  Aviso[]
@@ -609,4 +610,14 @@ model Redacao {
 
   @@index([estudanteId])
   @@index([temaId])
+}
+
+// Identidade visual do núcleo: logo e fotos usadas nas artes de redes sociais.
+// Máximo de 5 fotos (validado na aplicação).
+model IdentidadeNucleo {
+  id      String   @id @default(cuid())
+  nucleoId String  @unique
+  nucleo  Nucleo   @relation(fields: [nucleoId], references: [id])
+  logoUrl String?
+  fotos   String[] @default([])
 }

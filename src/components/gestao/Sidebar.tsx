@@ -20,6 +20,7 @@ const ITEMS_COORDENACAO = [
   { href: "/gestao/simulados", label: "Simulados", icon: "📝" },
   { href: "/gestao/questoes", label: "Banco de questões", icon: "❓" },
   { href: "/gestao/identidade", label: "Identidade", icon: "🎨" },
+  { href: "/gestao/artes", label: "Gerar arte", icon: "🖼️" },
   { href: "/gestao/frequencia", label: "Frequência detalhada", icon: "📊" },
   { href: "/gestao/formularios", label: "Formulários", icon: "🗂️" },
   { href: "/gestao/inscricoes", label: "Inscrições", icon: "📋" },
@@ -44,6 +45,7 @@ const ITEMS_APOIO = [
   { href: "/gestao/solicitacoes", label: "Solicitações", icon: "💬" },
   { href: "/gestao/estudantes", label: "Estudantes", icon: "🧑‍🎓" },
   { href: "/gestao/identidade", label: "Identidade", icon: "🎨" },
+  { href: "/gestao/artes", label: "Gerar arte", icon: "🖼️" },
   { href: "/gestao/frequencia", label: "Frequência detalhada", icon: "📊" },
   { href: "/gestao/simulados", label: "Desempenho em simulados", icon: "📝" },
 ];

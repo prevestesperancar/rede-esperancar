@@ -125,25 +125,25 @@ export function IdentidadeForm({ logoUrl, fotos, paleta }: { logoUrl: string | n
         <section className="bg-surface border border-border rounded-[18px] p-5">
           <div className="font-extrabold text-sm mb-1">Paleta de cores</div>
           <p className="text-xs text-ink-faint mb-3">
-            Sugerida a partir da logo. A primeira cor é o destaque das artes. Pode alterar qualquer uma.
+            Sugerida a partir da logo. A primeira cor é o destaque das artes. Digite o código no formato #RRGGBB para alterar.
           </p>
           <div className="flex items-center gap-3 flex-wrap">
             {cores.map((cor, i) => (
-              <label key={i} className="flex flex-col items-center gap-1 text-[11px] font-mono text-ink-faint">
+              <div key={i} className="flex items-center gap-2">
+                <span className="h-10 w-10 rounded-lg border border-border flex-shrink-0" style={{ background: cor }} />
                 <input
-                  type="color"
                   value={cor}
-                  onChange={(e) => setCores(cores.map((c, j) => (j === i ? e.target.value : c)))}
-                  className="h-12 w-12 rounded-lg border border-border cursor-pointer bg-transparent"
+                  maxLength={7}
+                  onChange={(e) => setCores(cores.map((c, j) => (j === i ? e.target.value.toUpperCase() : c)))}
+                  className="w-28 rounded-lg border border-border-strong px-2.5 py-1.5 text-sm font-mono outline-none focus:border-ink"
                 />
-                {cor}
-              </label>
+              </div>
             ))}
           </div>
           <button
             type="button"
             onClick={salvarCores}
-            disabled={enviando}
+            disabled={enviando || cores.some((c) => !/^#[0-9A-F]{6}$/.test(c))}
             className="mt-4 font-extrabold text-sm px-5 py-2.5 rounded-full bg-yellow text-yellow-ink disabled:opacity-60"
           >
             Salvar cores
